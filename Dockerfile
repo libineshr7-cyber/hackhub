@@ -1,28 +1,16 @@
-# Multi-stage Docker build for HackHub Spring Boot Application
-FROM eclipse-temurin:21-jdk-alpine AS builder
+# Fast Single-Stage Dockerfile for HackHub
+FROM eclipse-temurin:21-jdk-alpine
+
 WORKDIR /app
 
-# Copy maven wrapper & pom.xml
-COPY pom.xml .
+# Copy Maven wrapper & project files
+COPY pom.xml mvnw ./
 COPY .mvn .mvn
-COPY mvnw .
-
-# Download dependencies
-RUN ./mvnw dependency:go-offline -B || true
-
-# Copy source code and build package
 COPY src src
-RUN ./mvnw clean package -DskipTests
 
-# Stage 2: Runtime Image
-FROM eclipse-temurin:21-jre-alpine
-WORKDIR /app
+# Build executable jar
+RUN ./mvnw clean package -DskipTests -q
 
-# Copy compiled jar from builder
-COPY --from=builder /app/target/hackhub-1.0.0.jar app.jar
-
-# Create uploads directory
-RUN mkdir -p uploads/posters
-
+# Expose port and start
 EXPOSE 8085
-ENTRYPOINT ["java", "-jar", "app.jar"]
+CMD ["java", "-jar", "target/hackhub-1.0.0.jar"]
