@@ -1,17 +1,23 @@
-# Fast Single-Stage Dockerfile for HackHub
-FROM eclipse-temurin:21-jdk-alpine
-
+# Clean Dockerfile using pre-packaged Maven 3.9 + Temurin JDK 21 image
+FROM maven:3.9-eclipse-temurin-21-alpine AS builder
 WORKDIR /app
 
-# Copy Maven wrapper & project files
-COPY pom.xml mvnw ./
-COPY .mvn .mvn
+# Copy pom.xml and source files
+COPY pom.xml .
 COPY src src
 
-# Make Maven wrapper executable and build executable jar
-RUN chmod +x mvnw
-RUN ./mvnw clean package -DskipTests
+# Build executable jar
+RUN mvn clean package -DskipTests
 
-# Expose port and start
+# Stage 2: Minimal Runtime Image
+FROM eclipse-temurin:21-jre-alpine
+WORKDIR /app
+
+# Copy executable jar from builder stage
+COPY --from=builder /app/target/hackhub-1.0.0.jar app.jar
+
+# Create uploads directory
+RUN mkdir -p uploads/posters /app/data
+
 EXPOSE 8085
-CMD ["java", "-jar", "target/hackhub-1.0.0.jar"]
+ENTRYPOINT ["java", "-jar", "app.jar"]
