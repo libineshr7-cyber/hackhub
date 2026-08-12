@@ -49,7 +49,7 @@ public class DataInitializer implements CommandLineRunner {
             logger.info("✅ Admin account created: RegNo 000 | Password admin123");
         }
 
-        // 2. Seed Initial Student Accounts (001 to 049)
+        // 2. Seed Initial Student Accounts (CS001 to CS049) & Migrate legacy numeric Reg Nos (001 -> CS001)
         List<String> sampleSkillsList = Arrays.asList(
                 "Python, Cybersecurity",
                 "Java, Web Development",
@@ -65,12 +65,24 @@ public class DataInitializer implements CommandLineRunner {
         int countSeeded = 0;
 
         for (int i = 1; i <= 49; i++) {
-            String regNo = String.format("%03d", i);
-            if (!userRepository.existsByRegistrationNumber(regNo)) {
+            String legacyRegNo = String.format("%03d", i);
+            String newRegNo = String.format("CS%03d", i);
+
+            // Migrate old 001..049 to CS001..CS049 if present
+            userRepository.findByRegistrationNumber(legacyRegNo).ifPresent(oldUser -> {
+                oldUser.setRegistrationNumber(newRegNo);
+                if (oldUser.getName().startsWith("Student 0") || oldUser.getName().startsWith("Student 00")) {
+                    oldUser.setName("Student " + newRegNo);
+                }
+                userRepository.save(oldUser);
+                logger.info("🔄 Migrated user {} -> {}", legacyRegNo, newRegNo);
+            });
+
+            if (!userRepository.existsByRegistrationNumber(newRegNo)) {
                 User student = new User();
-                student.setRegistrationNumber(regNo);
-                student.setName("Student " + regNo);
-                student.setEmail("student" + regNo + "@hackhub.dept.edu");
+                student.setRegistrationNumber(newRegNo);
+                student.setName("Student " + newRegNo);
+                student.setEmail("student" + newRegNo.toLowerCase() + "@hackhub.dept.edu");
                 student.setPasswordHash(defaultPassHash);
                 student.setRole("ROLE_STUDENT");
                 student.setStatus("ACTIVE");
@@ -82,12 +94,12 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (countSeeded > 0) {
-            logger.info("✅ Seeded {} initial student accounts (001 to 049) with default password '123'.", countSeeded);
+            logger.info("✅ Seeded {} initial student accounts (CS001 to CS049) with default password '123'.", countSeeded);
         }
 
         // 3. Seed Sample Department Hackathons & Events if empty
         if (eventRepository.count() == 0) {
-            User creator = userRepository.findByRegistrationNumber("001").orElse(null);
+            User creator = userRepository.findByRegistrationNumber("CS001").orElse(null);
             if (creator == null) {
                 creator = userRepository.findAll().get(0);
             }

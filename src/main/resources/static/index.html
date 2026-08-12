@@ -41,7 +41,7 @@
 
                 <div class="user-badge" data-view="profile">
                     <div class="user-avatar">🎓</div>
-                    <span id="header-user-reg">Reg No: 001</span>
+                    <span id="header-user-reg">Reg No: CS001</span>
                 </div>
             </div>
         </div>
@@ -146,7 +146,16 @@
         <section id="view-teams" class="view-section" style="display:none;">
             <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
                 <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">🤝 Department Teammate Finder</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Look for hackathon teams, request to join open slots, and match skills with fellow students.</p>
+                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Look for hackathon teams, request to join open slots, or invite department students by Name / Reg No (CS001–CS049).</p>
+            </div>
+
+            <!-- Student Search & Quick Teammate Finder -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 10px;">🔎 Search Student by Name or Registration Number</h3>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="teams-student-search-input" class="form-input" placeholder="Enter Name or Reg No (e.g. CS001, CS027, Student CS015)..." oninput="Teams.handleSearchStudentInput()">
+                </div>
+                <div id="teams-student-search-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
             </div>
 
             <div style="margin-bottom: 24px;">
@@ -316,7 +325,7 @@
             <form onsubmit="Auth.handleLogin(event)">
                 <div class="form-group">
                     <label class="form-label">Registration Number</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="e.g. 001, 027, 149" required>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="e.g. CS001, CS027, CS049" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
@@ -365,7 +374,7 @@
                 <form onsubmit="Auth.handleRequestOtp(event)">
                     <div class="form-group">
                         <label class="form-label">Registration Number</label>
-                        <input type="text" id="otp-reg-no" class="form-input" placeholder="e.g. 027" required>
+                        <input type="text" id="otp-reg-no" class="form-input" placeholder="e.g. CS027" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Send 6-Digit Gmail OTP</button>
                 </form>

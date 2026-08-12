@@ -64,6 +64,27 @@ public class TeamController {
         }
     }
 
+    @PostMapping("/invite")
+    public ResponseEntity<?> inviteTeammate(@RequestBody InviteTeammateRequest request, Authentication authentication) {
+        try {
+            User currentUser = getCurrentUser(authentication);
+            ApiResponse response = teamService.inviteTeammateByNameOrRegNo(request.getTeamId(), request.getRegNoOrName(), currentUser);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/search-students")
+    public ResponseEntity<?> searchStudents(@RequestParam("query") String query) {
+        try {
+            List<Map<String, String>> students = teamService.searchStudents(query);
+            return ResponseEntity.ok(students);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
     @PostMapping("/request/{id}/respond")
     public ResponseEntity<?> respondToRequest(@PathVariable("id") Long requestId, @RequestBody Map<String, String> body, Authentication authentication) {
         try {

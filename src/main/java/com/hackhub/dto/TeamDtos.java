@@ -120,4 +120,13 @@ public class TeamDtos {
         public LocalDateTime getCreatedAt() { return createdAt; }
         public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     }
+    public static class InviteTeammateRequest {
+        private Long teamId;
+        private String regNoOrName;
+
+        public Long getTeamId() { return teamId; }
+        public void setTeamId(Long teamId) { this.teamId = teamId; }
+        public String getRegNoOrName() { return regNoOrName; }
+        public void setRegNoOrName(String regNoOrName) { this.regNoOrName = regNoOrName; }
+    }
 }

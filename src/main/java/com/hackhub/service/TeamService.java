@@ -26,6 +26,72 @@ public class TeamService {
     @Autowired
     private EventRepository eventRepository;
 
+    @Autowired
+    private UserRepository userRepository;
+
+    public List<Map<String, String>> searchStudents(String query) {
+        if (query == null || query.trim().isEmpty()) {
+            return Collections.emptyList();
+        }
+        String q = query.trim();
+        List<User> users = userRepository.findByRegistrationNumberContainingOrNameContaining(q, q);
+        return users.stream()
+                .filter(u -> !"DISABLED".equalsIgnoreCase(u.getStatus()) && !"ROLE_ADMIN".equals(u.getRole()))
+                .limit(10)
+                .map(u -> {
+                    Map<String, String> m = new HashMap<>();
+                    m.put("registrationNumber", u.getRegistrationNumber());
+                    m.put("name", u.getName());
+                    m.put("skills", u.getSkills() != null ? u.getSkills() : "");
+                    return m;
+                })
+                .collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ApiResponse inviteTeammateByNameOrRegNo(Long teamId, String regNoOrName, User inviter) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
+
+        if (regNoOrName == null || regNoOrName.trim().isEmpty()) {
+            throw new IllegalArgumentException("Please enter a student Name or Registration Number.");
+        }
+
+        String search = regNoOrName.trim();
+        User targetStudent = userRepository.findByRegistrationNumber(search)
+                .orElseGet(() -> {
+                    List<User> matches = userRepository.findByRegistrationNumberContainingOrNameContaining(search, search);
+                    if (matches.isEmpty()) {
+                        throw new IllegalArgumentException("No student found matching '" + search + "'. Please check the Name or Registration Number (e.g. CS001).");
+                    }
+                    return matches.get(0);
+                });
+
+        if (targetStudent.getId().equals(inviter.getId())) {
+            throw new IllegalArgumentException("You cannot invite yourself.");
+        }
+
+        boolean isMember = teamMemberRepository.existsByTeamAndUserAndStatus(team, targetStudent, "ACTIVE");
+        if (isMember) {
+            throw new IllegalArgumentException("Student " + targetStudent.getName() + " (" + targetStudent.getRegistrationNumber() + ") is already a member of this team.");
+        }
+
+        long currentCount = teamMemberRepository.countByTeamAndStatus(team, "ACTIVE");
+        if (currentCount >= team.getMaxMembers()) {
+            throw new IllegalStateException("Team '" + team.getTeamName() + "' is already full (" + team.getMaxMembers() + "/" + team.getMaxMembers() + ").");
+        }
+
+        boolean hasPending = teamRequestRepository.existsByTeamAndRequesterAndStatus(team, targetStudent, "PENDING");
+        if (hasPending) {
+            throw new IllegalStateException("An invitation/request is already pending for " + targetStudent.getName() + ".");
+        }
+
+        TeamRequest request = new TeamRequest(team, team.getEvent(), targetStudent, "PENDING");
+        teamRequestRepository.save(request);
+
+        return new ApiResponse(true, "Team request sent successfully to " + targetStudent.getName() + " (" + targetStudent.getRegistrationNumber() + ")!");
+    }
+
     @Transactional
     public TeamResponse createTeam(CreateTeamRequest request, User creator) {
         Event event = eventRepository.findById(request.getEventId())

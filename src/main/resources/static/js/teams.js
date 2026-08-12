@@ -40,20 +40,19 @@ const Teams = {
 
   createTeamCardHtml(team) {
     const isFull = team.currentMemberCount >= team.maxMembers;
-    const isCreator = team.userMember && team.creatorRegistrationNumber === API.getUser()?.registrationNumber;
 
     const membersListHtml = team.members.map(m => `
       <div style="font-size: 0.8rem; background: var(--bg-dark); padding: 6px 10px; border-radius: 6px; border: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center;">
         <span>👤 <strong>${this.escapeHtml(m.registrationNumber)}</strong> (${this.escapeHtml(m.name)})</span>
-        <span style="font-size: 0.72rem; color: var(--accent-cyan);">${m.skills || 'No skills listed'}</span>
+        <span style="font-size: 0.72rem; color: var(--accent-maroon); font-weight:600;">${m.skills || 'No skills listed'}</span>
       </div>
     `).join('');
 
     let actionBtnHtml = '';
     if (team.isUserMember) {
-      actionBtnHtml = `<span style="font-size:0.8rem; color: var(--status-upcoming); font-weight:600;">✓ You are in this team</span>`;
+      actionBtnHtml = `<span style="font-size:0.8rem; color: var(--status-upcoming); font-weight:700;">✓ You are in this team</span>`;
     } else if (team.hasUserRequested) {
-      actionBtnHtml = `<span style="font-size:0.8rem; color: var(--status-deadline); font-weight:600;">⏳ Request Pending</span>`;
+      actionBtnHtml = `<span style="font-size:0.8rem; color: var(--status-deadline); font-weight:700;">⏳ Request Pending</span>`;
     } else if (isFull) {
       actionBtnHtml = `<span style="font-size:0.8rem; color: var(--text-muted); font-weight:600;">Team Full</span>`;
     } else {
@@ -63,15 +62,25 @@ const Teams = {
         </button>`;
     }
 
+    let inviteFormHtml = '';
+    if (team.isUserMember && !isFull) {
+      inviteFormHtml = `
+        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color); display: flex; gap: 8px;">
+          <input type="text" id="invite-input-${team.id}" class="form-input" placeholder="Enter Name or Reg No (e.g. CS005, CS012)" style="font-size: 0.8rem; padding: 6px 10px;">
+          <button class="btn btn-primary btn-sm" onclick="Teams.handleInviteTeammate(${team.id})">➕ Send Request</button>
+        </div>
+      `;
+    }
+
     return `
-      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px;">
+      <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 14px; margin-bottom: 12px; box-shadow: 0 2px 6px rgba(0,0,0,0.02);">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
           <div>
             <h4 style="font-size: 1rem; color: var(--text-main); font-weight: 700;">${this.escapeHtml(team.teamName)}</h4>
-            <span style="font-size: 0.75rem; color: var(--text-muted);">Leader: ${this.escapeHtml(team.creatorName)} (${team.creatorRegistrationNumber})</span>
+            <span style="font-size: 0.75rem; color: var(--text-muted);">Leader: <strong>${this.escapeHtml(team.creatorName)}</strong> (${team.creatorRegistrationNumber})</span>
           </div>
           <div style="text-align: right;">
-            <span style="background: rgba(6,182,212,0.15); color: var(--accent-cyan); font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 12px;">
+            <span style="background: var(--accent-maroon-tint); color: var(--accent-maroon); font-size: 0.75rem; font-weight: 700; padding: 4px 8px; border-radius: 12px; border: 1px solid rgba(128,0,32,0.2);">
               ⚡ ${team.skillMatchScore}% Match
             </span>
             <div style="font-size: 0.75rem; color: var(--text-muted); margin-top: 2px;">
@@ -87,8 +96,34 @@ const Teams = {
         <div style="display: flex; justify-content: flex-end; align-items: center; margin-top: 8px;">
           ${actionBtnHtml}
         </div>
+        ${inviteFormHtml}
       </div>
     `;
+  },
+
+  async handleInviteTeammate(teamId) {
+    const input = document.getElementById(`invite-input-${teamId}`);
+    const regNoOrName = input ? input.value.trim() : '';
+
+    if (!regNoOrName) {
+      App.showToast('Please enter a student Name or Registration Number (e.g. CS005).', 'danger');
+      return;
+    }
+
+    try {
+      const res = await API.request('/teams/invite', {
+        method: 'POST',
+        body: JSON.stringify({ teamId, regNoOrName })
+      });
+
+      App.showToast(res.message, 'success');
+      if (input) input.value = '';
+      if (this.currentEventId) {
+        this.fetchAndRenderTeams(this.currentEventId);
+      }
+    } catch (err) {
+      App.showToast(err.message || 'Invitation failed', 'danger');
+    }
   },
 
   async handleCreateTeam(event) {
@@ -171,6 +206,40 @@ const Teams = {
       }
     } catch (err) {
       App.showToast(err.message || 'Response failed', 'danger');
+    }
+  },
+
+  async handleSearchStudentInput() {
+    const input = document.getElementById('teams-student-search-input');
+    const container = document.getElementById('teams-student-search-results');
+    if (!input || !container) return;
+
+    const query = input.value.trim();
+    if (!query) {
+      container.innerHTML = '';
+      return;
+    }
+
+    try {
+      const students = await API.request(`/teams/search-students?query=${encodeURIComponent(query)}`);
+      if (!students || students.length === 0) {
+        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); padding: 8px;">No students found matching "${this.escapeHtml(query)}". Try e.g. CS001, CS027.</div>`;
+        return;
+      }
+
+      container.innerHTML = students.map(s => `
+        <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
+          <div>
+            <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">🎓 ${this.escapeHtml(s.name)} (<span style="color: var(--accent-maroon);">${this.escapeHtml(s.registrationNumber)}</span>)</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Skills: ${this.escapeHtml(s.skills || 'None listed')}</div>
+          </div>
+          <div>
+            <span style="font-size: 0.75rem; background: var(--accent-maroon-tint); color: var(--accent-maroon); font-weight: 700; padding: 4px 8px; border-radius: 6px;">Available Teammate</span>
+          </div>
+        </div>
+      `).join('');
+    } catch (err) {
+      console.error(err);
     }
   },
 
