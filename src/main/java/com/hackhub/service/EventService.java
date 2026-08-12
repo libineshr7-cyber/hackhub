@@ -2,6 +2,7 @@ package com.hackhub.service;
 
 import com.hackhub.dto.EventDto;
 import com.hackhub.entity.Event;
+import com.hackhub.entity.Team;
 import com.hackhub.entity.User;
 import com.hackhub.repository.EventRepository;
 import com.hackhub.repository.SavedEventRepository;
