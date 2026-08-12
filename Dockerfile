@@ -8,8 +8,9 @@ COPY pom.xml mvnw ./
 COPY .mvn .mvn
 COPY src src
 
-# Build executable jar
-RUN ./mvnw clean package -DskipTests -q
+# Make Maven wrapper executable and build executable jar
+RUN chmod +x mvnw
+RUN ./mvnw clean package -DskipTests
 
 # Expose port and start
 EXPOSE 8085
