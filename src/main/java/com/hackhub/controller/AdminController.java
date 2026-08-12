@@ -22,6 +22,9 @@ public class AdminController {
     @Autowired
     private ReportService reportService;
 
+    @Autowired
+    private com.hackhub.service.EventService eventService;
+
     @GetMapping("/dashboard")
     public ResponseEntity<DashboardStats> getDashboardStats() {
         return ResponseEntity.ok(adminService.getDashboardStats());
@@ -73,6 +76,34 @@ public class AdminController {
             String status = body.get("status");
             ApiResponse response = reportService.updateReportStatus(id, status);
             return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/events")
+    public ResponseEntity<List<com.hackhub.dto.EventDto>> getAllEvents() {
+        return ResponseEntity.ok(eventService.getAllEventsForCalendar(null));
+    }
+
+    @PutMapping("/events/{id}")
+    public ResponseEntity<?> updateEvent(
+            @PathVariable("id") Long id,
+            @RequestPart("event") com.hackhub.dto.EventDto dto,
+            @RequestPart(value = "posterFile", required = false) org.springframework.web.multipart.MultipartFile posterFile) {
+        try {
+            com.hackhub.dto.EventDto updated = eventService.updateEvent(id, dto, posterFile);
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/events/{id}")
+    public ResponseEntity<?> deleteEvent(@PathVariable("id") Long id) {
+        try {
+            eventService.deleteEvent(id);
+            return ResponseEntity.ok(new ApiResponse(true, "Event deleted successfully."));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }

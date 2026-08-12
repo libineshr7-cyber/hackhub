@@ -12,6 +12,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import com.hackhub.repository.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -23,6 +24,18 @@ public class EventService {
 
     @Autowired
     private SavedEventRepository savedEventRepository;
+
+    @Autowired
+    private ReportRepository reportRepository;
+
+    @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private TeamMemberRepository teamMemberRepository;
+
+    @Autowired
+    private TeamRequestRepository teamRequestRepository;
 
     @Autowired
     private FileStorageService fileStorageService;
@@ -152,5 +165,76 @@ public class EventService {
         }
 
         return dto;
+    }
+
+    @Transactional
+    public EventDto updateEvent(Long eventId, EventDto dto, MultipartFile posterFile) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+
+        if (dto.getTitle() != null && !dto.getTitle().trim().isEmpty()) {
+            event.setTitle(dto.getTitle().trim());
+        }
+        if (dto.getDescription() != null) {
+            event.setDescription(dto.getDescription());
+        }
+        if (dto.getEventType() != null) {
+            event.setEventType(dto.getEventType());
+        }
+        if (dto.getTeamSizeMin() != null) {
+            event.setTeamSizeMin(dto.getTeamSizeMin());
+        }
+        if (dto.getTeamSizeMax() != null) {
+            event.setTeamSizeMax(dto.getTeamSizeMax());
+        }
+        if (dto.getStartDate() != null) {
+            event.setStartDate(dto.getStartDate());
+        }
+        if (dto.getEndDate() != null) {
+            event.setEndDate(dto.getEndDate());
+        }
+        if (dto.getRegistrationDeadline() != null) {
+            event.setRegistrationDeadline(dto.getRegistrationDeadline());
+        }
+        if (dto.getMode() != null) {
+            event.setMode(dto.getMode());
+        }
+        if (dto.getVenue() != null) {
+            event.setVenue(dto.getVenue());
+        }
+        if (dto.getRegistrationLink() != null) {
+            event.setRegistrationLink(dto.getRegistrationLink());
+        }
+        if (dto.getSkills() != null) {
+            event.setSkills(dto.getSkills());
+        }
+
+        if (posterFile != null && !posterFile.isEmpty()) {
+            String posterUrl = fileStorageService.storeFile(posterFile);
+            event.setPosterPath(posterUrl);
+        } else if (dto.getPosterPath() != null && !dto.getPosterPath().trim().isEmpty()) {
+            event.setPosterPath(dto.getPosterPath());
+        }
+
+        Event saved = eventRepository.save(event);
+        return mapToDto(saved, null);
+    }
+
+    @Transactional
+    public void deleteEvent(Long eventId) {
+        Event event = eventRepository.findById(eventId)
+                .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+
+        savedEventRepository.deleteByEvent(event);
+        reportRepository.deleteByEvent(event);
+        teamRequestRepository.deleteByEvent(event);
+
+        List<Team> teams = teamRepository.findByEventOrderByCreatedAtDesc(event);
+        for (Team t : teams) {
+            teamMemberRepository.deleteAll(teamMemberRepository.findByTeamAndStatus(t, "ACCEPTED"));
+            teamRepository.delete(t);
+        }
+
+        eventRepository.delete(event);
     }
 }

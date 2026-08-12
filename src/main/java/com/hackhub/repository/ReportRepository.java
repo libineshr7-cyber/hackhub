@@ -13,5 +13,6 @@ public interface ReportRepository extends JpaRepository<Report, Long> {
     List<Report> findByOrderByCreatedAtDesc();
     List<Report> findByStatusOrderByCreatedAtDesc(String status);
     boolean existsByEventAndReportedBy(Event event, User reportedBy);
+    void deleteByEvent(Event event);
     long countByStatus(String status);
 }

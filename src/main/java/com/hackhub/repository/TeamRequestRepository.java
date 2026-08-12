@@ -17,4 +17,5 @@ public interface TeamRequestRepository extends JpaRepository<TeamRequest, Long> 
     List<TeamRequest> findByRequesterOrderByCreatedAtDesc(User requester);
     Optional<TeamRequest> findByTeamAndRequesterAndStatus(Team team, User requester, String status);
     boolean existsByTeamAndRequesterAndStatus(Team team, User requester, String status);
+    void deleteByEvent(Event event);
 }

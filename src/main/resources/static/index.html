@@ -262,6 +262,29 @@
                 </div>
             </div>
 
+            <!-- Hackathons Management Table -->
+            <div style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Hackathons & Events Management (Modify / Delete)</h3>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Mode</th>
+                                <th>Dates</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-events-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- Reports Management Table -->
             <div>
                 <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">Reported Events Audit Log</h3>
@@ -614,6 +637,99 @@
                 </div>
                 <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password will be generated as <code>123</code>. First-login password change will be required.</p>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 10: Admin Edit Hackathon/Event -->
+    <div id="modal-admin-edit-event" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Modify Hackathon / Event</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-admin-edit-event" onsubmit="Admin.handleEditEventSubmit(event)">
+                <input type="hidden" id="admin-edit-event-id">
+
+                <div class="form-group">
+                    <label class="form-label">Event Title *</label>
+                    <input type="text" id="admin-edit-title" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea id="admin-edit-description" class="form-textarea" rows="3" required></textarea>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Event Type</label>
+                        <select id="admin-edit-type" class="form-select">
+                            <option value="HACKATHON">Hackathon</option>
+                            <option value="COMPETITION">Coding Competition</option>
+                            <option value="WORKSHOP">Workshop / Seminar</option>
+                            <option value="PROJECT">Project Expo</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mode</label>
+                        <select id="admin-edit-mode" class="form-select">
+                            <option value="ONLINE">Online</option>
+                            <option value="OFFLINE">Offline / On-Campus</option>
+                            <option value="HYBRID">Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Min Team Size</label>
+                        <input type="number" id="admin-edit-min-team" class="form-input" min="1" max="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Max Team Size</label>
+                        <input type="number" id="admin-edit-max-team" class="form-input" min="1" max="10" required>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                    <div class="form-group">
+                        <label class="form-label">Start Date *</label>
+                        <input type="date" id="admin-edit-start-date" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">End Date *</label>
+                        <input type="date" id="admin-edit-end-date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Deadline *</label>
+                    <input type="date" id="admin-edit-deadline" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Venue / Platform</label>
+                    <input type="text" id="admin-edit-venue" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Link (URL)</label>
+                    <input type="url" id="admin-edit-link" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Skills Required (Comma-separated)</label>
+                    <input type="text" id="admin-edit-skills" class="form-input">
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Modifications</button>
+                    <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-admin-edit-event')">Cancel</button>
+                </div>
             </form>
         </div>
     </div>
