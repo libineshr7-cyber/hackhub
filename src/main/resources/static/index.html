@@ -325,11 +325,11 @@
             <form onsubmit="Auth.handleLogin(event)">
                 <div class="form-group">
                     <label class="form-label">Registration Number</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="e.g. CS001, CS027, CSXXX" required>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="CSXXX" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="123" required>
+                    <input type="password" id="login-password" class="form-input" placeholder="" required>
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <a href="#" style="font-size: 0.85rem;" onclick="App.closeModal('modal-login'); Auth.showForgotPasswordModal();">Forgot Password?</a>
@@ -374,7 +374,7 @@
                 <form onsubmit="Auth.handleRequestOtp(event)">
                     <div class="form-group">
                         <label class="form-label">Registration Number</label>
-                        <input type="text" id="otp-reg-no" class="form-input" placeholder="e.g. CSXXX" required>
+                        <input type="text" id="otp-reg-no" class="form-input" placeholder="CSXXX" required>
                     </div>
                     <button type="submit" class="btn btn-primary" style="width: 100%;">Send 6-Digit Gmail OTP</button>
                 </form>
