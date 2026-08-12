@@ -226,17 +226,33 @@ public class EventService {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
 
+        // Step 1: Delete and flush saved events & reports & team requests for this event
         savedEventRepository.deleteByEvent(event);
-        reportRepository.deleteByEvent(event);
-        teamRequestRepository.deleteByEvent(event);
+        savedEventRepository.flush();
 
+        reportRepository.deleteByEvent(event);
+        reportRepository.flush();
+
+        teamRequestRepository.deleteByEvent(event);
+        teamRequestRepository.flush();
+
+        // Step 2: Delete and flush team members & team requests for teams in this event
         List<Team> teams = teamRepository.findByEventOrderByCreatedAtDesc(event);
         for (Team t : teams) {
             teamMemberRepository.deleteByTeam(t);
             teamRequestRepository.deleteByTeam(t);
+        }
+        teamMemberRepository.flush();
+        teamRequestRepository.flush();
+
+        // Step 3: Delete and flush teams
+        for (Team t : teams) {
             teamRepository.delete(t);
         }
+        teamRepository.flush();
 
+        // Step 4: Delete and flush event
         eventRepository.delete(event);
+        eventRepository.flush();
     }
 }
