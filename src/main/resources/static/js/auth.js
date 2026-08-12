@@ -8,6 +8,26 @@ const Auth = {
   },
 
   showFirstLoginModal() {
+    const title = document.getElementById('first-login-modal-title');
+    const desc = document.getElementById('first-login-modal-desc');
+    const closeBtn = document.getElementById('first-login-close-btn');
+    if (title) title.textContent = '🔐 First-Login Password Update';
+    if (desc) desc.innerHTML = 'For security reasons, please update your temporary password (default: <code>123</code>) before proceeding.';
+    if (closeBtn) closeBtn.style.display = 'none';
+    App.openModal('modal-first-login');
+  },
+
+  showChangePasswordModal() {
+    const title = document.getElementById('first-login-modal-title');
+    const desc = document.getElementById('first-login-modal-desc');
+    const closeBtn = document.getElementById('first-login-close-btn');
+    if (title) title.textContent = '🔐 Change Account Password';
+    if (desc) desc.textContent = 'Enter your current password and your new password below.';
+    if (closeBtn) closeBtn.style.display = 'block';
+    const curr = document.getElementById('first-current-password');
+    const next = document.getElementById('first-new-password');
+    if (curr) curr.value = '';
+    if (next) next.value = '';
     App.openModal('modal-first-login');
   },
 

@@ -196,7 +196,7 @@
 
                     <div style="display: flex; gap: 12px; margin-top: 20px;">
                         <button type="submit" class="btn btn-primary">Save Profile</button>
-                        <button type="button" class="btn btn-secondary" onclick="Auth.showFirstLoginModal()">Change Password</button>
+                        <button type="button" class="btn btn-secondary" onclick="Auth.showChangePasswordModal()">Change Password</button>
                         <button type="button" class="btn btn-danger" onclick="Auth.logout()">Logout</button>
                     </div>
                 </form>
@@ -343,9 +343,10 @@
     <div id="modal-first-login" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">🔐 First-Login Password Update</h3>
+                <h3 class="modal-title" id="first-login-modal-title">🔐 First-Login Password Update</h3>
+                <button type="button" class="close-btn" id="first-login-close-btn" style="display: none;">&times;</button>
             </div>
-            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
+            <p id="first-login-modal-desc" style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 16px;">
                 For security reasons, please update your temporary password (default: <code>123</code>) before proceeding.
             </p>
             <form onsubmit="Auth.handleFirstLoginPasswordChange(event)">

@@ -71,23 +71,26 @@ const App = {
       });
     });
 
-    // PROTECTED MODALS: login and first-login CANNOT be closed by clicking outside
-    const PROTECTED_MODALS = ['modal-login', 'modal-first-login'];
-
-    // Close Modal on overlay background click — skip protected modals
+    // PROTECTED MODALS: login is always protected; first-login is protected ONLY if user.firstLogin === true
     document.querySelectorAll('.modal-overlay').forEach(modal => {
       modal.addEventListener('click', (e) => {
-        if (e.target === modal && !PROTECTED_MODALS.includes(modal.id)) {
+        if (e.target === modal) {
+          const user = API.getUser();
+          if (modal.id === 'modal-login') return;
+          if (modal.id === 'modal-first-login' && user && user.firstLogin) return;
           this.closeModal(modal.id);
         }
       });
     });
 
-    // Modal close buttons — skip protected modals
+    // Modal close buttons
     document.querySelectorAll('.close-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         const modal = btn.closest('.modal-overlay');
-        if (modal && !PROTECTED_MODALS.includes(modal.id)) {
+        const user = API.getUser();
+        if (modal) {
+          if (modal.id === 'modal-login') return;
+          if (modal.id === 'modal-first-login' && user && user.firstLogin) return;
           this.closeModal(modal.id);
         }
       });
