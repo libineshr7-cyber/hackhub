@@ -219,6 +219,17 @@ const Admin = {
     document.getElementById('admin-edit-venue').value = event.venue || '';
     document.getElementById('admin-edit-link').value = event.registrationLink || '';
     document.getElementById('admin-edit-skills').value = event.skills || '';
+    document.getElementById('admin-edit-poster-url').value = event.posterPath || '';
+    document.getElementById('admin-edit-poster-file').value = '';
+
+    const previewContainer = document.getElementById('admin-edit-poster-preview');
+    if (previewContainer) {
+      if (event.posterPath) {
+        previewContainer.innerHTML = `<img src="${this.escapeHtml(event.posterPath)}" style="max-height: 100px; border-radius: 6px; border: 1px solid var(--border-color);" alt="Current Poster">`;
+      } else {
+        previewContainer.innerHTML = `<span style="font-size: 0.78rem; color: var(--text-muted);">No current poster image.</span>`;
+      }
+    }
 
     App.openModal('modal-admin-edit-event');
   },
@@ -238,14 +249,20 @@ const Admin = {
     const venue = document.getElementById('admin-edit-venue').value.trim();
     const registrationLink = document.getElementById('admin-edit-link').value.trim();
     const skills = document.getElementById('admin-edit-skills').value.trim();
+    const posterPath = document.getElementById('admin-edit-poster-url').value.trim();
 
     const payload = {
       title, description, eventType, mode, teamSizeMin, teamSizeMax,
-      startDate, endDate, registrationDeadline, venue, registrationLink, skills
+      startDate, endDate, registrationDeadline, venue, registrationLink, skills, posterPath
     };
 
     const formData = new FormData();
     formData.append('event', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+
+    const fileInput = document.getElementById('admin-edit-poster-file');
+    if (fileInput && fileInput.files[0]) {
+      formData.append('posterFile', fileInput.files[0]);
+    }
 
     try {
       await API.request(`/admin/events/${eventId}`, {
@@ -253,7 +270,7 @@ const Admin = {
         body: formData
       });
       App.closeModal('modal-admin-edit-event');
-      App.showToast('🎉 Event modified successfully!', 'success');
+      App.showToast('🎉 Hackathon details & poster updated successfully!', 'success');
       this.loadDashboard();
       if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
     } catch (err) {
