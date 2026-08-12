@@ -64,19 +64,23 @@ public class DataInitializer implements CommandLineRunner {
         String defaultPassHash = passwordEncoder.encode("123");
         int countSeeded = 0;
 
-        for (int i = 1; i <= 49; i++) {
-            String legacyRegNo = String.format("%03d", i);
-            String newRegNo = String.format("CS%03d", i);
-
-            // Migrate old 001..049 to CS001..CS049 if present
-            userRepository.findByRegistrationNumber(legacyRegNo).ifPresent(oldUser -> {
-                oldUser.setRegistrationNumber(newRegNo);
-                if (oldUser.getName().startsWith("Student 0") || oldUser.getName().startsWith("Student 00")) {
-                    oldUser.setName("Student " + newRegNo);
+        // Migrate ALL 3-digit numeric registration numbers (e.g. 001..049 -> CS001..CS049) in DB
+        List<User> allUsers = userRepository.findAll();
+        for (User u : allUsers) {
+            if (u.getRegistrationNumber() != null && u.getRegistrationNumber().matches("\\d{3}") && !"000".equals(u.getRegistrationNumber())) {
+                String oldReg = u.getRegistrationNumber();
+                String newReg = "CS" + oldReg;
+                u.setRegistrationNumber(newReg);
+                if (u.getName().startsWith("Student ") && !u.getName().contains("CS")) {
+                    u.setName("Student " + newReg);
                 }
-                userRepository.save(oldUser);
-                logger.info("🔄 Migrated user {} -> {}", legacyRegNo, newRegNo);
-            });
+                userRepository.save(u);
+                logger.info("🔄 Migrated database user {} -> {}", oldReg, newReg);
+            }
+        }
+
+        for (int i = 1; i <= 49; i++) {
+            String newRegNo = String.format("CS%03d", i);
 
             if (!userRepository.existsByRegistrationNumber(newRegNo)) {
                 User student = new User();

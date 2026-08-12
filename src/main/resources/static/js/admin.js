@@ -67,7 +67,10 @@ const Admin = {
 
   async handleCreateStudentSubmit(event) {
     event.preventDefault();
-    const regNo = document.getElementById('admin-create-reg-no').value.trim();
+    let regNo = document.getElementById('admin-create-reg-no').value.trim().toUpperCase();
+    if (/^\d+$/.test(regNo)) {
+      regNo = 'CS' + regNo.padStart(3, '0');
+    }
     const name = document.getElementById('admin-create-name').value.trim();
     const email = document.getElementById('admin-create-email').value.trim();
     const skills = document.getElementById('admin-create-skills').value.trim();
