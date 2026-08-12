@@ -18,4 +18,5 @@ public interface TeamRequestRepository extends JpaRepository<TeamRequest, Long> 
     Optional<TeamRequest> findByTeamAndRequesterAndStatus(Team team, User requester, String status);
     boolean existsByTeamAndRequesterAndStatus(Team team, User requester, String status);
     void deleteByEvent(Event event);
+    void deleteByTeam(Team team);
 }

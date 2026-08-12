@@ -16,4 +16,5 @@ public interface TeamMemberRepository extends JpaRepository<TeamMember, Long> {
     Optional<TeamMember> findByTeamAndUserAndStatus(Team team, User user, String status);
     long countByTeamAndStatus(Team team, String status);
     boolean existsByTeamAndUserAndStatus(Team team, User user, String status);
+    void deleteByTeam(Team team);
 }

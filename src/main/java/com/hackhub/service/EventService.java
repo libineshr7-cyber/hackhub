@@ -232,7 +232,8 @@ public class EventService {
 
         List<Team> teams = teamRepository.findByEventOrderByCreatedAtDesc(event);
         for (Team t : teams) {
-            teamMemberRepository.deleteAll(teamMemberRepository.findByTeamAndStatus(t, "ACCEPTED"));
+            teamMemberRepository.deleteByTeam(t);
+            teamRequestRepository.deleteByTeam(t);
             teamRepository.delete(t);
         }
 
