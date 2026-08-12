@@ -19,6 +19,18 @@ const Events = {
     }
   },
 
+  showAllEvents() {
+    const searchInput = document.getElementById('search-input');
+    const typeSelect = document.getElementById('filter-type-select');
+    const modeSelect = document.getElementById('filter-mode-select');
+    if (searchInput) searchInput.value = '';
+    if (typeSelect) typeSelect.value = 'ALL';
+    if (modeSelect) modeSelect.value = 'ALL';
+
+    App.navigateTo('upcoming');
+    this.loadUpcomingEvents();
+  },
+
   async loadUpcomingEvents() {
     try {
       const events = await API.request('/events/upcoming');

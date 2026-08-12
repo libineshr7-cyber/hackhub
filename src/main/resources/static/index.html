@@ -80,7 +80,7 @@
                 <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff;">Hello, Department Student 👋</h1>
                 <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem; margin-top: 4px;">Discover department hackathons, connect with peers, and form your ideal hackathon team instantly.</p>
                 <div style="display: flex; gap: 12px; margin-top: 16px;">
-                    <button class="btn btn-secondary" onclick="App.navigateTo('upcoming')">Explore Hackathons</button>
+                    <button class="btn btn-secondary" onclick="Events.showAllEvents()">Explore Hackathons</button>
                     <button class="btn btn-outline" style="border-color:rgba(255,255,255,0.6); color:#fff;" onclick="App.navigateTo('teams')">🤝 Find Team</button>
                 </div>
             </div>
@@ -88,7 +88,7 @@
             <div style="margin-bottom: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h2 style="font-size: 1.2rem; font-weight: 700;">🔥 Upcoming Events</h2>
-                    <a href="#" onclick="App.navigateTo('upcoming')">View all →</a>
+                    <a href="#" onclick="Events.showAllEvents()">View all →</a>
                 </div>
                 <div id="home-upcoming-grid" class="events-grid"></div>
             </div>
