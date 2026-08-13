@@ -69,28 +69,37 @@ public class UnstopSyncService {
         headers.set("Accept", "application/json, text/plain, */*");
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
-        int countSynced = 0;
-        try {
-            ResponseEntity<String> response = restTemplate.exchange(UNSTOP_API_URL, HttpMethod.GET, entity, String.class);
-            if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                JsonNode root = objectMapper.readTree(response.getBody());
-                JsonNode items = root.path("data").path("data");
+        int totalSyncedCount = 0;
+        int maxPages = 5; // Fetch up to 5 pages x 50 hackathons = up to 250 hackathons
 
-                if (items.isArray()) {
-                    for (JsonNode item : items) {
-                        try {
-                            boolean synced = processUnstopItem(item, admin);
-                            if (synced) countSynced++;
-                        } catch (Exception itemErr) {
-                            logger.debug("Could not parse single Unstop item: {}", itemErr.getMessage());
+        for (int page = 1; page <= maxPages; page++) {
+            String pageUrl = "https://unstop.com/api/public/opportunity/search-result?opportunity=hackathons&per_page=50&page=" + page;
+            try {
+                ResponseEntity<String> response = restTemplate.exchange(pageUrl, HttpMethod.GET, entity, String.class);
+                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                    JsonNode root = objectMapper.readTree(response.getBody());
+                    JsonNode items = root.path("data").path("data");
+
+                    if (items.isArray() && items.size() > 0) {
+                        for (JsonNode item : items) {
+                            try {
+                                boolean synced = processUnstopItem(item, admin);
+                                if (synced) totalSyncedCount++;
+                            } catch (Exception itemErr) {
+                                logger.debug("Could not parse single Unstop item: {}", itemErr.getMessage());
+                            }
                         }
+                    } else {
+                        break;
                     }
                 }
+            } catch (Exception e) {
+                logger.warn("Could not fetch Unstop hackathons page {}: {}", page, e.getMessage());
+                break;
             }
-        } catch (Exception e) {
-            logger.warn("Could not fetch Unstop hackathons: {}", e.getMessage());
         }
-        return countSynced;
+
+        return totalSyncedCount;
     }
 
     private boolean processUnstopItem(JsonNode item, User adminUser) {
@@ -140,7 +149,7 @@ public class UnstopSyncService {
         LocalDate endDate = parseIsoDate(item.path("end_date").asText(""), today.plusDays(30));
         LocalDate deadlineDate = parseIsoDate(regnReq.path("end_regn_dt").asText(""), today.plusDays(14));
 
-        if (deadlineDate.isBefore(today)) {
+        if (deadlineDate.isBefore(today) && endDate.isBefore(today)) {
             // Expired event from Unstop listing, skip
             return false;
         }
