@@ -473,6 +473,32 @@ const Admin = {
     }
   },
 
+  async syncUnstopEvents() {
+    try {
+      App.showToast('⏳ Syncing live hackathons from Unstop...', 'info');
+      const res = await API.request('/events/sync-unstop', { method: 'POST' });
+      App.showToast(res.message || 'Successfully synced Unstop hackathons!', 'success');
+      if (typeof Events !== 'undefined' && Events.loadHomeDashboard) Events.loadHomeDashboard();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to sync Unstop hackathons', 'danger');
+    }
+  },
+
+  async clearUnstopEvents() {
+    if (!confirm('Are you sure you want to remove all synced Unstop hackathons from the website database?')) {
+      return;
+    }
+    try {
+      const res = await API.request('/events/clear-unstop', { method: 'DELETE' });
+      App.showToast(res.message || 'Cleared Unstop events', 'info');
+      if (typeof Events !== 'undefined' && Events.loadHomeDashboard) Events.loadHomeDashboard();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to clear Unstop hackathons', 'danger');
+    }
+  },
+
   escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");

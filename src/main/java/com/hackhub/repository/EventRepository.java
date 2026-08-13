@@ -18,6 +18,10 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByRegistrationDeadlineBetweenOrderByRegistrationDeadlineAsc(LocalDate start, LocalDate end);
 
+    java.util.Optional<Event> findByRegistrationLink(String registrationLink);
+
+    List<Event> findByRegistrationLinkContaining(String keyword);
+
     @Query("SELECT e FROM Event e WHERE " +
            "(:query IS NULL OR LOWER(e.title) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(e.description) LIKE LOWER(CONCAT('%', :query, '%')) OR LOWER(e.skills) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
            "(:eventType IS NULL OR e.eventType = :eventType) AND " +

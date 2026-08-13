@@ -23,6 +23,9 @@ public class EventController {
     private EventService eventService;
 
     @Autowired
+    private com.hackhub.service.UnstopSyncService unstopSyncService;
+
+    @Autowired
     private UserRepository userRepository;
 
     @Autowired
@@ -111,6 +114,26 @@ public class EventController {
             return ResponseEntity.ok(dto);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @PostMapping("/sync-unstop")
+    public ResponseEntity<?> syncUnstopEvents() {
+        try {
+            int count = unstopSyncService.fetchAndSyncUnstopHackathons();
+            return ResponseEntity.ok(new ApiResponse(true, "Successfully synced " + count + " live hackathons from Unstop!"));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ApiResponse(false, "Unstop sync failed: " + e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/clear-unstop")
+    public ResponseEntity<?> clearUnstopEvents() {
+        try {
+            int count = unstopSyncService.clearUnstopEvents();
+            return ResponseEntity.ok(new ApiResponse(true, "Cleared " + count + " Unstop events from database."));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().body(new ApiResponse(false, "Failed to clear Unstop events: " + e.getMessage()));
         }
     }
 }

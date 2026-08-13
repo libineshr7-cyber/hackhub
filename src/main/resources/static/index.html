@@ -209,7 +209,11 @@
                     <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon); margin: 0;">Protected Admin Dashboard</h2>
                     <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Audit posting history, manage student accounts & hackathons</p>
                 </div>
-                <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-admin-create-student')">+ Create Student Account</button>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.syncUnstopEvents()">🌐 Sync Unstop Hackathons</button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.4);" onclick="Admin.clearUnstopEvents()">🗑️ Clear Unstop</button>
+                    <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-admin-create-student')">+ Create Student Account</button>
+                </div>
             </div>
 
             <!-- Stats Grid -->

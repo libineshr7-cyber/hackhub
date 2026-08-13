@@ -230,6 +230,9 @@ const Events = {
     const isSaved = event.saved;
     const saveBtnText = isSaved ? '🔖 Saved' : '🔖 Save';
     const saveBtnClass = isSaved ? 'btn-secondary' : 'btn-outline';
+    const isUnstop = (event.registrationLink && event.registrationLink.toLowerCase().includes('unstop.com')) || 
+                     (event.skills && event.skills.toLowerCase().includes('unstop')) ||
+                     (event.venue && event.venue.toLowerCase().includes('unstop'));
 
     return `
       <div class="event-card">
@@ -239,6 +242,7 @@ const Events = {
             : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${gradientBg};gap:8px;"><span style="font-size:2.5rem;">${typeEmoji}</span><span style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;">${this.escapeHtml(event.eventType)}</span></div>`
           }
           <span class="status-badge ${statusBadgeClass}">${statusText}</span>
+          ${isUnstop ? `<span class="mode-badge" style="background:#0284c7; right:85px;">🌐 Unstop</span>` : ''}
           <span class="mode-badge">${event.mode}</span>
         </div>
         <div class="event-card-body">
