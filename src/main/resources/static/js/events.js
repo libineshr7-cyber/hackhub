@@ -46,6 +46,15 @@ const Events = {
     }
   },
 
+  async loadDeadlineSoonEvents() {
+    try {
+      const events = await API.request('/events/deadline-soon');
+      this.renderEventsGrid('deadline-soon-grid', events);
+    } catch (err) {
+      App.showToast('Failed to load deadline soon events', 'danger');
+    }
+  },
+
   async loadSavedEvents() {
     try {
       const events = await API.request('/saved-events');
@@ -65,6 +74,7 @@ const Events = {
       let gridId = 'upcoming-grid';
       if (App.currentView === 'home') gridId = 'home-upcoming-grid';
       else if (App.currentView === 'ended') gridId = 'ended-grid';
+      else if (App.currentView === 'deadline-soon') gridId = 'deadline-soon-grid';
 
       this.renderEventsGrid(gridId, events);
     } catch (err) {

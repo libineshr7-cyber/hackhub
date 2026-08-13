@@ -27,6 +27,7 @@
             <ul class="nav-links">
                 <li class="nav-item active" data-view="home">Home</li>
                 <li class="nav-item" data-view="upcoming">Upcoming</li>
+                <li class="nav-item" data-view="deadline-soon" style="color:var(--status-deadline);">⏰ Deadline Soon</li>
                 <li class="nav-item" data-view="ended">Ended</li>
                 <li class="nav-item" data-view="saved">Saved</li>
                 <li class="nav-item" data-view="teams">Find Team</li>
@@ -57,6 +58,7 @@
         <div class="mobile-tab-bar">
             <button class="mobile-tab-pill active" data-view="home">🏠 Home</button>
             <button class="mobile-tab-pill" data-view="upcoming">🔥 Upcoming</button>
+            <button class="mobile-tab-pill" data-view="deadline-soon" style="color:var(--status-deadline);">⏰ Deadline Soon</button>
             <button class="mobile-tab-pill" data-view="ended">🏁 Ended</button>
             <button class="mobile-tab-pill" data-view="saved">🔖 Saved</button>
             <button class="mobile-tab-pill" data-view="teams">🤝 Teams</button>
@@ -116,6 +118,17 @@
         <section id="view-upcoming" class="view-section" style="display:none;">
             <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Active &amp; Upcoming Hackathons</h2>
             <div id="upcoming-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 2B. DEADLINE SOON VIEW -->
+        <section id="view-deadline-soon" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--status-deadline);">⏰ Deadline Soon (5 Days or Less Left)</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Hackathons with registration closing within 5 days! Form your team fast before registrations close.</p>
+                </div>
+            </div>
+            <div id="deadline-soon-grid" class="events-grid"></div>
         </section>
 
         <!-- 3. ENDED VIEW -->
@@ -423,6 +436,10 @@
         <a href="#" class="bottom-nav-item" data-view="upcoming">
             <span class="icon">🔥</span>
             <span>Upcoming</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-view="deadline-soon">
+            <span class="icon">⏰</span>
+            <span>Deadline</span>
         </a>
         <a href="#" class="bottom-nav-item" data-view="ended">
             <span class="icon">🏁</span>

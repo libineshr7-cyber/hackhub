@@ -156,6 +156,9 @@ const App = {
       case 'upcoming':
         Events.loadUpcomingEvents();
         break;
+      case 'deadline-soon':
+        Events.loadDeadlineSoonEvents();
+        break;
       case 'ended':
         Events.loadEndedEvents();
         break;
