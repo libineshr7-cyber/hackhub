@@ -128,6 +128,15 @@ const App = {
       }
     });
 
+    // Update Mobile Tab Pill Active state
+    document.querySelectorAll('.mobile-tab-pill').forEach(pill => {
+      if (pill.getAttribute('data-view') === viewName) {
+        pill.classList.add('active');
+      } else {
+        pill.classList.remove('active');
+      }
+    });
+
     // Hide all view sections
     document.querySelectorAll('.view-section').forEach(sec => {
       sec.style.display = 'none';

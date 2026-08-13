@@ -53,6 +53,15 @@
     <!-- Main Views Container -->
     <main class="container" style="margin-top: 16px;">
 
+        <!-- Mobile View Navigation Tab Pills Bar -->
+        <div class="mobile-tab-bar">
+            <button class="mobile-tab-pill active" data-view="home">🏠 Home</button>
+            <button class="mobile-tab-pill" data-view="upcoming">🔥 Upcoming</button>
+            <button class="mobile-tab-pill" data-view="ended">🏁 Ended</button>
+            <button class="mobile-tab-pill" data-view="saved">🔖 Saved</button>
+            <button class="mobile-tab-pill" data-view="teams">🤝 Teams</button>
+        </div>
+
         <!-- Global Search & Filter Bar -->
         <div class="search-filter-bar">
             <div class="search-input-group">
@@ -373,7 +382,15 @@
         </a>
         <a href="#" class="bottom-nav-item" data-view="upcoming">
             <span class="icon">🔥</span>
-            <span>Events</span>
+            <span>Upcoming</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-view="ended">
+            <span class="icon">🏁</span>
+            <span>Ended</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-view="saved">
+            <span class="icon">🔖</span>
+            <span>Saved</span>
         </a>
         <a href="#" class="bottom-nav-item" data-view="teams">
             <span class="icon">🤝</span>
@@ -382,7 +399,7 @@
         <a href="#" class="bottom-nav-item" onclick="Notifications.toggleModal(); return false;" style="position:relative;">
             <span class="icon">🔔</span>
             <span>Alerts</span>
-            <span id="bottom-notif-badge" class="badge" style="display:none; position:absolute; top:2px; right:10px; background:var(--status-danger); color:white; font-size:0.65rem; border-radius:10px; padding:1px 5px;">0</span>
+            <span id="bottom-notif-badge" class="badge" style="display:none; position:absolute; top:2px; right:6px; background:var(--status-danger); color:white; font-size:0.65rem; border-radius:10px; padding:1px 5px;">0</span>
         </a>
         <a href="#" class="bottom-nav-item" data-view="profile">
             <span class="profile-nav-avatar" id="bottom-profile-avatar">🎓</span>
