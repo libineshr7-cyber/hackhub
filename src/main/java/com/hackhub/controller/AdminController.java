@@ -35,6 +35,11 @@ public class AdminController {
         return ResponseEntity.ok(adminService.getStudents(search));
     }
 
+    @GetMapping("/users/log")
+    public ResponseEntity<List<UserResponse>> getUsersLog(@RequestParam(value = "search", required = false) String search) {
+        return ResponseEntity.ok(adminService.getAllUserLogs(search));
+    }
+
     @PostMapping("/students/create")
     public ResponseEntity<?> createStudent(@RequestBody CreateStudentRequest request) {
         try {

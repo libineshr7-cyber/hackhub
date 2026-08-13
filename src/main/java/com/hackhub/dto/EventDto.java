@@ -23,6 +23,7 @@ public class EventDto {
     private String status; // UPCOMING, ENDED, DEADLINE_SOON
     private boolean saved;
     private long daysToDeadline;
+    private String createdAt;
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -80,4 +81,7 @@ public class EventDto {
 
     public long getDaysToDeadline() { return daysToDeadline; }
     public void setDaysToDeadline(long daysToDeadline) { this.daysToDeadline = daysToDeadline; }
+
+    public String getCreatedAt() { return createdAt; }
+    public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
 }

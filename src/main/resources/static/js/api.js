@@ -41,11 +41,17 @@ const API = {
 
     const config = {
       ...options,
-      headers
+      headers,
+      cache: 'no-store'
     };
 
+    // Append cache-busting timestamp to GET requests so deleted events always disappear immediately
+    const isGet = !options.method || options.method === 'GET';
+    const separator = endpoint.includes('?') ? '&' : '?';
+    const url = isGet ? `${API_BASE}${endpoint}${separator}_t=${Date.now()}` : `${API_BASE}${endpoint}`;
+
     try {
-      const response = await fetch(`${API_BASE}${endpoint}`, config);
+      const response = await fetch(url, config);
       const isJson = response.headers.get('content-type')?.includes('application/json');
       const data = isJson ? await response.json() : null;
 

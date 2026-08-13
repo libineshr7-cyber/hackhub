@@ -34,6 +34,8 @@ public class AdminUserDto {
         private String skills;
         private String status;
         private boolean firstLogin;
+        private String createdAt;
+        private long postedEventsCount;
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -51,6 +53,10 @@ public class AdminUserDto {
         public void setStatus(String status) { this.status = status; }
         public boolean isFirstLogin() { return firstLogin; }
         public void setFirstLogin(boolean firstLogin) { this.firstLogin = firstLogin; }
+        public String getCreatedAt() { return createdAt; }
+        public void setCreatedAt(String createdAt) { this.createdAt = createdAt; }
+        public long getPostedEventsCount() { return postedEventsCount; }
+        public void setPostedEventsCount(long postedEventsCount) { this.postedEventsCount = postedEventsCount; }
     }
 
     public static class DashboardStats {

@@ -70,12 +70,15 @@ public class DataInitializer implements CommandLineRunner {
             if (u.getRegistrationNumber() != null && u.getRegistrationNumber().matches("\\d{3}") && !"000".equals(u.getRegistrationNumber())) {
                 String oldReg = u.getRegistrationNumber();
                 String newReg = "CS" + oldReg;
-                u.setRegistrationNumber(newReg);
-                if (u.getName().startsWith("Student ") && !u.getName().contains("CS")) {
-                    u.setName("Student " + newReg);
+                // Only migrate if the target CS reg number doesn't already exist
+                if (!userRepository.existsByRegistrationNumber(newReg)) {
+                    u.setRegistrationNumber(newReg);
+                    if (u.getName().startsWith("Student ") && !u.getName().contains("CS")) {
+                        u.setName("Student " + newReg);
+                    }
+                    userRepository.save(u);
+                    logger.info("🔄 Migrated database user {} -> {}", oldReg, newReg);
                 }
-                userRepository.save(u);
-                logger.info("🔄 Migrated database user {} -> {}", oldReg, newReg);
             }
         }
 

@@ -205,8 +205,11 @@
 
         <!-- 8. ADMIN VIEW -->
         <section id="view-admin" class="view-section" style="display:none;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon);">Protected Admin Dashboard</h2>
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon); margin: 0;">Protected Admin Dashboard</h2>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Audit posting history, manage student accounts & hackathons</p>
+                </div>
                 <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-admin-create-student')">+ Create Student Account</button>
             </div>
 
@@ -238,10 +241,78 @@
                 </div>
             </div>
 
-            <!-- Student Management Table -->
-            <div style="margin-bottom: 30px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
-                    <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (Initial 001–049 & Admin Created 050+)</h3>
+            <!-- Sub-Navigation Filter Pills for Admin -->
+            <div class="filters-row" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs & Controls</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="posting-history" onclick="Admin.switchSubTab('posting-history')">📜 Hackathon Posting History Log</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="userlogs" onclick="Admin.switchSubTab('userlogs')">👤 Active & Future User Logs</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="students" onclick="Admin.switchSubTab('students')">👥 Student Accounts</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
+            </div>
+
+            <!-- 1. HACKATHON POSTING HISTORY & CREATOR AUDIT LOG -->
+            <div id="admin-sec-posting-history" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">📜 Hackathon Posting History & Audit Log</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Track who posted each hackathon with Creator Reg No, Name, and exact Posting Date/Time</span>
+                    </div>
+                    <input type="text" id="admin-history-search-input" class="form-input" placeholder="Search title, Reg No, or name..." style="width: 260px;" oninput="Admin.handleSearchPostingHistory()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Hackathon / Event Title</th>
+                                <th>Type</th>
+                                <th>Posted By (Reg No & Name)</th>
+                                <th>Date & Time Posted</th>
+                                <th>Schedule</th>
+                                <th>Mode</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-history-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. ACTIVE & FUTURE USERS CREATION LOG -->
+            <div id="admin-sec-userlogs" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">👤 User Accounts Activity & Creation Log</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Displays active users log & future additional created users with Registration Date/Time & Post Counts</span>
+                    </div>
+                    <input type="text" id="admin-userlog-search-input" class="form-input" placeholder="Search Reg No, name, role..." style="width: 260px;" oninput="Admin.handleSearchUserLogs()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reg No</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Account Created Date & Time</th>
+                                <th>Posted Events</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-userlogs-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. Student Management Table -->
+            <div id="admin-sec-students" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (Initial CS001–CS049 & Admin Created CS050+)</h3>
                     <input type="text" id="admin-student-search-input" class="form-input" placeholder="Search Reg No or Name..." style="width: 250px;" oninput="Admin.handleSearchStudents()">
                 </div>
 
@@ -262,8 +333,8 @@
                 </div>
             </div>
 
-            <!-- Hackathons Management Table -->
-            <div style="margin-bottom: 30px;">
+            <!-- 4. Hackathons Management Table -->
+            <div id="admin-sec-events" style="margin-bottom: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
                     <h3 style="font-size: 1.1rem; font-weight: 700;">Hackathons & Events Management (Modify / Delete)</h3>
                 </div>
@@ -285,8 +356,8 @@
                 </div>
             </div>
 
-            <!-- Reports Management Table -->
-            <div>
+            <!-- 5. Reports Management Table -->
+            <div id="admin-sec-reports">
                 <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">Reported Events Audit Log</h3>
                 <div class="table-responsive">
                     <table class="data-table">
@@ -327,7 +398,7 @@
             <span>Teams</span>
         </a>
         <a href="#" class="bottom-nav-item" data-view="profile">
-            <span class="icon">👤</span>
+            <span class="profile-nav-avatar" id="bottom-profile-avatar">🎓</span>
             <span>Profile</span>
         </a>
         <a href="#" class="bottom-nav-item" id="bottom-admin-item" data-view="admin" style="display:none; color: var(--accent-cyan);">
@@ -666,9 +737,10 @@
                         <label class="form-label">Event Type</label>
                         <select id="admin-edit-type" class="form-select">
                             <option value="HACKATHON">Hackathon</option>
-                            <option value="COMPETITION">Coding Competition</option>
-                            <option value="WORKSHOP">Workshop / Seminar</option>
-                            <option value="PROJECT">Project Expo</option>
+                            <option value="WORKSHOP">Workshop</option>
+                            <option value="COMPETITION">Competition</option>
+                            <option value="CTF">CTF Challenge</option>
+                            <option value="OTHER">Other</option>
                         </select>
                     </div>
 

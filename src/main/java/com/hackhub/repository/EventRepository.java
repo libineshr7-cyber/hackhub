@@ -28,4 +28,5 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     long countByEndDateGreaterThanEqual(LocalDate date);
     long countByEndDateLessThan(LocalDate date);
+    long countByCreatedBy(com.hackhub.entity.User user);
 }

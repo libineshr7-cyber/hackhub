@@ -115,6 +115,19 @@ public class AdminService {
         return new ApiResponse(true, "Password for student " + user.getRegistrationNumber() + " has been reset to temporary password '123'. First-login password change will be required.");
     }
 
+    public List<UserResponse> getAllUserLogs(String search) {
+        List<User> users;
+        if (search != null && !search.trim().isEmpty()) {
+            users = userRepository.findByRegistrationNumberContainingOrNameContaining(search.trim(), search.trim());
+        } else {
+            users = userRepository.findAll();
+        }
+
+        return users.stream()
+                .map(this::mapToUserResponse)
+                .collect(Collectors.toList());
+    }
+
     private UserResponse mapToUserResponse(User user) {
         UserResponse dto = new UserResponse();
         dto.setId(user.getId());
@@ -125,6 +138,8 @@ public class AdminService {
         dto.setSkills(user.getSkills());
         dto.setStatus(user.getStatus());
         dto.setFirstLogin(user.isFirstLogin());
+        dto.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
+        dto.setPostedEventsCount(eventRepository.countByCreatedBy(user));
         return dto;
     }
 }

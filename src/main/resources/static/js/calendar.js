@@ -16,9 +16,12 @@ const Calendar = {
     const monthNames = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
     monthYearLabel.textContent = `${monthNames[month]} ${year}`;
 
+    // Show loading state
+    calendarGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-muted); padding:20px;">Loading calendar...</div>`;
+
     try {
       const events = await API.request('/events/calendar');
-      
+
       const firstDayIndex = new Date(year, month, 1).getDay();
       const totalDays = new Date(year, month + 1, 0).getDate();
 
@@ -26,7 +29,7 @@ const Calendar = {
 
       // Blank slots before start of month
       for (let i = 0; i < firstDayIndex; i++) {
-        gridHtml += `<div class="calendar-day" style="opacity: 0.2; background: transparent; border: none;"></div>`;
+        gridHtml += `<div class="calendar-day" style="opacity:0.15; background:transparent; border:none;"></div>`;
       }
 
       const todayStr = new Date().toISOString().split('T')[0];
@@ -40,28 +43,44 @@ const Calendar = {
         const isToday = dateStr === todayStr;
         const todayClass = isToday ? 'today' : '';
 
-        // Match events occurring or having registration deadlines on this day
-        const dayEvents = events.filter(e => e.startDate === dateStr || e.endDate === dateStr || e.registrationDeadline === dateStr);
+        // Show event ONCE on its START date (green badge)
+        const startEvents = events.filter(e => e.startDate === dateStr);
 
-        let eventBadgesHtml = dayEvents.map(e => `
-          <div class="cal-event-dot" onclick="Events.openEventDetailsModal(${e.id})">
-            ${e.startDate === dateStr ? '🚀 ' : ''}${e.registrationDeadline === dateStr ? '⏰ ' : ''}${Events.escapeHtml(e.title)}
-          </div>
-        `).join('');
+        // Show deadline ONCE on its deadline date (orange), skip if same as startDate to avoid duplicates
+        const deadlineEvents = events.filter(e =>
+          e.registrationDeadline === dateStr && e.startDate !== dateStr
+        );
+
+        let badgesHtml = '';
+
+        startEvents.forEach(e => {
+          badgesHtml += `
+            <div class="cal-event-dot cal-event-start" onclick="Events.openEventDetailsModal(${e.id})" title="Starts: ${Events.escapeHtml(e.title)}">
+              🚀 ${Events.escapeHtml(e.title)}
+            </div>`;
+        });
+
+        deadlineEvents.forEach(e => {
+          badgesHtml += `
+            <div class="cal-event-dot cal-event-deadline" onclick="Events.openEventDetailsModal(${e.id})" title="Deadline: ${Events.escapeHtml(e.title)}">
+              ⏰ ${Events.escapeHtml(e.title)}
+            </div>`;
+        });
 
         gridHtml += `
           <div class="calendar-day ${todayClass}">
             <span class="day-number">${day}</span>
             <div style="display:flex; flex-direction:column; gap:2px; margin-top:2px;">
-              ${eventBadgesHtml}
+              ${badgesHtml}
             </div>
-          </div>
-        `;
+          </div>`;
       }
 
       calendarGrid.innerHTML = gridHtml;
+
     } catch (err) {
       console.error('Failed to render calendar:', err);
+      calendarGrid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--status-danger); padding:20px;">Failed to load calendar. Please try again.</div>`;
     }
   },
 

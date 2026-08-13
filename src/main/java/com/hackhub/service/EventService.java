@@ -141,6 +141,7 @@ public class EventService {
         dto.setMode(event.getMode());
         dto.setVenue(event.getVenue());
         dto.setSkills(event.getSkills());
+        dto.setCreatedAt(event.getCreatedAt() != null ? event.getCreatedAt().toString() : null);
 
         if (event.getCreatedBy() != null) {
             dto.setCreatedByRegNo(event.getCreatedBy().getRegistrationNumber());

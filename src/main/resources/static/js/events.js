@@ -89,7 +89,19 @@ const Events = {
   },
 
   createEventCardHtml(event) {
-    const posterSrc = event.posterPath || 'https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80';
+    const posterSrc = event.posterPath || '';
+    // Event-type specific gradient colors and emojis for placeholder
+    const typeColors = {
+      'HACKATHON':   'linear-gradient(135deg,#800020,#9e1b32)',
+      'WORKSHOP':    'linear-gradient(135deg,#1e40af,#3b82f6)',
+      'COMPETITION': 'linear-gradient(135deg,#065f46,#059669)',
+      'CTF':         'linear-gradient(135deg,#4c1d95,#7c3aed)',
+      'OTHER':       'linear-gradient(135deg,#374151,#6b7280)'
+    };
+    const typeEmojis = { 'HACKATHON':'💻', 'WORKSHOP':'🔧', 'COMPETITION':'🏆', 'CTF':'🛡️', 'OTHER':'📌' };
+    const gradientBg = typeColors[event.eventType] || typeColors['OTHER'];
+    const typeEmoji  = typeEmojis[event.eventType] || '📌';
+
     
     let statusBadgeClass = 'badge-upcoming';
     let statusText = 'UPCOMING';
@@ -110,7 +122,10 @@ const Events = {
     return `
       <div class="event-card">
         <div class="poster-wrapper">
-          <img src="${posterSrc}" alt="${event.title}" class="poster-img" onerror="this.src='https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80'">
+          ${posterSrc
+            ? `<img src="${posterSrc}" alt="${this.escapeHtml(event.title)}" class="poster-img" onerror="this.parentElement.innerHTML='<div style=\\'width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${gradientBg};gap:8px;\\'><span style=\\'font-size:2.5rem;\\'>${typeEmoji}</span><span style=\\'color:rgba(255,255,255,0.85);font-weight:700;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;\\'>${this.escapeHtml(event.eventType)}</span></div>'+document.querySelector('.status-badge-tmp')?.outerHTML">`
+            : `<div style="width:100%;height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${gradientBg};gap:8px;"><span style="font-size:2.5rem;">${typeEmoji}</span><span style="color:rgba(255,255,255,0.85);font-weight:700;font-size:0.85rem;letter-spacing:1px;text-transform:uppercase;">${this.escapeHtml(event.eventType)}</span></div>`
+          }
           <span class="status-badge ${statusBadgeClass}">${statusText}</span>
           <span class="mode-badge">${event.mode}</span>
         </div>
@@ -165,6 +180,10 @@ const Events = {
   async handlePostEventSubmit(event) {
     event.preventDefault();
     const form = document.getElementById('form-post-event');
+    const submitBtn = form.querySelector('button[type="submit"]');
+    const done = App.submitGuard(submitBtn, '⏳ Publishing...');
+    if (!done) return; // Already submitting
+
     const formData = new FormData(form);
 
     const eventJsonObj = {
@@ -200,7 +219,9 @@ const Events = {
       form.reset();
       App.showToast('🎉 Hackathon event published immediately!', 'success');
       App.navigateTo('upcoming');
+      // Button stays disabled since modal is closed; it resets on next open
     } catch (err) {
+      done(); // Re-enable on error so user can retry
       App.showToast(err.message || 'Failed to post event', 'danger');
     }
   },

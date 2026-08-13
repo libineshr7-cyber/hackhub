@@ -47,9 +47,18 @@ const App = {
     const userRegElement = document.getElementById('header-user-reg');
     const navAdmin = document.getElementById('nav-admin-link');
     const bottomNavAdmin = document.getElementById('bottom-admin-item');
+    const bottomProfileAvatar = document.getElementById('bottom-profile-avatar');
 
     if (userRegElement) {
       userRegElement.textContent = `Reg No: ${user.registrationNumber}`;
+    }
+
+    // Update mobile bottom nav profile avatar with user initials
+    if (bottomProfileAvatar) {
+      const reg = user.registrationNumber || '';
+      // Show last 3 chars of reg no (e.g. "018" from "CS018")
+      const initials = reg.replace(/[^0-9]/g, '').slice(-3) || reg.slice(-2) || '?';
+      bottomProfileAvatar.textContent = initials;
     }
 
     if (user.role === 'ROLE_ADMIN') {
@@ -172,6 +181,24 @@ const App = {
     if (modal) {
       modal.classList.remove('active');
     }
+  },
+
+  /**
+   * submitGuard — prevents double-submission on any form button.
+   * Usage: const done = App.submitGuard(btn); ... await api call ... done();
+   * @param {HTMLElement} btn - the submit button to lock
+   * @param {string} loadingText - optional label while submitting
+   * @returns {Function} call done() to re-enable button
+   */
+  submitGuard(btn, loadingText = 'Please wait...') {
+    if (!btn || btn.disabled) return null; // Already submitting — block
+    const originalText = btn.innerHTML;
+    btn.disabled = true;
+    btn.innerHTML = `<span style="opacity:0.7">${loadingText}</span>`;
+    return () => {
+      btn.disabled = false;
+      btn.innerHTML = originalText;
+    };
   },
 
   showToast(message, type = 'info') {

@@ -192,8 +192,22 @@ a {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: all 0.25s ease;
+  transition: background 0.08s ease, opacity 0.08s ease, transform 0.08s ease;
   white-space: nowrap;
+  touch-action: manipulation; /* Eliminates 300ms tap delay on mobile */
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.btn:active {
+  transform: scale(0.97);
+  opacity: 0.88;
+}
+
+.btn:disabled, .btn[disabled] {
+  opacity: 0.55;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 
 .btn-primary {
@@ -204,7 +218,6 @@ a {
 
 .btn-primary:hover {
   background: linear-gradient(135deg, var(--accent-maroon-dark), var(--accent-maroon));
-  transform: translateY(-1px);
 }
 
 .btn-secondary {
@@ -289,22 +302,57 @@ a {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  justify-content: center;
+  gap: 3px;
   color: var(--text-dim);
-  font-size: 0.72rem;
+  font-size: 0.65rem;
   font-weight: 600;
   text-decoration: none;
   cursor: pointer;
-  width: 20%;
+  flex: 1;
+  min-width: 0;
+  padding: 2px 4px;
   transition: color 0.2s ease;
+  position: relative;
 }
 
 .bottom-nav-item .icon {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
+  line-height: 1;
+  display: block;
+}
+
+.bottom-nav-item span:not(.icon) {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+  display: block;
 }
 
 .bottom-nav-item.active {
   color: var(--accent-maroon);
+}
+
+/* Profile tab avatar circle */
+.bottom-nav-item[data-view="profile"] .profile-nav-avatar {
+  width: 26px;
+  height: 26px;
+  background: linear-gradient(135deg, var(--accent-maroon), var(--accent-maroon-light));
+  color: #ffffff;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border: 2px solid transparent;
+  transition: border-color 0.2s ease;
+}
+
+.bottom-nav-item[data-view="profile"].active .profile-nav-avatar {
+  border-color: var(--accent-maroon);
+  box-shadow: 0 0 0 2px var(--accent-maroon-glow);
 }
 
 /* Search and Filter Section */
@@ -675,7 +723,6 @@ a {
 }
 
 .cal-event-dot {
-  background: var(--accent-maroon);
   color: #ffffff;
   font-size: 0.65rem;
   padding: 2px 4px;
@@ -685,6 +732,16 @@ a {
   text-overflow: ellipsis;
   cursor: pointer;
   font-weight: 600;
+}
+
+/* 🚀 Event start date — green */
+.cal-event-start {
+  background: var(--status-upcoming);
+}
+
+/* ⏰ Registration deadline — orange */
+.cal-event-deadline {
+  background: var(--status-deadline);
 }
 
 /* Admin Dashboard Stats */
@@ -773,33 +830,271 @@ a {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* Responsive Media Queries */
+/* ============================================================
+   MOBILE-FIRST RESPONSIVE STYLES (max-width: 768px)
+   Target: 99% accurate mobile experience
+   ============================================================ */
 @media (max-width: 768px) {
+
+  /* --- Body & Base --- */
+  body {
+    padding-bottom: 80px;
+    font-size: 15px;
+    /* Support notched phones (iPhone X+) */
+    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+  }
+
+  /* --- Header --- */
+  .header {
+    padding: 10px 14px;
+  }
+
+  .header-content {
+    gap: 8px;
+  }
+
+  /* Hide black HackHub text and tagline — keep only red badge */
+  .logo > div {
+    display: none;
+  }
+
+  .logo-badge {
+    font-size: 0.75rem;
+    padding: 5px 10px;
+  }
+
+  /* Hide desktop nav links and Post Event button in header (FAB handles it) */
   .nav-links {
-    display: none; /* Hide top desktop navigation */
+    display: none;
   }
 
-  .bottom-nav {
-    display: flex; /* Show mobile bottom navbar */
+  .header-actions .btn {
+    display: none;
   }
 
-  .fab-post {
-    bottom: 74px;
+  /* Shrink user badge in header */
+  .user-badge {
+    padding: 5px 10px;
+    font-size: 0.78rem;
+    gap: 6px;
   }
 
+  .user-avatar {
+    width: 24px;
+    height: 24px;
+    font-size: 0.65rem;
+  }
+
+  /* --- Container --- */
+  .container {
+    padding: 0 12px;
+  }
+
+  /* --- Search & Filter Bar --- */
+  .search-filter-bar {
+    margin: 12px 0;
+    gap: 8px;
+    position: sticky;
+    top: 56px;
+    z-index: 50;
+    background: var(--bg-dark);
+    padding: 8px 0 4px;
+  }
+
+  .search-input-group input {
+    padding: 12px 14px 12px 40px;
+    font-size: 0.9rem;
+    border-radius: var(--radius-sm);
+  }
+
+  .search-icon {
+    left: 12px;
+    font-size: 1rem;
+  }
+
+  .filters-row {
+    gap: 8px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .filters-row::-webkit-scrollbar {
+    display: none;
+  }
+
+  .select-filter {
+    font-size: 0.8rem;
+    padding: 7px 10px;
+    white-space: nowrap;
+    flex-shrink: 0;
+    border-radius: 20px;
+  }
+
+  /* --- Events Grid --- */
   .events-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
+    margin-top: 12px;
+  }
+
+  /* --- Event Cards --- */
+  .event-card {
+    border-radius: var(--radius-sm);
+  }
+
+  .poster-wrapper {
+    height: 160px;
+  }
+
+  .event-card-body {
+    padding: 14px;
+    gap: 8px;
+  }
+
+  .event-title {
+    font-size: 1.05rem;
+  }
+
+  .event-description {
+    font-size: 0.85rem;
+  }
+
+  .event-meta {
+    font-size: 0.78rem;
+    gap: 8px;
+  }
+
+  .event-card-footer {
+    padding: 10px 14px;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .event-card-footer .btn {
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+
+  /* --- Home Hero Banner --- */
+  #view-home > div:first-child {
+    padding: 18px 16px;
+    border-radius: var(--radius-sm);
+  }
+
+  #view-home h1 {
+    font-size: 1.25rem !important;
+  }
+
+  #view-home p {
+    font-size: 0.88rem !important;
+  }
+
+  #view-home > div:first-child > div {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #view-home > div:first-child > div .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 12px;
+  }
+
+  /* --- Section Headings --- */
+  h2[style], h3[style] {
+    font-size: 1.1rem !important;
+  }
+
+  /* --- Bottom Navigation Bar --- */
+  .bottom-nav {
+    display: flex;
+    padding: 6px 0 calc(10px + env(safe-area-inset-bottom)) 0;
+    box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+  }
+
+  .bottom-nav-item {
+    gap: 2px;
+    font-size: 0.6rem;
+    padding: 2px 2px;
+  }
+
+  .bottom-nav-item .icon {
+    font-size: 1.1rem;
+  }
+
+  /* --- FAB (Floating Action Button) --- */
+  .fab-post {
+    bottom: calc(70px + env(safe-area-inset-bottom));
+    right: 16px;
+    width: 50px;
+    height: 50px;
+    font-size: 1.4rem;
+  }
+
+  /* --- Modals --- */
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end; /* Slide up from bottom on mobile */
   }
 
   .modal-box {
     max-width: 100%;
-    border-radius: var(--radius-md);
+    width: 100%;
+    border-radius: var(--radius-md) var(--radius-md) 0 0;
+    max-height: 92vh;
+    padding: 20px 16px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
   }
 
-  /* Mobile Calendar Fixes */
+  .modal-title {
+    font-size: 1.1rem;
+  }
+
+  /* --- Forms --- */
+  .form-input,
+  .form-textarea,
+  .form-select {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+    padding: 12px;
+    border-radius: var(--radius-sm);
+  }
+
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .form-label {
+    font-size: 0.82rem;
+  }
+
+  /* --- Buttons --- */
+  .btn {
+    padding: 10px 16px;
+    font-size: 0.88rem;
+    touch-action: manipulation;
+  }
+
+  .btn-sm {
+    padding: 7px 12px;
+    font-size: 0.78rem;
+  }
+
+  /* --- Calendar --- */
   .calendar-container {
+    padding: 12px 8px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+  }
+
+  .calendar-header {
+    margin-bottom: 10px;
+  }
+
+  .calendar-header h2 {
+    font-size: 1rem !important;
   }
 
   .calendar-grid {
