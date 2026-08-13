@@ -29,6 +29,9 @@ public class TeamService {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public List<Map<String, String>> searchStudents(String query) {
         if (query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
@@ -88,6 +91,16 @@ public class TeamService {
 
         TeamRequest request = new TeamRequest(team, team.getEvent(), targetStudent, "PENDING");
         teamRequestRepository.save(request);
+
+        // Send notification to invited teammate
+        notificationService.createNotification(
+            targetStudent,
+            inviter,
+            "🤝 Team Invitation Received!",
+            inviter.getName() + " (" + inviter.getRegistrationNumber() + ") invited you to join team '" + team.getTeamName() + "' for hackathon '" + team.getEvent().getTitle() + "'.",
+            "TEAM_INVITE",
+            "teams"
+        );
 
         return new ApiResponse(true, "Team request sent successfully to " + targetStudent.getName() + " (" + targetStudent.getRegistrationNumber() + ")!");
     }
@@ -155,6 +168,17 @@ public class TeamService {
         TeamRequest request = new TeamRequest(team, team.getEvent(), requester, "PENDING");
         teamRequestRepository.save(request);
 
+        // Send notification to team leader
+        User teamLeader = team.getCreatedBy();
+        notificationService.createNotification(
+            teamLeader,
+            requester,
+            "📩 New Join Request Received!",
+            requester.getName() + " (" + requester.getRegistrationNumber() + ") requested to join your team '" + team.getTeamName() + "' for hackathon '" + team.getEvent().getTitle() + "'.",
+            "TEAM_REQUEST",
+            "teams"
+        );
+
         return new ApiResponse(true, "Request to join team '" + team.getTeamName() + "' submitted successfully!");
     }
 
@@ -187,11 +211,32 @@ public class TeamService {
                 teamMemberRepository.save(newMember);
             }
 
+            // Send notification to requester
+            notificationService.createNotification(
+                request.getRequester(),
+                user,
+                "🎉 Join Request Accepted!",
+                user.getName() + " accepted your request to join team '" + team.getTeamName() + "' for hackathon '" + team.getEvent().getTitle() + "'!",
+                "REQUEST_ACCEPTED",
+                "teams"
+            );
+
             return new ApiResponse(true, "Student " + request.getRequester().getName() + " accepted into the team!");
 
         } else if ("REJECTED".equalsIgnoreCase(status)) {
             request.setStatus("REJECTED");
             teamRequestRepository.save(request);
+
+            // Send notification to requester
+            notificationService.createNotification(
+                request.getRequester(),
+                user,
+                "❌ Join Request Declined",
+                user.getName() + " declined your join request for team '" + team.getTeamName() + "'.",
+                "REQUEST_REJECTED",
+                "teams"
+            );
+
             return new ApiResponse(true, "Join request rejected.");
         } else {
             throw new IllegalArgumentException("Invalid status choice. Use ACCEPTED or REJECTED.");

@@ -40,6 +40,7 @@ const App = {
     } else {
       this.updateUserUI(user);
       this.navigateTo('home');
+      if (typeof Notifications !== 'undefined') Notifications.init();
     }
   },
 
