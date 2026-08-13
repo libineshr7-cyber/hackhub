@@ -450,7 +450,6 @@ const Admin = {
       App.showToast('🎉 Hackathon details & poster updated successfully!', 'success');
       this.loadDashboard();
       if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
-      if (typeof Calendar !== 'undefined' && Calendar.renderCalendar) Calendar.renderCalendar();
     } catch (err) {
       done(); // Re-enable on error
       App.showToast(err.message || 'Failed to modify event', 'danger');
@@ -467,7 +466,6 @@ const Admin = {
       App.showToast(res.message || 'Event deleted successfully', 'success');
       this.loadDashboard();
       if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
-      if (typeof Calendar !== 'undefined' && Calendar.renderCalendar) Calendar.renderCalendar();
     } catch (err) {
       App.showToast(err.message || 'Failed to delete event', 'danger');
     }

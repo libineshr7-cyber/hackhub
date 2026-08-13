@@ -155,9 +155,6 @@ const App = {
       case 'teams':
         Teams.loadTeamsView();
         break;
-      case 'calendar':
-        Calendar.renderCalendar();
-        break;
       case 'profile':
         Auth.loadProfile();
         break;
