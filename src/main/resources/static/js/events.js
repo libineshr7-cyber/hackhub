@@ -91,16 +91,45 @@ const Events = {
 
   activeTimerInterval: null,
 
-  calculateCountdown(deadlineStr) {
-    if (!deadlineStr) return { closed: true, text: '🛑 Registration Closed' };
+  parseDeadlineDate(deadlineStr) {
+    if (!deadlineStr) return null;
+    if (deadlineStr.includes('T')) {
+      return new Date(deadlineStr);
+    }
+    const parts = deadlineStr.split('-');
+    if (parts.length === 3) {
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10) - 1;
+      const day = parseInt(parts[2], 10);
+      return new Date(year, month, day, 23, 59, 59);
+    }
+    return new Date(deadlineStr);
+  },
 
-    // Target deadline is 23:59:59 on the deadline date
-    const targetDate = new Date(`${deadlineStr}T23:59:59`);
+  calculateCountdown(deadlineStr, createdAtStr = null) {
+    if (!deadlineStr) return { closed: true, text: '🛑 Registration Closed', percentRemaining: 0 };
+
+    const targetDate = this.parseDeadlineDate(deadlineStr);
+    if (!targetDate || isNaN(targetDate.getTime())) {
+      return { closed: true, text: '🛑 Registration Closed', percentRemaining: 0 };
+    }
+
     const now = new Date();
     const diff = targetDate.getTime() - now.getTime();
 
     if (diff <= 0) {
-      return { closed: true, text: '🛑 Registration Closed' };
+      return { closed: true, text: '🛑 Registration Closed', percentRemaining: 0 };
+    }
+
+    let percentRemaining = 100;
+    if (createdAtStr) {
+      const createdDate = new Date(createdAtStr);
+      if (createdDate && !isNaN(createdDate.getTime())) {
+        const totalDuration = targetDate.getTime() - createdDate.getTime();
+        if (totalDuration > 0) {
+          percentRemaining = Math.max(0, Math.min(100, (diff / totalDuration) * 100));
+        }
+      }
     }
 
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -117,7 +146,7 @@ const Events = {
       formatted = `🔥 ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s left!`;
     }
 
-    return { closed: false, text: formatted, days, hours, minutes, seconds };
+    return { closed: false, text: formatted, days, hours, minutes, seconds, percentRemaining };
   },
 
   startGlobalCountdownTicker() {
@@ -129,21 +158,36 @@ const Events = {
       // 1. Card badge countdown tickers
       document.querySelectorAll('[data-deadline-timer]').forEach(elem => {
         const deadline = elem.getAttribute('data-deadline-timer');
-        const res = this.calculateCountdown(deadline);
-        elem.textContent = res.text;
+        const createdAt = elem.getAttribute('data-created-at');
+        const res = this.calculateCountdown(deadline, createdAt);
+        
+        const textElem = elem.querySelector('.timer-text') || elem;
+        textElem.textContent = res.text;
+
         if (res.closed) {
           elem.style.background = 'rgba(100,116,139,0.15)';
           elem.style.color = 'var(--text-muted)';
           elem.style.borderColor = 'transparent';
+        } else {
+          elem.style.background = 'rgba(220, 38, 38, 0.08)';
+          elem.style.color = 'var(--status-deadline)';
+          elem.style.borderColor = 'rgba(220, 38, 38, 0.25)';
         }
       });
 
-      // 2. Event details modal countdown banner
+      // 2. Event details modal countdown banner & progress bar
       const modalTimerElem = document.getElementById('modal-details-countdown-timer');
+      const modalBarElem = document.getElementById('modal-details-countdown-bar');
       if (modalTimerElem && modalTimerElem.hasAttribute('data-modal-deadline')) {
         const deadline = modalTimerElem.getAttribute('data-modal-deadline');
-        const res = this.calculateCountdown(deadline);
+        const createdAt = modalTimerElem.getAttribute('data-modal-created-at');
+        const res = this.calculateCountdown(deadline, createdAt);
         modalTimerElem.textContent = res.text;
+        
+        if (modalBarElem) {
+          modalBarElem.style.width = `${res.percentRemaining}%`;
+        }
+
         if (res.closed) {
           modalTimerElem.style.color = 'var(--status-danger)';
         } else {
@@ -206,8 +250,8 @@ const Events = {
             <span class="meta-item">📅 ${event.startDate} to ${event.endDate}</span>
           </div>
 
-          <div class="live-countdown-badge" data-deadline-timer="${event.registrationDeadline}">
-            ⏳ Calculating countdown...
+          <div class="live-countdown-badge" data-deadline-timer="${event.registrationDeadline}" data-created-at="${event.createdAt || ''}">
+            <span class="timer-text">⏳ Calculating countdown...</span>
           </div>
 
           ${skillsList ? `<div class="skills-tags" style="margin-top:8px;">${skillsList}</div>` : ''}
