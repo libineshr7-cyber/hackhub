@@ -12,23 +12,20 @@ const Events = {
       const upcoming = await API.request('/events/upcoming');
       const deadlineSoon = await API.request('/events/deadline-soon');
 
-      this.renderEventsGrid('home-upcoming-grid', upcoming.slice(0, 3));
+      this.renderEventsGrid('home-upcoming-grid', upcoming);
       this.renderEventsGrid('home-deadline-grid', deadlineSoon);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
     }
   },
 
-  showAllEvents() {
-    const searchInput = document.getElementById('search-input');
-    const typeSelect = document.getElementById('filter-type-select');
-    const modeSelect = document.getElementById('filter-mode-select');
-    if (searchInput) searchInput.value = '';
-    if (typeSelect) typeSelect.value = 'ALL';
-    if (modeSelect) modeSelect.value = 'ALL';
+  scrollToHomeEvents() {
+    const sec = document.getElementById('home-events-section');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth' });
+  },
 
-    App.navigateTo('upcoming');
-    this.loadUpcomingEvents();
+  showAllEvents() {
+    this.scrollToHomeEvents();
   },
 
   async loadUpcomingEvents() {
@@ -65,7 +62,10 @@ const Events = {
 
     try {
       const events = await API.request(`/events/search?query=${encodeURIComponent(query)}&eventType=${eventType}&mode=${mode}`);
-      const gridId = App.currentView === 'ended' ? 'ended-grid' : 'upcoming-grid';
+      let gridId = 'upcoming-grid';
+      if (App.currentView === 'home') gridId = 'home-upcoming-grid';
+      else if (App.currentView === 'ended') gridId = 'ended-grid';
+
       this.renderEventsGrid(gridId, events);
     } catch (err) {
       console.error(err);
