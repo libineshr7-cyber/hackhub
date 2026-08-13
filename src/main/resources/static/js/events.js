@@ -86,6 +86,74 @@ const Events = {
     }
 
     container.innerHTML = events.map(event => this.createEventCardHtml(event)).join('');
+    this.startGlobalCountdownTicker();
+  },
+
+  activeTimerInterval: null,
+
+  calculateCountdown(deadlineStr) {
+    if (!deadlineStr) return { closed: true, text: '🛑 Registration Closed' };
+
+    // Target deadline is 23:59:59 on the deadline date
+    const targetDate = new Date(`${deadlineStr}T23:59:59`);
+    const now = new Date();
+    const diff = targetDate.getTime() - now.getTime();
+
+    if (diff <= 0) {
+      return { closed: true, text: '🛑 Registration Closed' };
+    }
+
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    const hours = Math.floor((diff / (1000 * 60 * 60)) % 24);
+    const minutes = Math.floor((diff / (1000 * 60)) % 60);
+    const seconds = Math.floor((diff / 1000) % 60);
+
+    const pad = (n) => String(n).padStart(2, '0');
+
+    let formatted = '';
+    if (days > 0) {
+      formatted = `⏳ ${days}d ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s remaining`;
+    } else {
+      formatted = `🔥 ${pad(hours)}h ${pad(minutes)}m ${pad(seconds)}s left!`;
+    }
+
+    return { closed: false, text: formatted, days, hours, minutes, seconds };
+  },
+
+  startGlobalCountdownTicker() {
+    if (this.activeTimerInterval) {
+      clearInterval(this.activeTimerInterval);
+    }
+
+    const updateAllTimers = () => {
+      // 1. Card badge countdown tickers
+      document.querySelectorAll('[data-deadline-timer]').forEach(elem => {
+        const deadline = elem.getAttribute('data-deadline-timer');
+        const res = this.calculateCountdown(deadline);
+        elem.textContent = res.text;
+        if (res.closed) {
+          elem.style.background = 'rgba(100,116,139,0.15)';
+          elem.style.color = 'var(--text-muted)';
+          elem.style.borderColor = 'transparent';
+        }
+      });
+
+      // 2. Event details modal countdown banner
+      const modalTimerElem = document.getElementById('modal-details-countdown-timer');
+      if (modalTimerElem && modalTimerElem.hasAttribute('data-modal-deadline')) {
+        const deadline = modalTimerElem.getAttribute('data-modal-deadline');
+        const res = this.calculateCountdown(deadline);
+        modalTimerElem.textContent = res.text;
+        if (res.closed) {
+          modalTimerElem.style.color = 'var(--status-danger)';
+        } else {
+          modalTimerElem.style.color = 'var(--accent-maroon)';
+        }
+      }
+    };
+
+    updateAllTimers();
+    this.activeTimerInterval = setInterval(updateAllTimers, 1000);
   },
 
   createEventCardHtml(event) {
@@ -138,7 +206,11 @@ const Events = {
             <span class="meta-item">📅 ${event.startDate} to ${event.endDate}</span>
           </div>
 
-          ${skillsList ? `<div class="skills-tags">${skillsList}</div>` : ''}
+          <div class="live-countdown-badge" data-deadline-timer="${event.registrationDeadline}">
+            ⏳ Calculating countdown...
+          </div>
+
+          ${skillsList ? `<div class="skills-tags" style="margin-top:8px;">${skillsList}</div>` : ''}
         </div>
         <div class="event-card-footer">
           <button class="btn ${saveBtnClass} btn-sm" onclick="Events.toggleSave(${event.id}, ${isSaved})">
@@ -241,10 +313,28 @@ const Events = {
       document.getElementById('modal-details-dates').textContent = `${event.startDate} to ${event.endDate}`;
       document.getElementById('modal-details-deadline').textContent = `${event.registrationDeadline} (${event.daysToDeadline} days left)`;
       
+      const countdownTimer = document.getElementById('modal-details-countdown-timer');
+      if (countdownTimer) {
+        countdownTimer.setAttribute('data-modal-deadline', event.registrationDeadline);
+        const res = this.calculateCountdown(event.registrationDeadline);
+        countdownTimer.textContent = res.text;
+      }
+
       const regLinkElem = document.getElementById('modal-details-reglink');
+      const resCount = this.calculateCountdown(event.registrationDeadline);
+
       if (event.registrationLink) {
         regLinkElem.href = event.registrationLink;
         regLinkElem.style.display = 'inline-flex';
+        if (resCount.closed) {
+          regLinkElem.style.opacity = '0.5';
+          regLinkElem.style.pointerEvents = 'none';
+          regLinkElem.textContent = '🛑 Registration Closed';
+        } else {
+          regLinkElem.style.opacity = '1';
+          regLinkElem.style.pointerEvents = 'auto';
+          regLinkElem.textContent = '🔗 Apply / Register Now';
+        }
       } else {
         regLinkElem.style.display = 'none';
       }
@@ -259,6 +349,7 @@ const Events = {
       };
 
       App.openModal('modal-event-details');
+      this.startGlobalCountdownTicker();
     } catch (err) {
       App.showToast('Failed to load event details', 'danger');
     }

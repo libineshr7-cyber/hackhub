@@ -210,6 +210,23 @@ a {
   pointer-events: none;
 }
 
+/* Live Hackathon Deadline Countdown Ticker Badge */
+.live-countdown-badge {
+  background: rgba(220, 38, 38, 0.08);
+  color: var(--status-deadline);
+  border: 1px solid rgba(220, 38, 38, 0.25);
+  font-weight: 700;
+  font-size: 0.76rem;
+  padding: 4px 8px;
+  border-radius: 6px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  margin-top: 4px;
+  width: fit-content;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-maroon), var(--accent-maroon-light));
   color: #ffffff;
