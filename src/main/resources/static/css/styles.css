@@ -32,6 +32,11 @@
   --shadow-card: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
   --glass-bg: rgba(255, 255, 255, 0.92);
   --glass-border: rgba(0, 0, 0, 0.06);
+
+  --safe-top: env(safe-area-inset-top, 0px);
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+  --safe-left: env(safe-area-inset-left, 0px);
+  --safe-right: env(safe-area-inset-right, 0px);
 }
 
 * {
@@ -71,11 +76,13 @@ a {
   background: var(--accent-maroon);
 }
 
-/* Container */
+/* Container — Fluid autofit across all viewports */
 .container {
-  max-width: 1200px;
+  width: 100%;
+  max-width: 1320px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding-left: max(16px, var(--safe-left));
+  padding-right: max(16px, var(--safe-right));
 }
 
 /* Header & Top Navigation */
@@ -435,12 +442,25 @@ a {
   border-color: var(--accent-maroon);
 }
 
-/* Event Cards Grid */
+/* Event Cards Grid — Fluid Auto-fit */
 .events-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
   gap: 20px;
   margin-top: 16px;
+}
+
+/* Responsive Utility Classes */
+.admin-search-input {
+  width: 100%;
+  max-width: 280px;
+  min-width: 160px;
+}
+
+.form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
 }
 
 .event-card {
@@ -608,9 +628,8 @@ a {
   background: var(--bg-card);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
-  width: 100%;
-  max-width: 520px;
-  max-height: 90vh;
+  width: min(600px, 100%);
+  max-height: calc(90vh - var(--safe-top) - var(--safe-bottom));
   overflow-y: auto;
   padding: 24px;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
@@ -848,29 +867,70 @@ a {
 }
 
 /* ============================================================
-   MOBILE-FIRST RESPONSIVE STYLES (max-width: 768px)
-   Target: 99% accurate mobile experience
+   UNIVERSAL AUTOFIT RESPONSIVE SYSTEM FOR ALL DEVICES
    ============================================================ */
-@media (max-width: 768px) {
 
-  /* --- Body & Base --- */
-  body {
-    padding-bottom: 80px;
-    font-size: 15px;
-    /* Support notched phones (iPhone X+) */
-    padding-bottom: calc(80px + env(safe-area-inset-bottom));
+/* --- Ultra-Wide Monitors & 4K Displays (> 1400px) --- */
+@media (min-width: 1400px) {
+  .events-grid {
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: 24px;
+  }
+}
+
+/* --- Laptops & iPads in Landscape (1025px - 1399px) --- */
+@media (max-width: 1399px) and (min-width: 1025px) {
+  .container {
+    max-width: 1140px;
+  }
+  .events-grid {
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  }
+}
+
+/* --- Tablets & iPad Portrait (769px - 1024px) --- */
+@media (max-width: 1024px) and (min-width: 769px) {
+  .container {
+    padding-left: max(20px, var(--safe-left));
+    padding-right: max(20px, var(--safe-right));
   }
 
-  /* --- Header --- */
+  .nav-links {
+    gap: 12px;
+  }
+
+  .nav-item {
+    padding: 6px 10px;
+    font-size: 0.88rem;
+  }
+
+  .events-grid {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 16px;
+  }
+
+  .admin-search-input {
+    max-width: 220px;
+  }
+}
+
+/* --- Mobile Portrait & Landscape (max-width: 768px) --- */
+@media (max-width: 768px) {
+  /* Body & Insets */
+  body {
+    padding-bottom: calc(82px + var(--safe-bottom));
+    font-size: 15px;
+  }
+
+  /* Header */
   .header {
-    padding: 10px 14px;
+    padding: 10px max(12px, var(--safe-right)) 10px max(12px, var(--safe-left));
   }
 
   .header-content {
     gap: 8px;
   }
 
-  /* Hide black HackHub text and tagline — keep only red badge */
   .logo > div {
     display: none;
   }
@@ -880,7 +940,6 @@ a {
     padding: 5px 10px;
   }
 
-  /* Hide desktop nav links and Post Event button in header (FAB handles it) */
   .nav-links {
     display: none;
   }
@@ -889,7 +948,6 @@ a {
     display: none;
   }
 
-  /* Shrink user badge in header */
   .user-badge {
     padding: 5px 10px;
     font-size: 0.78rem;
@@ -902,17 +960,12 @@ a {
     font-size: 0.65rem;
   }
 
-  /* --- Container --- */
-  .container {
-    padding: 0 12px;
-  }
-
-  /* --- Search & Filter Bar --- */
+  /* Search & Filter Bar */
   .search-filter-bar {
     margin: 12px 0;
     gap: 8px;
     position: sticky;
-    top: 56px;
+    top: 52px;
     z-index: 50;
     background: var(--bg-dark);
     padding: 8px 0 4px;
@@ -943,22 +996,28 @@ a {
 
   .select-filter {
     font-size: 0.8rem;
-    padding: 7px 10px;
+    padding: 7px 12px;
     white-space: nowrap;
     flex-shrink: 0;
     border-radius: 20px;
   }
 
-  /* --- Events Grid --- */
-  .events-grid {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    margin-top: 12px;
+  /* Admin Utilities */
+  .admin-search-input {
+    max-width: 100%;
+    width: 100%;
   }
 
-  /* --- Event Cards --- */
-  .event-card {
-    border-radius: var(--radius-sm);
+  .form-grid-2 {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  /* Events Grid */
+  .events-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 280px), 1fr));
+    gap: 14px;
+    margin-top: 12px;
   }
 
   .poster-wrapper {
@@ -994,7 +1053,7 @@ a {
     padding: 6px 10px;
   }
 
-  /* --- Home Hero Banner --- */
+  /* Home Banner */
   #view-home > div:first-child {
     padding: 18px 16px;
     border-radius: var(--radius-sm);
@@ -1019,15 +1078,10 @@ a {
     padding: 12px;
   }
 
-  /* --- Section Headings --- */
-  h2[style], h3[style] {
-    font-size: 1.1rem !important;
-  }
-
-  /* --- Bottom Navigation Bar --- */
+  /* Bottom Navigation */
   .bottom-nav {
     display: flex;
-    padding: 6px 0 calc(10px + env(safe-area-inset-bottom)) 0;
+    padding: 6px var(--safe-right) calc(8px + var(--safe-bottom)) var(--safe-left);
     box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
   }
 
@@ -1035,45 +1089,45 @@ a {
     gap: 2px;
     font-size: 0.6rem;
     padding: 2px 2px;
+    min-height: 44px;
   }
 
   .bottom-nav-item .icon {
-    font-size: 1.1rem;
+    font-size: 1.15rem;
   }
 
-  /* --- FAB (Floating Action Button) --- */
+  /* FAB Button */
   .fab-post {
-    bottom: calc(70px + env(safe-area-inset-bottom));
-    right: 16px;
-    width: 50px;
-    height: 50px;
-    font-size: 1.4rem;
+    bottom: calc(72px + var(--safe-bottom));
+    right: max(16px, var(--safe-right));
+    width: 52px;
+    height: 52px;
+    font-size: 1.5rem;
   }
 
-  /* --- Modals --- */
+  /* Modals — Bottom Sheet on Mobile */
   .modal-overlay {
     padding: 0;
-    align-items: flex-end; /* Slide up from bottom on mobile */
+    align-items: flex-end;
   }
 
   .modal-box {
     max-width: 100%;
     width: 100%;
     border-radius: var(--radius-md) var(--radius-md) 0 0;
-    max-height: 92vh;
-    padding: 20px 16px;
-    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+    max-height: calc(92vh - var(--safe-top));
+    padding: 20px 16px calc(24px + var(--safe-bottom)) 16px;
   }
 
   .modal-title {
     font-size: 1.1rem;
   }
 
-  /* --- Forms --- */
+  /* Forms iOS Autofit */
   .form-input,
   .form-textarea,
   .form-select {
-    font-size: 16px; /* Prevent iOS zoom on focus */
+    font-size: 16px;
     padding: 12px;
     border-radius: var(--radius-sm);
   }
@@ -1087,7 +1141,7 @@ a {
     font-size: 0.82rem;
   }
 
-  /* --- Buttons --- */
+  /* Buttons */
   .btn {
     padding: 10px 16px;
     font-size: 0.88rem;
@@ -1099,15 +1153,17 @@ a {
     font-size: 0.78rem;
   }
 
-  /* --- Calendar --- */
+  /* Table Touch Scroll Hints */
+  .table-responsive {
+    border-radius: var(--radius-sm);
+    box-shadow: inset -10px 0 8px -8px rgba(0, 0, 0, 0.08);
+  }
+
+  /* Calendar */
   .calendar-container {
     padding: 12px 8px;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-  }
-
-  .calendar-header {
-    margin-bottom: 10px;
   }
 
   .calendar-header h2 {
@@ -1118,25 +1174,66 @@ a {
     gap: 2px;
   }
 
-  .calendar-header-day {
-    font-size: 0.68rem;
-    padding: 4px 0;
-  }
-
   .calendar-day {
-    min-height: 52px;
+    min-height: 50px;
     padding: 3px;
     font-size: 0.7rem;
-    gap: 2px;
+  }
+}
+
+/* --- Compact Mobile Devices & Narrow Screens (max-width: 480px) --- */
+@media (max-width: 480px) {
+  .events-grid {
+    grid-template-columns: 1fr;
   }
 
-  .day-number {
+  .stat-card {
+    padding: 12px;
+  }
+
+  .stat-number {
+    font-size: 1.5rem;
+  }
+
+  .stat-label {
+    font-size: 0.75rem;
+  }
+
+  .toast-container {
+    left: 12px;
+    right: 12px;
+    top: 12px;
+  }
+
+  .toast {
+    font-size: 0.82rem;
+    padding: 10px 14px;
+  }
+}
+
+/* --- Micro Devices & Outer Foldables (max-width: 360px) --- */
+@media (max-width: 360px) {
+  .container {
+    padding-left: 8px;
+    padding-right: 8px;
+  }
+
+  .logo-badge {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+  }
+
+  .user-badge span {
     font-size: 0.72rem;
   }
 
-  .cal-event-dot {
-    font-size: 0.58rem;
-    padding: 1px 3px;
-    border-radius: 3px;
+  .bottom-nav-item span:not(.icon) {
+    font-size: 0.55rem;
+  }
+
+  .fab-post {
+    width: 46px;
+    height: 46px;
+    font-size: 1.3rem;
   }
 }

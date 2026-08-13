@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>HackHub — Department Hackathon &amp; Event Platform</title>
     <meta name="description" content="Department-only hackathon &amp; event platform for students to discover events, post hackathons, and find teammates.">
     <link rel="stylesheet" href="/css/styles.css">
@@ -257,7 +257,7 @@
                         <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">📜 Hackathon Posting History & Audit Log</h3>
                         <span style="font-size: 0.78rem; color: var(--text-muted);">Track who posted each hackathon with Creator Reg No, Name, and exact Posting Date/Time</span>
                     </div>
-                    <input type="text" id="admin-history-search-input" class="form-input" placeholder="Search title, Reg No, or name..." style="width: 260px;" oninput="Admin.handleSearchPostingHistory()">
+                    <input type="text" id="admin-history-search-input" class="form-input admin-search-input" placeholder="Search title, Reg No, or name..." oninput="Admin.handleSearchPostingHistory()">
                 </div>
 
                 <div class="table-responsive">
@@ -286,7 +286,7 @@
                         <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">👤 User Accounts Activity & Creation Log</h3>
                         <span style="font-size: 0.78rem; color: var(--text-muted);">Displays active users log & future additional created users with Registration Date/Time & Post Counts</span>
                     </div>
-                    <input type="text" id="admin-userlog-search-input" class="form-input" placeholder="Search Reg No, name, role..." style="width: 260px;" oninput="Admin.handleSearchUserLogs()">
+                    <input type="text" id="admin-userlog-search-input" class="form-input admin-search-input" placeholder="Search Reg No, name, role..." oninput="Admin.handleSearchUserLogs()">
                 </div>
 
                 <div class="table-responsive">
@@ -312,7 +312,7 @@
             <div id="admin-sec-students" style="margin-bottom: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                     <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (Initial CS001–CS049 & Admin Created CS050+)</h3>
-                    <input type="text" id="admin-student-search-input" class="form-input" placeholder="Search Reg No or Name..." style="width: 250px;" oninput="Admin.handleSearchStudents()">
+                    <input type="text" id="admin-student-search-input" class="form-input admin-search-input" placeholder="Search Reg No or Name..." oninput="Admin.handleSearchStudents()">
                 </div>
 
                 <div class="table-responsive">
@@ -646,7 +646,7 @@
 
             <p id="modal-details-description" style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 16px;"></p>
 
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.85rem; color: var(--text-muted); background: var(--bg-dark); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+            <div class="form-grid-2" style="font-size: 0.85rem; color: var(--text-muted); background: var(--bg-dark); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
                 <div>🏷️ <strong>Type:</strong> <span id="modal-details-type"></span></div>
                 <div>🌐 <strong>Mode:</strong> <span id="modal-details-mode"></span></div>
                 <div>📍 <strong>Venue:</strong> <span id="modal-details-venue"></span></div>
@@ -741,7 +741,7 @@
                     <textarea id="admin-edit-description" class="form-textarea" rows="3" required></textarea>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label">Event Type</label>
                         <select id="admin-edit-type" class="form-select">
@@ -763,7 +763,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label">Min Team Size</label>
                         <input type="number" id="admin-edit-min-team" class="form-input" min="1" max="10" required>
@@ -775,7 +775,7 @@
                     </div>
                 </div>
 
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
+                <div class="form-grid-2">
                     <div class="form-group">
                         <label class="form-label">Start Date *</label>
                         <input type="date" id="admin-edit-start-date" class="form-input" required>
