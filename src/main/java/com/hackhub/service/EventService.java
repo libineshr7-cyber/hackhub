@@ -83,24 +83,29 @@ public class EventService {
     }
 
     public List<EventDto> getUpcomingEvents(User user) {
-        LocalDate today = LocalDate.now();
-        List<Event> events = eventRepository.findByEndDateGreaterThanEqualOrderByStartDateAsc(today);
-        return events.stream().map(e -> mapToDto(e, user)).collect(Collectors.toList());
+        List<Event> events = eventRepository.findAll();
+        return events.stream()
+                .map(e -> mapToDto(e, user))
+                .filter(dto -> !"ENDED".equals(dto.getStatus()))
+                .sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate()))
+                .collect(Collectors.toList());
     }
 
     public List<EventDto> getEndedEvents(User user) {
-        LocalDate today = LocalDate.now();
-        List<Event> events = eventRepository.findByEndDateLessThanOrderByEndDateDesc(today);
-        return events.stream().map(e -> mapToDto(e, user)).collect(Collectors.toList());
+        List<Event> events = eventRepository.findAll();
+        return events.stream()
+                .map(e -> mapToDto(e, user))
+                .filter(dto -> "ENDED".equals(dto.getStatus()))
+                .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
+                .collect(Collectors.toList());
     }
 
     public List<EventDto> getDeadlineSoonEvents(User user) {
-        LocalDate today = LocalDate.now();
-        LocalDate inFiveDays = today.plusDays(5);
-        List<Event> events = eventRepository.findByRegistrationDeadlineBetweenOrderByRegistrationDeadlineAsc(today, inFiveDays);
+        List<Event> events = eventRepository.findAll();
         return events.stream()
-                .filter(e -> !e.getEndDate().isBefore(today))
                 .map(e -> mapToDto(e, user))
+                .filter(dto -> "DEADLINE_SOON".equals(dto.getStatus()))
+                .sorted((a, b) -> a.getRegistrationDeadline().compareTo(b.getRegistrationDeadline()))
                 .collect(Collectors.toList());
     }
 
@@ -148,11 +153,10 @@ public class EventService {
             dto.setCreatedByName(event.getCreatedBy().getName());
         }
 
-        // Calculate dynamic status based on date
-        if (today.isAfter(event.getEndDate())) {
+        // Calculate dynamic status based on date (Ended if end date or registration deadline has passed)
+        if (today.isAfter(event.getEndDate()) || today.isAfter(event.getRegistrationDeadline())) {
             dto.setStatus("ENDED");
-        } else if (!today.isAfter(event.getRegistrationDeadline()) && 
-                   ChronoUnit.DAYS.between(today, event.getRegistrationDeadline()) <= 5) {
+        } else if (ChronoUnit.DAYS.between(today, event.getRegistrationDeadline()) <= 5) {
             dto.setStatus("DEADLINE_SOON");
         } else {
             dto.setStatus("UPCOMING");
