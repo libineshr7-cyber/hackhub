@@ -147,6 +147,7 @@ public class UnstopSyncService {
         LocalDate today = LocalDate.now();
         LocalDate startDate = parseIsoDate(item.path("start_date").asText(""), today.plusDays(7));
         LocalDate endDate = parseIsoDate(item.path("end_date").asText(""), today.plusDays(30));
+        LocalDate deadlineDate = parseIsoDate(regnReq.path("end_regn_dt").asText(""), today.plusDays(14));
         // Event will be dynamically categorized as ENDED or UPCOMING by EventService mapToDto
 
         // Venue & Org
