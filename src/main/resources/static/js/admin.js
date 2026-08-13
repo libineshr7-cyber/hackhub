@@ -59,17 +59,75 @@ const Admin = {
       'userlogs': document.getElementById('admin-sec-userlogs'),
       'students': document.getElementById('admin-sec-students'),
       'events': document.getElementById('admin-sec-events'),
-      'reports': document.getElementById('admin-sec-reports')
+      'reports': document.getElementById('admin-sec-reports'),
+      'database': document.getElementById('admin-sec-database')
     };
 
     if (tabName === 'all') {
-      Object.values(sections).forEach(sec => { if (sec) sec.style.display = 'block'; });
+      Object.keys(sections).forEach(key => {
+        if (sections[key]) {
+          sections[key].style.display = (key === 'database') ? 'none' : 'block';
+        }
+      });
     } else {
       Object.keys(sections).forEach(key => {
         if (sections[key]) {
           sections[key].style.display = (key === tabName) ? 'block' : 'none';
         }
       });
+      if (tabName === 'database') {
+        this.loadDbTable('users');
+      }
+    }
+  },
+
+  async loadDbTable(tableName) {
+    const headersEl = document.getElementById('db-table-headers');
+    const rowsEl = document.getElementById('db-table-rows');
+    if (!headersEl || !rowsEl) return;
+
+    try {
+      rowsEl.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px;">Loading database records...</td></tr>';
+      
+      let data = [];
+      if (tableName === 'users') {
+        data = await API.request('/admin/users/log');
+        headersEl.innerHTML = '<th>ID</th><th>Reg No</th><th>Name</th><th>Role</th><th>Status</th><th>First Login</th>';
+        rowsEl.innerHTML = data.map(u => `
+          <tr>
+            <td>#${u.id}</td>
+            <td><strong>${this.escapeHtml(u.registrationNumber)}</strong></td>
+            <td>${this.escapeHtml(u.name)}</td>
+            <td><code>${u.role}</code></td>
+            <td><span class="badge ${u.status === 'ACTIVE' ? 'badge-upcoming' : 'badge-ended'}">${u.status}</span></td>
+            <td>${u.firstLogin ? 'YES' : 'NO'}</td>
+          </tr>`).join('');
+      } else if (tableName === 'events') {
+        data = await API.request('/admin/events');
+        headersEl.innerHTML = '<th>ID</th><th>Title</th><th>Type</th><th>Mode</th><th>Deadline</th><th>Status</th>';
+        rowsEl.innerHTML = data.map(e => `
+          <tr>
+            <td>#${e.id}</td>
+            <td><strong>${this.escapeHtml(e.title)}</strong></td>
+            <td>${e.eventType}</td>
+            <td>${e.mode}</td>
+            <td>${e.registrationDeadline}</td>
+            <td><span class="badge ${e.status === 'UPCOMING' ? 'badge-upcoming' : (e.status === 'ENDED' ? 'badge-ended' : 'badge-deadline')}">${e.status}</span></td>
+          </tr>`).join('');
+      } else if (tableName === 'reports') {
+        data = await API.request('/admin/reports');
+        headersEl.innerHTML = '<th>ID</th><th>Reported Event</th><th>Reporter Reg No</th><th>Reason</th><th>Status</th>';
+        rowsEl.innerHTML = data.map(r => `
+          <tr>
+            <td>#${r.id}</td>
+            <td><strong>${this.escapeHtml(r.eventTitle)}</strong></td>
+            <td>${this.escapeHtml(r.reporterRegNo)}</td>
+            <td>${this.escapeHtml(r.reason)}</td>
+            <td><span class="badge ${r.status === 'RESOLVED' ? 'badge-upcoming' : 'badge-deadline'}">${r.status}</span></td>
+          </tr>`).join('');
+      }
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="10" style="color:var(--status-danger); text-align:center; padding:20px;">Failed to load database table: ${err.message}</td></tr>`;
     }
   },
 

@@ -244,6 +244,46 @@
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="students" onclick="Admin.switchSubTab('students')">👥 Student Accounts</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector & H2 Console</button>
+            </div>
+
+            <!-- DATABASE INSPECTOR & H2 CONSOLE LINK SECTION -->
+            <div id="admin-sec-database" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🗄️ Live Database Inspector & H2 Web Console</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Inspect live tables, database records, and connect to H2 Web Console</span>
+                    </div>
+                    <a href="/h2-console" target="_blank" class="btn btn-primary btn-sm">🖥️ Open H2 Web Console (/h2-console)</a>
+                </div>
+
+                <div class="card" style="padding: 16px; margin-bottom: 16px; background: rgba(14, 165, 233, 0.06); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 10px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">💡 How to connect via H2 Web Console:</h4>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; line-height: 1.6; margin:0;">
+                        <li><strong>H2 Console URL</strong>: <a href="/h2-console" target="_blank" style="color:var(--accent-maroon); font-weight:600;">/h2-console</a></li>
+                        <li><strong>JDBC URL</strong>: <code>jdbc:h2:file:./data/hackhubdb</code> (or default memory URL)</li>
+                        <li><strong>User Name</strong>: <code>sa</code></li>
+                        <li><strong>Password</strong>: <em>(leave empty)</em></li>
+                    </ul>
+                </div>
+
+                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('users')">👥 Users Data</button>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('events')">💻 Events Data</button>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('reports')">🚩 Reports Data</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="db-table-view">
+                        <thead>
+                            <tr id="db-table-headers">
+                                <th>Select a database table above to inspect live records...</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-table-rows">
+                        </tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- 1. HACKATHON POSTING HISTORY & CREATOR AUDIT LOG -->
