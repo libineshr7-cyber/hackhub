@@ -83,39 +83,43 @@ public class EventService {
     }
 
     public List<EventDto> getUpcomingEvents(User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.findAll();
         return events.stream()
-                .map(e -> mapToDto(e, user))
+                .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> !"ENDED".equals(dto.getStatus()))
                 .sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate()))
                 .collect(Collectors.toList());
     }
 
     public List<EventDto> getEndedEvents(User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.findAll();
         return events.stream()
-                .map(e -> mapToDto(e, user))
+                .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> "ENDED".equals(dto.getStatus()))
                 .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
                 .collect(Collectors.toList());
     }
 
     public List<EventDto> getDeadlineSoonEvents(User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.findAll();
         return events.stream()
-                .map(e -> mapToDto(e, user))
+                .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> "DEADLINE_SOON".equals(dto.getStatus()))
                 .sorted((a, b) -> a.getRegistrationDeadline().compareTo(b.getRegistrationDeadline()))
                 .collect(Collectors.toList());
     }
 
     public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.searchEvents(
                 (query != null && !query.trim().isEmpty()) ? query.trim() : null,
                 (eventType != null && !eventType.trim().isEmpty() && !"ALL".equalsIgnoreCase(eventType)) ? eventType.trim() : null,
                 (mode != null && !mode.trim().isEmpty() && !"ALL".equalsIgnoreCase(mode)) ? mode.trim() : null
         );
-        return events.stream().map(e -> mapToDto(e, user)).collect(Collectors.toList());
+        return events.stream().map(e -> mapToDtoWithSavedSet(e, user, savedIds)).collect(Collectors.toList());
     }
 
     public EventDto getEventDetails(Long eventId, User user) {
@@ -125,11 +129,17 @@ public class EventService {
     }
 
     public List<EventDto> getAllEventsForCalendar(User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.findAll();
-        return events.stream().map(e -> mapToDto(e, user)).collect(Collectors.toList());
+        return events.stream().map(e -> mapToDtoWithSavedSet(e, user, savedIds)).collect(Collectors.toList());
     }
 
     public EventDto mapToDto(Event event, User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
+        return mapToDtoWithSavedSet(event, user, savedIds);
+    }
+
+    public EventDto mapToDtoWithSavedSet(Event event, User user, java.util.Set<Long> savedEventIds) {
         LocalDate today = LocalDate.now();
         EventDto dto = new EventDto();
         dto.setId(event.getId());
@@ -165,9 +175,8 @@ public class EventService {
         long daysToDeadline = ChronoUnit.DAYS.between(today, event.getRegistrationDeadline());
         dto.setDaysToDeadline(daysToDeadline);
 
-        if (user != null) {
-            boolean isSaved = savedEventRepository.existsByUserAndEvent(user, event);
-            dto.setSaved(isSaved);
+        if (savedEventIds != null && event.getId() != null) {
+            dto.setSaved(savedEventIds.contains(event.getId()));
         }
 
         return dto;

@@ -39,9 +39,9 @@ public class UnstopSyncService {
     private ObjectMapper objectMapper;
 
     /**
-     * Run automatically on startup (initialDelay = 5s) and periodically every 6 hours
+     * Run periodically every 6 hours (initialDelay = 60s after startup to keep server boot instant)
      */
-    @Scheduled(initialDelay = 5000, fixedRate = 21600000)
+    @Scheduled(initialDelay = 60000, fixedRate = 21600000)
     public void scheduledUnstopSync() {
         logger.info("🔄 Running scheduled Unstop Live Hackathons sync...");
         try {
