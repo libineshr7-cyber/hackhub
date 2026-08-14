@@ -86,22 +86,25 @@ a {
 }
 
 /* Header & Top Navigation */
+/* Header & Top Navigation — Full Maroon Premium Theme */
 .header {
   position: sticky;
   top: 0;
-  z-index: 100;
-  background: var(--glass-bg);
+  z-index: 1000;
+  background: linear-gradient(135deg, #800020 0%, #5B0017 100%);
+  color: #ffffff;
   backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border-color);
+  -webkit-backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   padding: 12px 16px;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+  box-shadow: 0 4px 20px rgba(128, 0, 32, 0.35);
 }
 
 .header-content {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  max-width: 1200px;
+  max-width: 1280px;
   margin: 0 auto;
 }
 
@@ -109,26 +112,29 @@ a {
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 1.3rem;
-  font-weight: 800;
-  letter-spacing: 0.5px;
-  color: var(--text-main);
+  cursor: pointer;
+  user-select: none;
 }
 
 .logo-badge {
-  background: linear-gradient(135deg, var(--accent-maroon), var(--accent-maroon-light));
-  color: #ffffff;
-  padding: 4px 10px;
-  border-radius: var(--radius-sm);
-  font-size: 0.8rem;
+  background: #ffffff;
+  color: #800020;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 1.05rem;
   font-weight: 900;
   letter-spacing: 1px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s ease;
+}
+
+.logo-badge:hover {
+  transform: scale(1.03);
+  box-shadow: 0 4px 12px rgba(255, 255, 255, 0.25);
 }
 
 .tagline-sub {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  font-weight: 500;
+  display: none;
 }
 
 /* Mobile Tab Bar — Hidden by default on Desktop screens (> 768px) */
@@ -139,43 +145,94 @@ a {
 .nav-links {
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 8px;
   list-style: none;
+  margin: 0;
+  padding: 0;
 }
 
 .nav-item {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  color: var(--text-muted);
+  color: rgba(255, 255, 255, 0.85);
   font-weight: 600;
-  font-size: 0.95rem;
+  font-size: 0.92rem;
   cursor: pointer;
-  padding: 6px 14px;
-  border-radius: var(--radius-sm);
+  padding: 7px 16px;
+  border-radius: 20px;
   transition: all 0.2s ease;
   white-space: nowrap;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
-.nav-item:hover, .nav-item.active {
-  color: var(--accent-maroon);
-  background: var(--accent-maroon-tint);
+.nav-item:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.nav-item.active {
+  color: #800020;
+  background: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .nav-item.nav-item-deadline {
-  color: var(--status-deadline);
+  color: #FFD700;
 }
 
-.nav-item.nav-item-deadline:hover, .nav-item.nav-item-deadline.active {
+.nav-item.nav-item-deadline:hover {
   color: #ffffff;
-  background: var(--status-deadline);
+  background: rgba(255, 215, 0, 0.22);
+}
+
+.nav-item.nav-item-deadline.active {
+  color: #4A0012;
+  background: #FFD700;
+  font-weight: 700;
+  box-shadow: 0 2px 10px rgba(255, 215, 0, 0.35);
 }
 
 .header-actions {
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.header-actions #notif-bell-btn {
+  background: rgba(255, 255, 255, 0.15) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+}
+
+.header-actions #notif-bell-btn:hover {
+  background: rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.header-actions .btn-primary {
+  background: #ffffff !important;
+  color: #800020 !important;
+  font-weight: 700 !important;
+  border: none !important;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2) !important;
+}
+
+.header-actions .btn-primary:hover {
+  background: #f8fafc !important;
+  color: #5B0017 !important;
+  transform: translateY(-1px);
+}
+
+.user-badge {
+  background: rgba(255, 255, 255, 0.15) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25) !important;
+  color: #ffffff !important;
+}
+
+.user-badge #header-user-reg {
+  color: #ffffff !important;
 }
 
 /* User Profile Badge in Header */
