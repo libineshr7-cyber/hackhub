@@ -277,6 +277,9 @@ const Events = {
           <button class="btn btn-secondary btn-sm" onclick="Teams.openFindTeamModal(${event.id}, '${this.escapeHtml(event.title)}')">
             🤝 Find Team
           </button>
+          <button class="btn btn-outline btn-sm" onclick="Events.openShareModal(${event.id}, '${this.escapeHtml(event.title)}', '${event.registrationLink || ''}', '${event.registrationDeadline || ''}')">
+            📤 Share
+          </button>
           <button class="btn btn-primary btn-sm" onclick="Events.openEventDetailsModal(${event.id})">
             Details
           </button>
@@ -402,6 +405,13 @@ const Events = {
         Teams.openFindTeamModal(event.id, event.title);
       };
 
+      const shareBtn = document.getElementById('modal-details-share');
+      if (shareBtn) {
+        shareBtn.onclick = () => {
+          this.openShareModal(event.id, event.title, event.registrationLink || '', event.registrationDeadline || '');
+        };
+      }
+
       document.getElementById('modal-details-report').onclick = () => {
         this.openReportModal(event.id, event.title);
       };
@@ -441,5 +451,63 @@ const Events = {
   escapeHtml(str) {
     if (!str) return '';
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  },
+
+  currentShareData: null,
+
+  openShareModal(id, title, link, deadline) {
+    this.currentShareData = { id, title, link, deadline };
+    const titleEl = document.getElementById('share-modal-title');
+    if (titleEl) titleEl.textContent = title;
+
+    const nativeBtn = document.getElementById('share-btn-native');
+    if (nativeBtn) {
+      nativeBtn.style.display = (navigator.share) ? 'flex' : 'none';
+    }
+
+    App.openModal('modal-share-event');
+  },
+
+  execShare(type) {
+    if (!this.currentShareData) return;
+    const { title, link, deadline } = this.currentShareData;
+    const eventUrl = link || window.location.href;
+    const shareText = `🚀 Join me for "${title}" on HackHub!\n⏰ Registration Deadline: ${deadline || 'Closing Soon'}\n👉 Register here: ${eventUrl}`;
+
+    if (type === 'whatsapp') {
+      const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
+      window.open(waUrl, '_blank');
+      App.closeModal('modal-share-event');
+    } else if (type === 'copy') {
+      if (navigator.clipboard && navigator.clipboard.writeText) {
+        navigator.clipboard.writeText(eventUrl).then(() => {
+          App.showToast('🔗 Hackathon link copied to clipboard!', 'success');
+        }).catch(() => {
+          this.fallbackCopy(eventUrl);
+        });
+      } else {
+        this.fallbackCopy(eventUrl);
+      }
+      App.closeModal('modal-share-event');
+    } else if (type === 'native') {
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: `Check out ${title} on HackHub!`,
+          url: eventUrl
+        }).catch(err => console.log('Share cancelled', err));
+      }
+      App.closeModal('modal-share-event');
+    }
+  },
+
+  fallbackCopy(text) {
+    const input = document.createElement('input');
+    input.value = text;
+    document.body.appendChild(input);
+    input.select();
+    document.execCommand('copy');
+    document.body.removeChild(input);
+    App.showToast('🔗 Hackathon link copied to clipboard!', 'success');
   }
 };

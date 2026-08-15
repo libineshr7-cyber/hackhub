@@ -145,10 +145,23 @@ public class UnstopSyncService {
 
         // Dates
         LocalDate today = LocalDate.now();
-        LocalDate startDate = parseIsoDate(item.path("start_date").asText(""), today.plusDays(7));
-        LocalDate endDate = parseIsoDate(item.path("end_date").asText(""), today.plusDays(30));
-        LocalDate deadlineDate = parseIsoDate(regnReq.path("end_regn_dt").asText(""), today.plusDays(14));
-        // Event will be dynamically categorized as ENDED or UPCOMING by EventService mapToDto
+        LocalDate startDate = parseIsoDate(item.path("start_date").asText(""), today.plusDays(1));
+        LocalDate endDate = parseIsoDate(item.path("end_date").asText(""), startDate.plusDays(2));
+        
+        String regnEndStr = regnReq.path("end_regn_dt").asText("");
+        if (regnEndStr.isEmpty()) regnEndStr = item.path("end_regn_dt").asText("");
+        if (regnEndStr.isEmpty()) regnEndStr = item.path("regn_end_date").asText("");
+        if (regnEndStr.isEmpty()) regnEndStr = item.path("application_close_date").asText("");
+        
+        LocalDate deadlineDate = parseIsoDate(regnEndStr, endDate);
+
+        // Check explicit registration status from Unstop JSON
+        String regStatus = item.path("registerStatus").asText("").toLowerCase();
+        String oppStatus = item.path("status").asText("").toLowerCase();
+        if (regStatus.contains("closed") || regStatus.contains("expired") || oppStatus.contains("closed") || oppStatus.contains("expired") || oppStatus.contains("archived")) {
+            deadlineDate = today.minusDays(1);
+            endDate = today.minusDays(1);
+        }
 
         // Venue & Org
         String orgName = item.path("organisation").path("name").asText("Unstop Partner").trim();

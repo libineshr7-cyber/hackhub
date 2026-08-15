@@ -164,9 +164,12 @@ public class EventService {
         }
 
         // Calculate dynamic status based on date (Ended if end date or registration deadline has passed)
-        if (today.isAfter(event.getEndDate()) || today.isAfter(event.getRegistrationDeadline())) {
+        boolean isEndedByEndDate = event.getEndDate() != null && today.isAfter(event.getEndDate());
+        boolean isEndedByDeadline = event.getRegistrationDeadline() != null && today.isAfter(event.getRegistrationDeadline());
+
+        if (isEndedByEndDate || isEndedByDeadline) {
             dto.setStatus("ENDED");
-        } else if (ChronoUnit.DAYS.between(today, event.getRegistrationDeadline()) <= 5) {
+        } else if (event.getRegistrationDeadline() != null && ChronoUnit.DAYS.between(today, event.getRegistrationDeadline()) <= 5) {
             dto.setStatus("DEADLINE_SOON");
         } else {
             dto.setStatus("UPCOMING");

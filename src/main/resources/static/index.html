@@ -716,7 +716,35 @@
             <div style="display: flex; gap: 10px; flex-wrap: wrap;">
                 <a id="modal-details-reglink" href="#" target="_blank" class="btn btn-primary">🔗 Register Now</a>
                 <button id="modal-details-findteam" class="btn btn-secondary">🤝 Find Team</button>
+                <button id="modal-details-share" class="btn btn-outline">📤 Share</button>
                 <button id="modal-details-report" class="btn btn-danger btn-sm" style="margin-left: auto;">⚠️ Report Event</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 9: Share Event Options -->
+    <div id="modal-share-event" class="modal-overlay">
+        <div class="modal-box" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 Share Hackathon</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            
+            <p id="share-modal-title" style="font-weight: 700; color: var(--accent-maroon); font-size: 1.05rem; margin-bottom: 10px; word-break: break-word;"></p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">Invite classmates, team members, or share to WhatsApp & social platforms!</p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="btn btn-primary" onclick="Events.execShare('whatsapp')" style="background: #25D366; border-color: #25D366; color: #ffffff; justify-content: center; gap: 8px; font-weight: 700; padding: 10px 16px;">
+                    <span style="font-size: 1.2rem;">💬</span> Share to WhatsApp
+                </button>
+
+                <button type="button" class="btn btn-secondary" onclick="Events.execShare('copy')" style="justify-content: center; gap: 8px; font-weight: 600; padding: 10px 16px;">
+                    <span>📋</span> Copy Hackathon Link
+                </button>
+
+                <button type="button" class="btn btn-outline" id="share-btn-native" onclick="Events.execShare('native')" style="justify-content: center; gap: 8px; font-weight: 600; padding: 10px 16px;">
+                    <span>📲</span> More Apps (Native Share)
+                </button>
             </div>
         </div>
     </div>
