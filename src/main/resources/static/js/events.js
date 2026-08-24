@@ -460,6 +460,18 @@ const Events = {
         regLinkElem.style.display = 'none';
       }
 
+      const saveBtn = document.getElementById('modal-details-save');
+      if (saveBtn) {
+        saveBtn.textContent = event.saved ? '🔖 Saved' : '🔖 Save';
+        saveBtn.className = event.saved ? 'btn btn-secondary' : 'btn btn-outline';
+        saveBtn.onclick = async () => {
+          await this.toggleSave(event.id, event.saved);
+          event.saved = !event.saved;
+          saveBtn.textContent = event.saved ? '🔖 Saved' : '🔖 Save';
+          saveBtn.className = event.saved ? 'btn btn-secondary' : 'btn btn-outline';
+        };
+      }
+
       document.getElementById('modal-details-findteam').onclick = () => {
         App.closeModal('modal-event-details');
         Teams.openFindTeamModal(event.id, event.title);
