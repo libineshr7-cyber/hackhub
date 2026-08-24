@@ -55,6 +55,15 @@ const Events = {
     }
   },
 
+  async loadLatestEvents() {
+    try {
+      const events = await API.request('/events/latest');
+      this.renderEventsGrid('latest-grid', events);
+    } catch (err) {
+      App.showToast('Failed to load latest events', 'danger');
+    }
+  },
+
   async loadSavedEvents() {
     try {
       const events = await API.request('/saved-events');
@@ -73,8 +82,10 @@ const Events = {
       const events = await API.request(`/events/search?query=${encodeURIComponent(query)}&eventType=${eventType}&mode=${mode}`);
       let gridId = 'upcoming-grid';
       if (App.currentView === 'home') gridId = 'home-upcoming-grid';
+      else if (App.currentView === 'latest') gridId = 'latest-grid';
       else if (App.currentView === 'ended') gridId = 'ended-grid';
       else if (App.currentView === 'deadline-soon') gridId = 'deadline-soon-grid';
+      else if (App.currentView === 'saved') gridId = 'saved-grid';
 
       this.renderEventsGrid(gridId, events);
     } catch (err) {
@@ -300,8 +311,12 @@ const Events = {
 
       if (App.currentView === 'saved') {
         this.loadSavedEvents();
+      } else if (App.currentView === 'latest') {
+        this.loadLatestEvents();
       } else if (App.currentView === 'upcoming') {
         this.loadUpcomingEvents();
+      } else if (App.currentView === 'deadline-soon') {
+        this.loadDeadlineSoonEvents();
       } else {
         this.loadHomeDashboard();
       }

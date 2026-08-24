@@ -188,9 +188,20 @@ public class UnstopSyncService {
         Optional<Event> existing = eventRepository.findByRegistrationLink(regLink);
         Event event = existing.orElse(new Event());
 
+        String lowerTitle = title.toLowerCase();
+        String lowerDesc = cleanDesc.toLowerCase();
+        String detectedType = "HACKATHON";
+        if (lowerTitle.contains("ctf") || lowerTitle.contains("capture the flag") || lowerDesc.contains("ctf") || lowerDesc.contains("capture the flag")) {
+            detectedType = "CTF";
+        } else if (lowerTitle.contains("workshop") || lowerTitle.contains("bootcamp") || lowerTitle.contains("webinar") || lowerTitle.contains("masterclass")) {
+            detectedType = "WORKSHOP";
+        } else if (lowerTitle.contains("quiz") || lowerTitle.contains("contest") || lowerTitle.contains("competition") || lowerTitle.contains("olympiad")) {
+            detectedType = "COMPETITION";
+        }
+
         event.setTitle(title);
         event.setDescription(cleanDesc);
-        event.setEventType("HACKATHON");
+        event.setEventType(detectedType);
         event.setTeamSizeMin(minTeam);
         event.setTeamSizeMax(maxTeam);
         event.setStartDate(startDate);

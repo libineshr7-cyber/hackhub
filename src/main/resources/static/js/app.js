@@ -153,6 +153,9 @@ const App = {
       case 'home':
         Events.loadHomeDashboard();
         break;
+      case 'latest':
+        Events.loadLatestEvents();
+        break;
       case 'upcoming':
         Events.loadUpcomingEvents();
         break;

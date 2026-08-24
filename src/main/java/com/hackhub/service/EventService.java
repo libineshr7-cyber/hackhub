@@ -112,6 +112,29 @@ public class EventService {
                 .collect(Collectors.toList());
     }
 
+    public List<EventDto> getLatestEvents(User user) {
+        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
+        java.time.LocalDateTime sevenDaysAgo = java.time.LocalDateTime.now().minusDays(7);
+        List<Event> events = eventRepository.findAll();
+        List<EventDto> latest = events.stream()
+                .filter(e -> e.getCreatedAt() != null && e.getCreatedAt().isAfter(sevenDaysAgo))
+                .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
+                .filter(dto -> !"ENDED".equals(dto.getStatus()))
+                .sorted((a, b) -> (b.getCreatedAt() != null && a.getCreatedAt() != null) ? b.getCreatedAt().compareTo(a.getCreatedAt()) : 0)
+                .collect(Collectors.toList());
+        
+        // Fallback: If fewer than 5 events posted in last 7 days, get top 10 most recently uploaded active events
+        if (latest.size() < 5) {
+            latest = events.stream()
+                    .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
+                    .filter(dto -> !"ENDED".equals(dto.getStatus()))
+                    .sorted((a, b) -> (b.getCreatedAt() != null && a.getCreatedAt() != null) ? b.getCreatedAt().compareTo(a.getCreatedAt()) : 0)
+                    .limit(10)
+                    .collect(Collectors.toList());
+        }
+        return latest;
+    }
+
     public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> events = eventRepository.searchEvents(

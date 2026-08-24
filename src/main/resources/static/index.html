@@ -22,6 +22,7 @@
             <!-- Desktop Nav Links -->
             <ul class="nav-links">
                 <li class="nav-item active" data-view="home">Home</li>
+                <li class="nav-item" data-view="latest">✨ Latest</li>
                 <li class="nav-item" data-view="upcoming">Upcoming</li>
                 <li class="nav-item nav-item-deadline" data-view="deadline-soon">⏰ Deadline Soon</li>
                 <li class="nav-item" data-view="ended">Ended</li>
@@ -53,6 +54,7 @@
         <!-- Mobile View Navigation Tab Pills Bar -->
         <div class="mobile-tab-bar">
             <button class="mobile-tab-pill active" data-view="home">🏠 Home</button>
+            <button class="mobile-tab-pill" data-view="latest">✨ Latest</button>
             <button class="mobile-tab-pill" data-view="upcoming">🔥 Upcoming</button>
             <button class="mobile-tab-pill" data-view="deadline-soon" style="color:var(--status-deadline);">⏰ Deadline Soon</button>
             <button class="mobile-tab-pill" data-view="ended">🏁 Ended</button>
@@ -114,6 +116,17 @@
         <section id="view-upcoming" class="view-section" style="display:none;">
             <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Active &amp; Upcoming Hackathons</h2>
             <div id="upcoming-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 2A. LATEST VIEW (NEWLY UPLOADED IN LAST 7 DAYS) -->
+        <section id="view-latest" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">✨ Latest Hackathons (Uploaded Recently)</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Fresh hackathons and competitions uploaded within the last 7 days! Be the first to form your team and apply.</p>
+                </div>
+            </div>
+            <div id="latest-grid" class="events-grid"></div>
         </section>
 
         <!-- 2B. DEADLINE SOON VIEW -->
@@ -701,11 +714,12 @@
                 <div>⏰ <strong>Deadline:</strong> <span id="modal-details-deadline"></span></div>
             </div>
 
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                <a id="modal-details-reglink" href="#" target="_blank" class="btn btn-primary">🔗 Register Now</a>
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; align-items: center;">
+                <a id="modal-details-reglink" href="#" target="_blank" class="btn btn-primary" style="flex:1; justify-content:center;">🔗 Register Now</a>
                 <button id="modal-details-findteam" class="btn btn-secondary">🤝 Find Team</button>
                 <button id="modal-details-share" class="btn btn-outline">📤 Share</button>
-                <button id="modal-details-report" class="btn btn-danger btn-sm" style="margin-left: auto;">⚠️ Report Event</button>
+                <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-event-details')" style="border: 1px solid var(--border-color);">❌ Close</button>
+                <button id="modal-details-report" class="btn btn-danger btn-sm" style="margin-left: auto;">⚠️ Report</button>
             </div>
         </div>
     </div>
