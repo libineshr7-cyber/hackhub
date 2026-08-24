@@ -66,10 +66,10 @@
         <div class="search-filter-bar">
             <div class="search-input-group">
                 <span class="search-icon">🔎</span>
-                <input type="text" id="search-input" placeholder="Search hackathons, topics, skills (e.g. Cybersecurity, AI, Python)..." oninput="Events.handleSearchFilter()">
+                <input type="text" id="search-input" placeholder="Search hackathons, topics, skills (e.g. CTF, AI, Python)..." onkeyup="if(event.key==='Enter') Events.handleSearchFilter(true)" oninput="Events.handleSearchFilter(false)">
             </div>
             <div class="filters-row">
-                <select id="filter-type-select" class="select-filter" onchange="Events.handleSearchFilter()">
+                <select id="filter-type-select" class="select-filter" onchange="Events.handleSearchFilter(false)">
                     <option value="ALL">All Event Types</option>
                     <option value="HACKATHON">Hackathon</option>
                     <option value="WORKSHOP">Workshop</option>
@@ -77,12 +77,16 @@
                     <option value="CTF">CTF Challenge</option>
                 </select>
 
-                <select id="filter-mode-select" class="select-filter" onchange="Events.handleSearchFilter()">
+                <select id="filter-mode-select" class="select-filter" onchange="Events.handleSearchFilter(false)">
                     <option value="ALL">All Modes</option>
                     <option value="ONLINE">Online</option>
                     <option value="OFFLINE">Offline</option>
                     <option value="HYBRID">Hybrid</option>
                 </select>
+
+                <button type="button" class="btn btn-primary" onclick="Events.handleSearchFilter(true)" style="padding: 7px 16px; font-weight: 700; gap: 6px; white-space: nowrap; font-size: 0.85rem; border-radius: 20px; flex-shrink: 0;">
+                    🔍 Search
+                </button>
             </div>
         </div>
 

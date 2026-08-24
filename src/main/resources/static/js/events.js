@@ -111,7 +111,7 @@ const Events = {
     }
   },
 
-  async handleSearchFilter() {
+  async handleSearchFilter(shouldScroll = false) {
     const query = document.getElementById('search-input')?.value || '';
     const eventType = document.getElementById('filter-type-select')?.value || 'ALL';
     const mode = document.getElementById('filter-mode-select')?.value || 'ALL';
@@ -126,6 +126,13 @@ const Events = {
       else if (App.currentView === 'saved') gridId = 'saved-grid';
 
       this.renderEventsGrid(gridId, events);
+
+      if (shouldScroll) {
+        const targetElem = document.getElementById(gridId);
+        if (targetElem) {
+          targetElem.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }
     } catch (err) {
       console.error(err);
     }
