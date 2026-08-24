@@ -22,19 +22,7 @@ public interface EventRepository extends JpaRepository<Event, Long> {
 
     List<Event> findByRegistrationLinkContaining(String keyword);
 
-    @Query("SELECT e FROM Event e WHERE " +
-           "(:query IS NULL OR " +
-           " LOWER(e.title) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(CAST(e.description AS string)) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(e.skills) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(e.venue) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(e.eventType) LIKE LOWER(CONCAT('%', :query, '%')) OR " +
-           " LOWER(e.mode) LIKE LOWER(CONCAT('%', :query, '%'))) AND " +
-           "(:eventType IS NULL OR LOWER(e.eventType) = LOWER(:eventType)) AND " +
-           "(:mode IS NULL OR LOWER(e.mode) = LOWER(:mode))")
-    List<Event> searchEvents(@Param("query") String query,
-                             @Param("eventType") String eventType,
-                             @Param("mode") String mode);
+
 
     List<Event> findByCreatedAtAfterOrderByCreatedAtDesc(java.time.LocalDateTime cutoff);
 

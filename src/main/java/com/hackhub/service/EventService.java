@@ -137,18 +137,7 @@ public class EventService {
 
     public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
-        
-        List<Event> allEvents;
-        try {
-            allEvents = eventRepository.searchEvents(
-                    (query != null && !query.trim().isEmpty()) ? query.trim() : null,
-                    (eventType != null && !eventType.trim().isEmpty() && !"ALL".equalsIgnoreCase(eventType)) ? eventType.trim() : null,
-                    (mode != null && !mode.trim().isEmpty() && !"ALL".equalsIgnoreCase(mode)) ? mode.trim() : null
-            );
-        } catch (Exception e) {
-            // Fallback to findAll if DB-specific function error occurs
-            allEvents = eventRepository.findAll();
-        }
+        List<Event> allEvents = eventRepository.findAll();
 
         String q = (query != null) ? query.trim().toLowerCase() : "";
         String type = (eventType != null) ? eventType.trim().toUpperCase() : "ALL";
