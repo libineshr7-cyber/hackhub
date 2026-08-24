@@ -7,7 +7,30 @@ const Events = {
   activeTypeFilter: 'ALL',
   activeModeFilter: 'ALL',
 
+  showGridLoading(containerId, message = 'Loading live hackathons...') {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px;">
+        <div style="font-size: 2rem; margin-bottom: 8px;">⚡</div>
+        <p style="font-size: 1.05rem; font-weight: 700; color: var(--accent-maroon);">${message}</p>
+        <p style="font-size: 0.82rem; color: var(--text-muted); margin-top: 4px;">Connecting to server & fetching latest hackathons...</p>
+      </div>`;
+  },
+
+  showGridError(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = `
+      <div style="grid-column: 1 / -1; text-align: center; padding: 40px 20px; color: var(--text-muted);">
+        <p style="font-size: 1.05rem; font-weight: 600;">No events found</p>
+        <p style="font-size: 0.85rem; margin-top: 4px;">Check back later or adjust your search filters.</p>
+      </div>`;
+  },
+
   async loadHomeDashboard() {
+    this.showGridLoading('home-upcoming-grid', 'Loading department & Unstop hackathons...');
+    this.showGridLoading('home-deadline-grid', 'Checking application deadlines...');
     try {
       const upcoming = await API.request('/events/upcoming');
       const deadlineSoon = await API.request('/events/deadline-soon');
@@ -16,6 +39,7 @@ const Events = {
       this.renderEventsGrid('home-deadline-grid', deadlineSoon);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
+      this.showGridError('home-upcoming-grid', 'Events.loadHomeDashboard()');
     }
   },
 
@@ -29,38 +53,52 @@ const Events = {
   },
 
   async loadUpcomingEvents() {
+    this.showGridLoading('upcoming-grid', 'Loading upcoming hackathons...');
     try {
       const events = await API.request('/events/upcoming');
       this.renderEventsGrid('upcoming-grid', events);
     } catch (err) {
-      App.showToast('Failed to load upcoming events', 'danger');
+      this.showGridError('upcoming-grid', 'Events.loadUpcomingEvents()');
     }
   },
 
   async loadEndedEvents() {
+    this.showGridLoading('ended-grid', 'Loading past events...');
     try {
       const events = await API.request('/events/ended');
       this.renderEventsGrid('ended-grid', events);
     } catch (err) {
-      App.showToast('Failed to load ended events', 'danger');
+      this.showGridError('ended-grid', 'Events.loadEndedEvents()');
     }
   },
 
   async loadDeadlineSoonEvents() {
+    this.showGridLoading('deadline-soon-grid', 'Checking closing deadlines...');
     try {
       const events = await API.request('/events/deadline-soon');
       this.renderEventsGrid('deadline-soon-grid', events);
     } catch (err) {
-      App.showToast('Failed to load deadline soon events', 'danger');
+      this.showGridError('deadline-soon-grid', 'Events.loadDeadlineSoonEvents()');
     }
   },
 
   async loadLatestEvents() {
+    this.showGridLoading('latest-grid', 'Fetching newly uploaded hackathons...');
     try {
       const events = await API.request('/events/latest');
       this.renderEventsGrid('latest-grid', events);
     } catch (err) {
-      App.showToast('Failed to load latest events', 'danger');
+      this.showGridError('latest-grid', 'Events.loadLatestEvents()');
+    }
+  },
+
+  async loadSavedEvents() {
+    this.showGridLoading('saved-grid', 'Loading saved hackathons...');
+    try {
+      const events = await API.request('/saved-events');
+      this.renderEventsGrid('saved-grid', events);
+    } catch (err) {
+      this.showGridError('saved-grid', 'Events.loadSavedEvents()');
     }
   },
 

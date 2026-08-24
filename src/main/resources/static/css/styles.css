@@ -668,12 +668,21 @@ a {
 }
 
 .event-card-footer {
-  padding: 14px 18px;
+  padding: 12px 14px;
   border-top: 1px solid var(--border-color);
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
   background: #f8fafc;
+}
+
+.event-card-footer .btn {
+  flex: 1 1 calc(50% - 6px);
+  min-width: 0;
+  padding: 8px 10px;
+  font-size: 0.8rem;
+  justify-content: center;
 }
 
 /* Modals */
