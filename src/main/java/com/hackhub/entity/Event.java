@@ -15,7 +15,7 @@ public class Event {
     @Column(nullable = false)
     private String title;
 
-    @Column(columnDefinition = "TEXT", nullable = false)
+    @Column(length = 5000, nullable = false)
     private String description;
 
     @Column(name = "event_type", nullable = false)

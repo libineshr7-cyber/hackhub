@@ -137,12 +137,49 @@ public class EventService {
 
     public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
-        List<Event> events = eventRepository.searchEvents(
-                (query != null && !query.trim().isEmpty()) ? query.trim() : null,
-                (eventType != null && !eventType.trim().isEmpty() && !"ALL".equalsIgnoreCase(eventType)) ? eventType.trim() : null,
-                (mode != null && !mode.trim().isEmpty() && !"ALL".equalsIgnoreCase(mode)) ? mode.trim() : null
-        );
-        return events.stream().map(e -> mapToDtoWithSavedSet(e, user, savedIds)).collect(Collectors.toList());
+        
+        List<Event> allEvents;
+        try {
+            allEvents = eventRepository.searchEvents(
+                    (query != null && !query.trim().isEmpty()) ? query.trim() : null,
+                    (eventType != null && !eventType.trim().isEmpty() && !"ALL".equalsIgnoreCase(eventType)) ? eventType.trim() : null,
+                    (mode != null && !mode.trim().isEmpty() && !"ALL".equalsIgnoreCase(mode)) ? mode.trim() : null
+            );
+        } catch (Exception e) {
+            // Fallback to findAll if DB-specific function error occurs
+            allEvents = eventRepository.findAll();
+        }
+
+        String q = (query != null) ? query.trim().toLowerCase() : "";
+        String type = (eventType != null) ? eventType.trim().toUpperCase() : "ALL";
+        String m = (mode != null) ? mode.trim().toUpperCase() : "ALL";
+
+        return allEvents.stream()
+                .filter(evt -> {
+                    // 1. Strict Event Type Match (e.g. CTF, HACKATHON, WORKSHOP, COMPETITION)
+                    if (!"ALL".equals(type) && !type.equalsIgnoreCase(evt.getEventType())) {
+                        return false;
+                    }
+                    // 2. Strict Mode Match (e.g. ONLINE, OFFLINE, HYBRID)
+                    if (!"ALL".equals(m) && !m.equalsIgnoreCase(evt.getMode())) {
+                        return false;
+                    }
+                    // 3. Keyword Search Match across Title, Description, Skills, Venue, EventType, Mode
+                    if (!q.isEmpty()) {
+                        String title = (evt.getTitle() != null) ? evt.getTitle().toLowerCase() : "";
+                        String desc = (evt.getDescription() != null) ? evt.getDescription().toLowerCase() : "";
+                        String skills = (evt.getSkills() != null) ? evt.getSkills().toLowerCase() : "";
+                        String venue = (evt.getVenue() != null) ? evt.getVenue().toLowerCase() : "";
+                        String eType = (evt.getEventType() != null) ? evt.getEventType().toLowerCase() : "";
+                        String eMode = (evt.getMode() != null) ? evt.getMode().toLowerCase() : "";
+
+                        return title.contains(q) || desc.contains(q) || skills.contains(q) ||
+                               venue.contains(q) || eType.contains(q) || eMode.contains(q);
+                    }
+                    return true;
+                })
+                .map(evt -> mapToDtoWithSavedSet(evt, user, savedIds))
+                .collect(Collectors.toList());
     }
 
     public EventDto getEventDetails(Long eventId, User user) {
