@@ -429,30 +429,18 @@
             <span class="icon">🏠</span>
             <span>Home</span>
         </a>
-        <a href="#" class="bottom-nav-item" data-view="upcoming">
-            <span class="icon">🔥</span>
-            <span>Upcoming</span>
-        </a>
-        <a href="#" class="bottom-nav-item" data-view="deadline-soon">
-            <span class="icon">⏰</span>
-            <span>Deadline</span>
-        </a>
-        <a href="#" class="bottom-nav-item" data-view="ended">
-            <span class="icon">🏁</span>
-            <span>Ended</span>
-        </a>
-        <a href="#" class="bottom-nav-item" data-view="saved">
-            <span class="icon">🔖</span>
-            <span>Saved</span>
-        </a>
         <a href="#" class="bottom-nav-item" data-view="teams">
             <span class="icon">🤝</span>
             <span>Teams</span>
         </a>
+        <a href="#" class="bottom-nav-item bottom-nav-post" onclick="App.openModal('modal-post-event'); return false;">
+            <span class="icon" style="font-size:1.4rem;">➕</span>
+            <span>Post</span>
+        </a>
         <a href="#" class="bottom-nav-item" onclick="Notifications.toggleModal(); return false;" style="position:relative;">
             <span class="icon">🔔</span>
             <span>Alerts</span>
-            <span id="bottom-notif-badge" class="badge" style="display:none; position:absolute; top:2px; right:6px; background:var(--status-danger); color:white; font-size:0.65rem; border-radius:10px; padding:1px 5px;">0</span>
+            <span id="bottom-notif-badge" class="badge" style="display:none; position:absolute; top:2px; right:12px; background:var(--status-danger); color:white; font-size:0.65rem; border-radius:10px; padding:1px 5px;">0</span>
         </a>
         <a href="#" class="bottom-nav-item" data-view="profile">
             <span class="profile-nav-avatar" id="bottom-profile-avatar">🎓</span>

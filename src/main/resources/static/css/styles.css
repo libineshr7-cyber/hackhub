@@ -1198,31 +1198,60 @@ a {
     padding: 12px;
   }
 
-  /* Bottom Navigation */
+  /* Bottom Navigation — Clean 5-Tab Mobile Bar */
   .bottom-nav {
     display: flex;
+    justify-content: space-around;
+    align-items: center;
     padding: 6px var(--safe-right) calc(8px + var(--safe-bottom)) var(--safe-left);
-    box-shadow: 0 -2px 20px rgba(0,0,0,0.08);
+    box-shadow: 0 -4px 20px rgba(0,0,0,0.12);
+    background: var(--bg-card);
+    border-top: 1px solid var(--border-color);
   }
 
   .bottom-nav-item {
-    gap: 2px;
-    font-size: 0.6rem;
-    padding: 2px 2px;
-    min-height: 44px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    padding: 4px 0;
+    min-height: 48px;
+    text-decoration: none;
+    transition: all 0.2s ease;
   }
 
   .bottom-nav-item .icon {
-    font-size: 1.15rem;
+    font-size: 1.25rem;
+    line-height: 1;
   }
 
-  /* FAB Button */
+  .bottom-nav-item.active {
+    color: var(--accent-maroon);
+    font-weight: 700;
+  }
+
+  .bottom-nav-post {
+    color: #ffffff !important;
+    background: linear-gradient(135deg, var(--accent-maroon), var(--accent-maroon-light));
+    border-radius: 20px;
+    padding: 4px 10px;
+    margin: -8px 2px 0 2px;
+    box-shadow: 0 4px 14px rgba(128, 0, 32, 0.4);
+    min-height: 44px;
+  }
+
+  .bottom-nav-post .icon {
+    font-size: 1.3rem;
+  }
+
+  /* FAB Button — Hidden when bottom nav post button is present */
   .fab-post {
-    bottom: calc(72px + var(--safe-bottom));
-    right: max(16px, var(--safe-right));
-    width: 52px;
-    height: 52px;
-    font-size: 1.5rem;
+    display: none !important;
   }
 
   /* Modals — Bottom Sheet on Mobile */
