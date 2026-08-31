@@ -30,13 +30,18 @@ const App = {
     history.pushState({ spa: true }, '', window.location.pathname);
 
     if (!token || !user) {
-      // Not logged in — show login modal, do NOT load any view
+      // Not logged in — hide all views, reset user UI, and show login modal
+      document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
+      const userRegElement = document.getElementById('header-user-reg');
+      if (userRegElement) userRegElement.textContent = '🔒 Login';
+      const bottomProfileAvatar = document.getElementById('bottom-profile-avatar');
+      if (bottomProfileAvatar) bottomProfileAvatar.textContent = '🎓';
       Auth.showLoginModal();
     } else if (user.firstLogin) {
       // Logged in but must change password first — block navigation to home
+      document.querySelectorAll('.view-section').forEach(sec => sec.style.display = 'none');
       this.updateUserUI(user);
       Auth.showFirstLoginModal();
-      // Do NOT call navigateTo('home') here — keep all views hidden
     } else {
       this.updateUserUI(user);
       this.navigateTo('home');
@@ -108,6 +113,19 @@ const App = {
   },
 
   navigateTo(viewName) {
+    const token = API.getToken();
+    const user = API.getUser();
+
+    if (!token || !user) {
+      Auth.showLoginModal();
+      return;
+    }
+
+    if (user.firstLogin) {
+      Auth.showFirstLoginModal();
+      return;
+    }
+
     this.currentView = viewName;
 
     // Update Desktop Nav Active state
@@ -183,6 +201,18 @@ const App = {
   },
 
   openModal(modalId) {
+    if (modalId !== 'modal-login') {
+      const token = API.getToken();
+      const user = API.getUser();
+      if (!token || !user) {
+        Auth.showLoginModal();
+        return;
+      }
+      if (user.firstLogin && modalId !== 'modal-first-login') {
+        Auth.showFirstLoginModal();
+        return;
+      }
+    }
     const modal = document.getElementById(modalId);
     if (modal) {
       modal.classList.add('active');
