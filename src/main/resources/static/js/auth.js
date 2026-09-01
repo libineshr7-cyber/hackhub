@@ -5,6 +5,10 @@
 const Auth = {
   showLoginModal() {
     App.openModal('modal-login');
+    setTimeout(() => {
+      const regInput = document.getElementById('login-reg-no');
+      if (regInput) regInput.focus();
+    }, 150);
   },
 
   showFirstLoginModal() {
@@ -32,7 +36,9 @@ const Auth = {
   },
 
   async handleLogin(event) {
-    event.preventDefault();
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
     const regNo = document.getElementById('login-reg-no').value.trim();
     const password = document.getElementById('login-password').value;
 

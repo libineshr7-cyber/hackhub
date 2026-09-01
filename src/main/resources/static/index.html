@@ -510,24 +510,25 @@
     <!-- MODAL 1: Login -->
     <div id="modal-login" class="modal-overlay">
         <div class="modal-box">
-            <div class="modal-header">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <img src="/logo.png" alt="HackHub Logo" class="brand-logo-img" style="width: 32px; height: 32px;">
-                    <h3 class="modal-title">Student Login</h3>
+                    <h3 class="modal-title">Student &amp; Admin Login</h3>
                 </div>
+                <button type="button" class="close-btn" onclick="App.closeModal('modal-login')">&times;</button>
             </div>
-            <form onsubmit="Auth.handleLogin(event)">
+            <form id="form-login" onsubmit="Auth.handleLogin(event)">
                 <div class="form-group">
-                    <label class="form-label">Registration Number</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="Admin or CS2XXX / CS3XXX" required>
+                    <label class="form-label">Registration Number / Username</label>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="Admin, CS2001-CS2049, CS3001-CS3048" required onkeydown="if(event.key==='Enter'){event.preventDefault(); Auth.handleLogin(event);}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="" required>
+                    <input type="password" id="login-password" class="form-input" placeholder="Default: 123" required onkeydown="if(event.key==='Enter'){event.preventDefault(); Auth.handleLogin(event);}">
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <a href="#" style="font-size: 0.85rem;" onclick="App.closeModal('modal-login'); Auth.showForgotPasswordModal();">Forgot Password?</a>
-                    <button type="submit" class="btn btn-primary">Login to HackHub</button>
+                    <button type="submit" id="btn-login-submit" class="btn btn-primary">Login to HackHub</button>
                 </div>
             </form>
         </div>
