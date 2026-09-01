@@ -35,26 +35,44 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("🚀 Initializing HackHub Database & Initial Accounts...");
 
         // 1. Seed Admin Account (Admin / 123)
-        if (!userRepository.existsByRegistrationNumber("Admin")) {
-            User admin = new User();
-            admin.setRegistrationNumber("Admin");
-            admin.setName("Department Admin");
-            admin.setEmail("admin@hackhub.dept.edu");
-            admin.setPasswordHash(passwordEncoder.encode("123"));
-            admin.setRole("ROLE_ADMIN");
-            admin.setStatus("ACTIVE");
-            admin.setDepartment("CS");
-            admin.setSkills("Administration, Cybersecurity, Governance");
-            admin.setFirstLogin(false);
-            userRepository.save(admin);
+        User admin = userRepository.findByRegistrationNumber("Admin").orElseGet(() -> {
+            User newAdmin = new User();
+            newAdmin.setRegistrationNumber("Admin");
+            newAdmin.setName("Department Admin");
+            newAdmin.setEmail("admin@hackhub.dept.edu");
+            newAdmin.setPasswordHash(passwordEncoder.encode("123"));
+            newAdmin.setRole("ROLE_ADMIN");
+            newAdmin.setStatus("ACTIVE");
+            newAdmin.setDepartment("CS");
+            newAdmin.setSkills("Administration, Cybersecurity, Governance");
+            newAdmin.setFirstLogin(false);
+            User saved = userRepository.save(newAdmin);
             logger.info("✅ Admin account created: RegNo Admin | Password 123");
-        }
-
-        // Clean up legacy 000 admin if present
-        userRepository.findByRegistrationNumber("000").ifPresent(oldAdmin -> {
-            userRepository.delete(oldAdmin);
-            logger.info("🗑️ Removed legacy admin account 000");
+            return saved;
         });
+
+        // Safely reassign events created by legacy 000 to new Admin, then remove/disable 000
+        try {
+            userRepository.findByRegistrationNumber("000").ifPresent(oldAdmin -> {
+                try {
+                    List<Event> allEvents = eventRepository.findAll();
+                    for (Event event : allEvents) {
+                        if (event.getCreatedBy() != null && oldAdmin.getId().equals(event.getCreatedBy().getId())) {
+                            event.setCreatedBy(admin);
+                            eventRepository.save(event);
+                        }
+                    }
+                    userRepository.delete(oldAdmin);
+                    logger.info("🗑️ Reassigned events and removed legacy admin account 000");
+                } catch (Exception ex) {
+                    oldAdmin.setStatus("DISABLED");
+                    userRepository.save(oldAdmin);
+                    logger.warn("⚠️ Legacy admin 000 disabled instead of deleted: {}", ex.getMessage());
+                }
+            });
+        } catch (Exception e) {
+            logger.warn("⚠️ Legacy admin migration skipped: {}", e.getMessage());
+        }
 
         // 2. Seed Initial Student Accounts (CS2001-CS2049 and CS3001-CS3048)
         List<String> sampleSkillsList = Arrays.asList(
