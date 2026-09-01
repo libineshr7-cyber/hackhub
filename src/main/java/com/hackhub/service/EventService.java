@@ -139,53 +139,46 @@ public class EventService {
     }
 
     public List<EventDto> searchEvents(String query, String eventType, String mode, String view, User user) {
-        java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
-        List<Event> allEvents = eventRepository.findAll();
+        String v = (view != null) ? view.trim().toLowerCase() : "upcoming";
+        List<EventDto> pool;
+
+        if ("deadline-soon".equals(v) || "deadlinesoon".equals(v)) {
+            pool = getDeadlineSoonEvents(user);
+        } else if ("latest".equals(v)) {
+            pool = getLatestEvents(user);
+        } else if ("ended".equals(v)) {
+            pool = getEndedEvents(user);
+        } else {
+            pool = getUpcomingEvents(user);
+        }
 
         String q = (query != null) ? query.trim().toLowerCase() : "";
         String type = (eventType != null) ? eventType.trim().toUpperCase() : "ALL";
         String m = (mode != null) ? mode.trim().toUpperCase() : "ALL";
-        String v = (view != null) ? view.trim().toLowerCase() : "upcoming";
-        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
 
-        return allEvents.stream()
-                .filter(evt -> {
+        return pool.stream()
+                .filter(dto -> {
                     // 1. Strict Event Type Match (e.g. CTF, HACKATHON, WORKSHOP, COMPETITION)
-                    if (!"ALL".equals(type) && !type.equalsIgnoreCase(evt.getEventType())) {
+                    if (!"ALL".equals(type) && !type.equalsIgnoreCase(dto.getEventType())) {
                         return false;
                     }
                     // 2. Strict Mode Match (e.g. ONLINE, OFFLINE, HYBRID)
-                    if (!"ALL".equals(m) && !m.equalsIgnoreCase(evt.getMode())) {
+                    if (!"ALL".equals(m) && !m.equalsIgnoreCase(dto.getMode())) {
                         return false;
                     }
                     // 3. Keyword Search Match across Title, Description, Skills, Venue, EventType, Mode
                     if (!q.isEmpty()) {
-                        String title = (evt.getTitle() != null) ? evt.getTitle().toLowerCase() : "";
-                        String desc = (evt.getDescription() != null) ? evt.getDescription().toLowerCase() : "";
-                        String skills = (evt.getSkills() != null) ? evt.getSkills().toLowerCase() : "";
-                        String venue = (evt.getVenue() != null) ? evt.getVenue().toLowerCase() : "";
-                        String eType = (evt.getEventType() != null) ? evt.getEventType().toLowerCase() : "";
-                        String eMode = (evt.getMode() != null) ? evt.getMode().toLowerCase() : "";
+                        String title = (dto.getTitle() != null) ? dto.getTitle().toLowerCase() : "";
+                        String desc = (dto.getDescription() != null) ? dto.getDescription().toLowerCase() : "";
+                        String skills = (dto.getSkills() != null) ? dto.getSkills().toLowerCase() : "";
+                        String venue = (dto.getVenue() != null) ? dto.getVenue().toLowerCase() : "";
+                        String eType = (dto.getEventType() != null) ? dto.getEventType().toLowerCase() : "";
+                        String eMode = (dto.getMode() != null) ? dto.getMode().toLowerCase() : "";
 
                         return title.contains(q) || desc.contains(q) || skills.contains(q) ||
                                venue.contains(q) || eType.contains(q) || eMode.contains(q);
                     }
                     return true;
-                })
-                .map(evt -> mapToDtoWithSavedSet(evt, user, savedIds))
-                .filter(dto -> {
-                    // When on 'ended' tab, only show ended events from last 7 days
-                    if ("ended".equals(v)) {
-                        return "ENDED".equals(dto.getStatus()) && dto.getEndDate() != null && !dto.getEndDate().isBefore(sevenDaysAgo);
-                    }
-                    // In ANY other tab (home, upcoming, latest, deadline-soon, saved), NEVER show ended events!
-                    return !"ENDED".equals(dto.getStatus());
-                })
-                .sorted((a, b) -> {
-                    if ("ended".equals(v)) {
-                        return b.getEndDate().compareTo(a.getEndDate());
-                    }
-                    return a.getStartDate().compareTo(b.getStartDate());
                 })
                 .collect(Collectors.toList());
     }
