@@ -11,11 +11,11 @@ const Auth = {
     }, 150);
   },
 
-  showFirstLoginModal(defaultPass = '123') {
-    this.showChangePasswordModal(defaultPass);
+  showFirstLoginModal() {
+    this.showChangePasswordModal();
   },
 
-  showChangePasswordModal(defaultPass = '') {
+  showChangePasswordModal() {
     const title = document.getElementById('first-login-modal-title');
     const desc = document.getElementById('first-login-modal-desc');
     const closeBtn = document.getElementById('first-login-close-btn');
@@ -25,16 +25,12 @@ const Auth = {
     
     const curr = document.getElementById('first-current-password');
     const next = document.getElementById('first-new-password');
-    if (curr) curr.value = defaultPass || '';
+    if (curr) curr.value = '';
     if (next) next.value = '';
     
     App.openModal('modal-first-login');
     setTimeout(() => {
-      if (defaultPass && next) {
-        next.focus();
-      } else if (curr) {
-        curr.focus();
-      }
+      if (curr) curr.focus();
     }, 150);
   },
 
@@ -46,8 +42,17 @@ const Auth = {
     const password = document.getElementById('login-password').value;
 
     if (!regNo || !password) {
-      App.showToast('Please enter registration number and password.', 'danger');
+      App.showToast('Please enter registration number or name and password.', 'danger');
+      if (!regNo) document.getElementById('login-reg-no').focus();
+      else document.getElementById('login-password').focus();
       return;
+    }
+
+    const btn = document.getElementById('btn-login-submit');
+    const originalText = btn ? btn.innerHTML : 'Login to HackHub';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Logging in...';
     }
 
     try {
@@ -72,33 +77,49 @@ const Auth = {
       App.updateUserUI(data);
 
       if (data.firstLogin || password === '123') {
-        this.showChangePasswordModal(password === '123' ? '123' : '');
+        this.showChangePasswordModal();
       } else {
         App.navigateTo('home');
       }
     } catch (err) {
       App.showToast(err.message || 'Login failed', 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     }
   },
 
   async handleFirstLoginPasswordChange(event) {
-    event.preventDefault();
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
     const currentPassword = document.getElementById('first-current-password').value;
     const newPassword = document.getElementById('first-new-password').value;
 
     if (!currentPassword || !newPassword) {
-      App.showToast('Please fill in both password fields.', 'danger');
+      App.showToast('Please fill in both current and new password fields.', 'danger');
+      if (!currentPassword) document.getElementById('first-current-password').focus();
+      else document.getElementById('first-new-password').focus();
       return;
     }
 
-    if (newPassword.length < 4) {
-      App.showToast('New password must be at least 4 characters.', 'danger');
+    if (newPassword.length < 3) {
+      App.showToast('New password must be at least 3 characters.', 'danger');
       return;
     }
 
-    if (newPassword === '123') {
-      App.showToast('New password cannot be the same as the temporary password.', 'danger');
+    if (newPassword === currentPassword) {
+      App.showToast('New password cannot be the same as current password.', 'danger');
       return;
+    }
+
+    const btn = document.getElementById('btn-update-password-submit');
+    const originalText = btn ? btn.innerHTML : 'Update Password & Continue';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Updating password...';
     }
 
     try {
@@ -120,6 +141,11 @@ const Auth = {
       App.navigateTo('home');
     } catch (err) {
       App.showToast(err.message || 'Password change failed. Check your current password.', 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     }
   },
 

@@ -517,14 +517,14 @@
                 </div>
                 <button type="button" class="close-btn" onclick="App.closeModal('modal-login')">&times;</button>
             </div>
-            <form id="form-login" onsubmit="Auth.handleLogin(event)">
+            <form id="form-login" onsubmit="Auth.handleLogin(event); return false;">
                 <div class="form-group">
                     <label class="form-label">Registration Number / Username</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="Enter Registration Number or Name" required onkeydown="if(event.key==='Enter'){event.preventDefault(); Auth.handleLogin(event);}">
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="Enter Registration Number or Name" required onkeydown="if(event.key==='Enter'){event.preventDefault(); const p=document.getElementById('login-password'); if(p.value){document.getElementById('btn-login-submit').click();} else {p.focus();}}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
-                    <input type="password" id="login-password" class="form-input" placeholder="Enter Password" required onkeydown="if(event.key==='Enter'){event.preventDefault(); Auth.handleLogin(event);}">
+                    <input type="password" id="login-password" class="form-input" placeholder="Enter Password" required onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('btn-login-submit').click();}">
                 </div>
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
                     <a href="#" style="font-size: 0.85rem;" onclick="App.closeModal('modal-login'); Auth.showForgotPasswordModal();">Forgot Password?</a>
