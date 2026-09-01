@@ -19,5 +19,5 @@ COPY --from=builder /app/target/hackhub-1.0.0.jar app.jar
 # Create uploads directory
 RUN mkdir -p uploads/posters /app/data
 
-EXPOSE 8085
+EXPOSE 10000 8085 8080
 ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-Xss512k", "-jar", "app.jar"]
