@@ -519,8 +519,8 @@
             </div>
             <form id="form-login" onsubmit="Auth.handleLogin(event); return false;">
                 <div class="form-group">
-                    <label class="form-label">Registration Number / Username</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="Enter Registration Number or Name" required onkeydown="if(event.key==='Enter'){event.preventDefault(); const p=document.getElementById('login-password'); if(p.value){document.getElementById('btn-login-submit').click();} else {p.focus();}}">
+                    <label class="form-label">Registration Number</label>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="Registration Number" required onkeydown="if(event.key==='Enter'){event.preventDefault(); const p=document.getElementById('login-password'); if(p.value){document.getElementById('btn-login-submit').click();} else {p.focus();}}">
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>

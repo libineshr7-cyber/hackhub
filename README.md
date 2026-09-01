@@ -91,23 +91,21 @@ http://localhost:8080
 
 ---
 
-## 🔑 Initial Accounts & Credentials
+## 🔑 Account Access & Security Architecture
 
-### Default Student Accounts (001–149)
-- **Registration Numbers**: `001`, `002`, `003`, ..., `149`
-- **Initial Password**: `123`
-- **First Login Behavior**: Prompted to update password immediately.
+### Department Student Accounts
+- **Registration Formats**: `CS2001`–`CS2049` (2nd Year), `CS3001`–`CS3048` (3rd Year).
+- **First Login Behavior**: Automatically prompted to establish a secure password upon initial access.
 
-### Default Admin Account
-- **Registration Number**: `000`
-- **Password**: `admin123`
-- **Role**: `ROLE_ADMIN`
+### Department Administration
+- **Role Hierarchy**: System Administrator (`ROLE_ADMIN`) and Department Sub-Administrators (`ROLE_SUBADMIN`).
+- **Access Control**: Role-based access control with granular department and year-level permission scoping.
 
 ---
 
 ## 🛡️ Security Notes
 
-- Passwords are strictly hashed using **BCrypt** with high salt work factors.
+- Passwords are strictly hashed using **BCrypt** with salted work factors.
 - File uploads are validated for MIME type (`image/jpeg`, `image/png`, `image/webp`), size (<5MB), and sanitized with random UUID filenames.
-- Admin routes (`/api/admin/**`) are protected by Spring Security role verification (`ROLE_ADMIN`), not just hidden client links.
-- Secrets are excluded via `.gitignore`.
+- Admin routes (`/api/admin/**`) are protected by Spring Security method security and role verification (`ROLE_ADMIN`, `ROLE_SUBADMIN`).
+- Secrets and sensitive environment configurations are excluded via `.gitignore`.
