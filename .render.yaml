@@ -6,4 +6,4 @@ services:
     healthCheckPath: /api/health
     envVars:
       - key: PORT
-        value: 10000
+        value: 8085
