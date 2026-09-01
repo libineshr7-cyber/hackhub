@@ -38,7 +38,8 @@ public class AuthService {
 
     public LoginResponse login(LoginRequest request) {
         String identifier = request.getRegistrationNumber() != null ? request.getRegistrationNumber().trim() : "";
-        User user = userRepository.findByRegistrationNumberIgnoreCase(identifier)
+        User user = userRepository.findByRegistrationNumber(identifier)
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(identifier))
                 .or(() -> userRepository.findByEmailIgnoreCase(identifier))
                 .or(() -> userRepository.findByNameIgnoreCase(identifier))
                 .orElseThrow(() -> new IllegalArgumentException("Invalid registration number, username, or password."));

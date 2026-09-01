@@ -32,8 +32,10 @@ const Events = {
     this.showGridLoading('home-upcoming-grid', 'Loading department & Unstop hackathons...');
     this.showGridLoading('home-deadline-grid', 'Checking application deadlines...');
     try {
-      const upcoming = await API.request('/events/upcoming');
-      const deadlineSoon = await API.request('/events/deadline-soon');
+      const [upcoming, deadlineSoon] = await Promise.all([
+        API.request('/events/upcoming'),
+        API.request('/events/deadline-soon')
+      ]);
 
       this.renderEventsGrid('home-upcoming-grid', upcoming);
       this.renderEventsGrid('home-deadline-grid', deadlineSoon);

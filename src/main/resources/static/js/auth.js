@@ -50,9 +50,14 @@ const Auth = {
 
     const btn = document.getElementById('btn-login-submit');
     const originalText = btn ? btn.innerHTML : 'Login to HackHub';
+    let progressTimer = null;
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '⏳ Logging in...';
+      btn.innerHTML = '⚡ Authenticating...';
+      let sec = 1;
+      progressTimer = setInterval(() => {
+        if (btn) btn.innerHTML = `⚡ Authenticating (${sec++}s)...`;
+      }, 1000);
     }
 
     try {
@@ -84,6 +89,7 @@ const Auth = {
     } catch (err) {
       App.showToast(err.message || 'Login failed', 'danger');
     } finally {
+      if (progressTimer) clearInterval(progressTimer);
       if (btn) {
         btn.disabled = false;
         btn.innerHTML = originalText;
