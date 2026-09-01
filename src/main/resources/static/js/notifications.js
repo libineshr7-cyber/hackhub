@@ -14,12 +14,12 @@ const Notifications = {
 
   startPolling() {
     if (this.pollTimer) clearInterval(this.pollTimer);
-    // Poll unread notification count every 8 seconds
+    // Poll unread notification count every 30 seconds when tab is active
     this.pollTimer = setInterval(() => {
-      if (API.getToken()) {
+      if (API.getToken() && !document.hidden) {
         this.checkNewNotifications();
       }
-    }, 8000);
+    }, 30000);
   },
 
   async fetchUnreadCount() {

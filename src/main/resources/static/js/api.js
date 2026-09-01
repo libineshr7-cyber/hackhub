@@ -54,9 +54,9 @@ const API = {
       try {
         const response = await fetch(url, config);
 
-        // Server cold start / Gateway booting (502, 503, 504) — retry automatically
-        if ((response.status === 502 || response.status === 503 || response.status === 504) && attempt < retries) {
-          console.warn(`⏳ Server booting (Status ${response.status}). Retrying attempt ${attempt}/${retries}...`);
+        // Server cold start / Gateway booting (502, 503, 504) or Rate-limited (429) — retry automatically
+        if ((response.status === 429 || response.status === 502 || response.status === 503 || response.status === 504) && attempt < retries) {
+          console.warn(`⏳ Server busy / rate limited (Status ${response.status}). Retrying attempt ${attempt}/${retries}...`);
           await new Promise(r => setTimeout(r, attempt * 1500));
           continue;
         }
@@ -68,6 +68,9 @@ const API = {
           if (response.status === 401 && !endpoint.startsWith('/auth/login')) {
             this.clearToken();
             window.location.reload();
+          }
+          if (response.status === 429) {
+            throw new Error('Too many requests. Please wait a few seconds and try again.');
           }
           const errorMsg = data && data.message ? data.message : `Error (${response.status}): ${response.statusText}`;
           throw new Error(errorMsg);

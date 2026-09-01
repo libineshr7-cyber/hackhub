@@ -37,15 +37,18 @@ public class AuthService {
     private static final SecureRandom random = new SecureRandom();
 
     public LoginResponse login(LoginRequest request) {
-        User user = userRepository.findByRegistrationNumber(request.getRegistrationNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Invalid registration number or password."));
+        String identifier = request.getRegistrationNumber() != null ? request.getRegistrationNumber().trim() : "";
+        User user = userRepository.findByRegistrationNumberIgnoreCase(identifier)
+                .or(() -> userRepository.findByEmailIgnoreCase(identifier))
+                .or(() -> userRepository.findByNameIgnoreCase(identifier))
+                .orElseThrow(() -> new IllegalArgumentException("Invalid registration number, username, or password."));
 
         if ("DISABLED".equalsIgnoreCase(user.getStatus())) {
             throw new IllegalStateException("Account is disabled. Please contact department admin.");
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid registration number or password.");
+            throw new IllegalArgumentException("Invalid registration number, username, or password.");
         }
 
         String token = jwtUtils.generateToken(user.getRegistrationNumber(), user.getRole());
