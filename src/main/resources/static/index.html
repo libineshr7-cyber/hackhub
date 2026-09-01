@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
     <title>HackHub — Department Hackathon &amp; Event Platform</title>
     <meta name="description" content="Department-only hackathon &amp; event platform for students to discover events, post hackathons, and find teammates.">
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/logo.png">
     <link rel="stylesheet" href="/css/styles.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -15,7 +18,8 @@
     <!-- Header Navigation -->
     <header class="header">
         <div class="header-content">
-            <div class="logo" data-view="home">
+            <div class="logo" data-view="home" title="HackHub Home">
+                <img src="/logo.png" alt="HackHub Logo" class="brand-logo-img">
                 <span class="logo-badge">HACKHUB</span>
             </div>
 
@@ -507,7 +511,10 @@
     <div id="modal-login" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Student Login</h3>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="/logo.png" alt="HackHub Logo" class="brand-logo-img" style="width: 32px; height: 32px;">
+                    <h3 class="modal-title">Student Login</h3>
+                </div>
             </div>
             <form onsubmit="Auth.handleLogin(event)">
                 <div class="form-group">
