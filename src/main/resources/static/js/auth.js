@@ -249,7 +249,19 @@ const Auth = {
   },
 
   async handleUpdateProfile(event) {
-    event.preventDefault();
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    if (this.isUpdatingProfile) return;
+    this.isUpdatingProfile = true;
+
+    const btn = document.querySelector('#view-profile button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : 'Save Profile';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Saving...';
+    }
+
     const name = document.getElementById('profile-name-input').value.trim();
     const email = document.getElementById('profile-email-input').value.trim();
     const skills = document.getElementById('profile-skills-input').value.trim();
@@ -271,12 +283,22 @@ const Auth = {
       App.showToast('Profile updated successfully!', 'success');
     } catch (err) {
       App.showToast(err.message || 'Profile update failed', 'danger');
+    } finally {
+      this.isUpdatingProfile = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
     }
   },
 
   logout() {
+    if (this.isLoggingOut) return;
+    this.isLoggingOut = true;
     API.clearToken();
     App.showToast('Logged out successfully.', 'info');
-    window.location.reload();
+    setTimeout(() => {
+      window.location.reload();
+    }, 250);
   }
 };
