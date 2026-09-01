@@ -53,9 +53,9 @@ public class UnstopSyncService {
     }
 
     public int fetchAndSyncUnstopHackathons() {
-        User admin = userRepository.findByRegistrationNumber("000").orElse(null);
+        User admin = userRepository.findByRegistrationNumber("Admin").orElse(null);
         if (admin == null) {
-            List<User> admins = userRepository.findAll();
+            List<User> admins = userRepository.findByRole("ROLE_ADMIN");
             if (!admins.isEmpty()) admin = admins.get(0);
         }
         if (admin == null) {
