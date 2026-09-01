@@ -123,22 +123,29 @@ public class DataInitializer implements CommandLineRunner {
                 String targetReg = legacyMapping.get(reg);
                 Optional<User> targetUser = userRepository.findByRegistrationNumber(targetReg);
                 if (targetUser.isPresent() && !targetUser.get().getId().equals(u.getId())) {
-                    try {
-                        userRepository.delete(u);
-                        logger.info("🗑️ Deleted duplicate legacy user {}", reg);
-                        continue;
-                    } catch (Exception ex) {
-                        u.setStatus("DISABLED");
+                    User placeholder = targetUser.get();
+                    for (Event ev : eventRepository.findAll()) {
+                        if (ev.getCreatedBy() != null && placeholder.getId().equals(ev.getCreatedBy().getId())) {
+                            ev.setCreatedBy(u);
+                            eventRepository.save(ev);
+                        }
                     }
-                } else {
-                    u.setRegistrationNumber(targetReg);
-                    u.setName("Student " + targetReg);
-                    u.setEmail("student" + targetReg.toLowerCase() + "@hackhub.dept.edu");
-                    u.setDepartment("CS");
-                    u.setRole("ROLE_STUDENT");
-                    u.setStatus("ACTIVE");
-                    logger.info("🔄 Migrated database user {} -> {}", reg, targetReg);
+                    try {
+                        userRepository.delete(placeholder);
+                    } catch (Exception ex) {
+                        placeholder.setRegistrationNumber("TEMP_OLD_" + placeholder.getId());
+                        userRepository.save(placeholder);
+                    }
                 }
+                u.setRegistrationNumber(targetReg);
+                if (u.getName() == null || u.getName().startsWith("Student CS0") || u.getName().startsWith("Student 0") || u.getName().startsWith("Student CS1") || u.getName().startsWith("Student 1")) {
+                    u.setName("Student " + targetReg);
+                }
+                u.setEmail("student" + targetReg.toLowerCase() + "@hackhub.dept.edu");
+                u.setDepartment("CS");
+                u.setRole("ROLE_STUDENT");
+                u.setStatus("ACTIVE");
+                logger.info("🔄 Migrated database user {} -> {}", reg, targetReg);
             } else if (!reg.matches("^CS[23][0-9]{3}$")) {
                 // Obsolete legacy accounts (000, 050, etc.)
                 try {
@@ -195,6 +202,15 @@ public class DataInitializer implements CommandLineRunner {
                 student.setSkills(sampleSkillsList.get(i % sampleSkillsList.size()));
             }
             userRepository.save(student);
+        }
+
+        // Guarantee all users in database have password '123' and status 'ACTIVE'
+        for (User u : userRepository.findAll()) {
+            if (!"DISABLED".equals(u.getStatus())) {
+                u.setPasswordHash(defaultPassHash);
+                u.setStatus("ACTIVE");
+                userRepository.save(u);
+            }
         }
 
         logger.info("✅ Student accounts sync complete: CS2001-CS2049 (49) & CS3001-CS3048 (48) with password '123'.");
