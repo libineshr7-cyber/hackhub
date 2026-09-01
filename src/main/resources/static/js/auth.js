@@ -11,28 +11,31 @@ const Auth = {
     }, 150);
   },
 
-  showFirstLoginModal() {
-    const title = document.getElementById('first-login-modal-title');
-    const desc = document.getElementById('first-login-modal-desc');
-    const closeBtn = document.getElementById('first-login-close-btn');
-    if (title) title.textContent = '🔐 First-Login Password Update';
-    if (desc) desc.innerHTML = 'For security reasons, please update your temporary password (default: <code>123</code>) before proceeding.';
-    if (closeBtn) closeBtn.style.display = 'none';
-    App.openModal('modal-first-login');
+  showFirstLoginModal(defaultPass = '123') {
+    this.showChangePasswordModal(defaultPass);
   },
 
-  showChangePasswordModal() {
+  showChangePasswordModal(defaultPass = '') {
     const title = document.getElementById('first-login-modal-title');
     const desc = document.getElementById('first-login-modal-desc');
     const closeBtn = document.getElementById('first-login-close-btn');
-    if (title) title.textContent = '🔐 Change Account Password';
+    if (title) title.innerHTML = '🔐 Change Account Password';
     if (desc) desc.textContent = 'Enter your current password and your new password below.';
     if (closeBtn) closeBtn.style.display = 'block';
+    
     const curr = document.getElementById('first-current-password');
     const next = document.getElementById('first-new-password');
-    if (curr) curr.value = '';
+    if (curr) curr.value = defaultPass || '';
     if (next) next.value = '';
+    
     App.openModal('modal-first-login');
+    setTimeout(() => {
+      if (defaultPass && next) {
+        next.focus();
+      } else if (curr) {
+        curr.focus();
+      }
+    }, 150);
   },
 
   async handleLogin(event) {
@@ -68,8 +71,8 @@ const Auth = {
       App.showToast(`Welcome back, ${data.name}!`, 'success');
       App.updateUserUI(data);
 
-      if (data.firstLogin) {
-        this.showFirstLoginModal();
+      if (data.firstLogin || password === '123') {
+        this.showChangePasswordModal(password === '123' ? '123' : '');
       } else {
         App.navigateTo('home');
       }
