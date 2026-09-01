@@ -67,7 +67,7 @@ const App = {
       bottomProfileAvatar.textContent = initials;
     }
 
-    if (user.role === 'ROLE_ADMIN') {
+    if (user.role === 'ROLE_ADMIN' || user.role === 'ROLE_SUBADMIN') {
       if (navAdmin) navAdmin.style.display = 'inline-block';
       if (bottomNavAdmin) bottomNavAdmin.style.display = 'flex';
     } else {

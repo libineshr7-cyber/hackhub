@@ -34,22 +34,29 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("==================================================");
         logger.info("🚀 Initializing HackHub Database & Initial Accounts...");
 
-        // 1. Seed Admin Account (000 / admin)
-        if (!userRepository.existsByRegistrationNumber("000")) {
+        // 1. Seed Admin Account (Admin / 123)
+        if (!userRepository.existsByRegistrationNumber("Admin")) {
             User admin = new User();
-            admin.setRegistrationNumber("000");
-            admin.setName("Department Head / Admin");
+            admin.setRegistrationNumber("Admin");
+            admin.setName("Department Admin");
             admin.setEmail("admin@hackhub.dept.edu");
-            admin.setPasswordHash(passwordEncoder.encode("admin123"));
+            admin.setPasswordHash(passwordEncoder.encode("123"));
             admin.setRole("ROLE_ADMIN");
             admin.setStatus("ACTIVE");
+            admin.setDepartment("CS");
             admin.setSkills("Administration, Cybersecurity, Governance");
             admin.setFirstLogin(false);
             userRepository.save(admin);
-            logger.info("✅ Admin account created: RegNo 000 | Password admin123");
+            logger.info("✅ Admin account created: RegNo Admin | Password 123");
         }
 
-        // 2. Seed Initial Student Accounts (CS001 to CS049) & Migrate legacy numeric Reg Nos (001 -> CS001)
+        // Clean up legacy 000 admin if present
+        userRepository.findByRegistrationNumber("000").ifPresent(oldAdmin -> {
+            userRepository.delete(oldAdmin);
+            logger.info("🗑️ Removed legacy admin account 000");
+        });
+
+        // 2. Seed Initial Student Accounts (CS2001-CS2049 and CS3001-CS3048)
         List<String> sampleSkillsList = Arrays.asList(
                 "Python, Cybersecurity",
                 "Java, Web Development",
@@ -64,35 +71,58 @@ public class DataInitializer implements CommandLineRunner {
         String defaultPassHash = passwordEncoder.encode("123");
         int countSeeded = 0;
 
-        // Migrate ALL 3-digit numeric registration numbers (e.g. 001..049 -> CS001..CS049) in DB
+        // Migrate legacy CS001..CS049 -> CS2001..CS2049 in DB
         List<User> allUsers = userRepository.findAll();
         for (User u : allUsers) {
-            if (u.getRegistrationNumber() != null && u.getRegistrationNumber().matches("\\d{3}") && !"000".equals(u.getRegistrationNumber())) {
-                String oldReg = u.getRegistrationNumber();
-                String newReg = "CS" + oldReg;
-                // Only migrate if the target CS reg number doesn't already exist
-                if (!userRepository.existsByRegistrationNumber(newReg)) {
-                    u.setRegistrationNumber(newReg);
-                    if (u.getName().startsWith("Student ") && !u.getName().contains("CS")) {
-                        u.setName("Student " + newReg);
+            String reg = u.getRegistrationNumber();
+            if (reg != null && reg.matches("^CS0[0-4][0-9]$")) {
+                int num = Integer.parseInt(reg.substring(2));
+                String targetReg = String.format("CS%04d", 2000 + num);
+                if (!userRepository.existsByRegistrationNumber(targetReg)) {
+                    u.setRegistrationNumber(targetReg);
+                    if (u.getName() != null && u.getName().contains("CS0")) {
+                        u.setName(u.getName().replace("CS0", "CS20"));
+                    }
+                    if (u.getDepartment() == null) {
+                        u.setDepartment("CS");
                     }
                     userRepository.save(u);
-                    logger.info("🔄 Migrated database user {} -> {}", oldReg, newReg);
+                    logger.info("🔄 Migrated database user {} -> {}", reg, targetReg);
                 }
             }
         }
 
+        // Seed CS2001 to CS2049 (2nd Year)
         for (int i = 1; i <= 49; i++) {
-            String newRegNo = String.format("CS%03d", i);
-
-            if (!userRepository.existsByRegistrationNumber(newRegNo)) {
+            String regNo = String.format("CS%04d", 2000 + i);
+            if (!userRepository.existsByRegistrationNumber(regNo)) {
                 User student = new User();
-                student.setRegistrationNumber(newRegNo);
-                student.setName("Student " + newRegNo);
-                student.setEmail("student" + newRegNo.toLowerCase() + "@hackhub.dept.edu");
+                student.setRegistrationNumber(regNo);
+                student.setName("Student " + regNo);
+                student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
                 student.setPasswordHash(defaultPassHash);
                 student.setRole("ROLE_STUDENT");
                 student.setStatus("ACTIVE");
+                student.setDepartment("CS");
+                student.setSkills(sampleSkillsList.get(i % sampleSkillsList.size()));
+                student.setFirstLogin(true);
+                userRepository.save(student);
+                countSeeded++;
+            }
+        }
+
+        // Seed CS3001 to CS3048 (3rd Year)
+        for (int i = 1; i <= 48; i++) {
+            String regNo = String.format("CS%04d", 3000 + i);
+            if (!userRepository.existsByRegistrationNumber(regNo)) {
+                User student = new User();
+                student.setRegistrationNumber(regNo);
+                student.setName("Student " + regNo);
+                student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
+                student.setPasswordHash(defaultPassHash);
+                student.setRole("ROLE_STUDENT");
+                student.setStatus("ACTIVE");
+                student.setDepartment("CS");
                 student.setSkills(sampleSkillsList.get(i % sampleSkillsList.size()));
                 student.setFirstLogin(true);
                 userRepository.save(student);
@@ -101,12 +131,12 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         if (countSeeded > 0) {
-            logger.info("✅ Seeded {} initial student accounts (CS001 to CS049) with default password '123'.", countSeeded);
+            logger.info("✅ Seeded {} student accounts (CS2001-CS2049 & CS3001-CS3048) with default password '123'.", countSeeded);
         }
 
         // 3. Seed Sample Department Hackathons & Events if empty
         if (eventRepository.count() == 0) {
-            User creator = userRepository.findByRegistrationNumber("CS001").orElse(null);
+            User creator = userRepository.findByRegistrationNumber("CS2001").orElse(null);
             if (creator == null) {
                 creator = userRepository.findAll().get(0);
             }

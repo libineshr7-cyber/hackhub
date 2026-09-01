@@ -32,23 +32,95 @@ public class TeamService {
     @Autowired
     private NotificationService notificationService;
 
-    public List<Map<String, String>> searchStudents(String query) {
+    public List<Map<String, String>> searchStudents(String query, String filterBy, String filterValue) {
         if (query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
         }
         String q = query.trim();
         List<User> users = userRepository.findByRegistrationNumberContainingOrNameContaining(q, q);
         return users.stream()
-                .filter(u -> !"DISABLED".equalsIgnoreCase(u.getStatus()) && !"ROLE_ADMIN".equals(u.getRole()))
+                .filter(u -> !"DISABLED".equalsIgnoreCase(u.getStatus()) && !"ROLE_ADMIN".equals(u.getRole()) && !"ROLE_SUBADMIN".equals(u.getRole()))
+                .filter(u -> {
+                    if ("class".equalsIgnoreCase(filterBy) && filterValue != null && !filterValue.isEmpty()) {
+                        // Class filter: reg number starts with filterValue (e.g. "CS2", "CS3")
+                        return u.getRegistrationNumber() != null &&
+                               u.getRegistrationNumber().toUpperCase().startsWith(filterValue.toUpperCase());
+                    }
+                    if ("department".equalsIgnoreCase(filterBy) && filterValue != null && !filterValue.isEmpty()) {
+                        // Department filter: user's department matches
+                        return filterValue.equalsIgnoreCase(u.getDepartment());
+                    }
+                    return true; // No filter — show all
+                })
                 .limit(10)
                 .map(u -> {
                     Map<String, String> m = new HashMap<>();
                     m.put("registrationNumber", u.getRegistrationNumber());
                     m.put("name", u.getName());
                     m.put("skills", u.getSkills() != null ? u.getSkills() : "");
+                    m.put("department", u.getDepartment() != null ? u.getDepartment() : "");
                     return m;
                 })
                 .collect(Collectors.toList());
+    }
+
+    // Backward compat overload
+    public List<Map<String, String>> searchStudents(String query) {
+        return searchStudents(query, null, null);
+    }
+
+    /**
+     * Broadcast team invite to a whole class (e.g. "CS2" = CS2001-CS2049) or
+     * whole department (e.g. "CS"). Sends notifications to all eligible users.
+     */
+    @Transactional
+    public ApiResponse broadcastTeamInvite(Long teamId, String filterType, String filterValue, User inviter) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
+
+        if (filterValue == null || filterValue.trim().isEmpty()) {
+            throw new IllegalArgumentException("Please specify a class prefix or department name.");
+        }
+
+        List<User> targets;
+        if ("class".equalsIgnoreCase(filterType)) {
+            // Class: all students whose reg number starts with filterValue
+            targets = userRepository.findByRegistrationNumberStartingWith(filterValue.toUpperCase());
+        } else if ("department".equalsIgnoreCase(filterType)) {
+            // Department: all students in a specific department
+            targets = userRepository.findByDepartment(filterValue.toUpperCase());
+        } else {
+            throw new IllegalArgumentException("Invalid filterType. Use 'class' or 'department'.");
+        }
+
+        long currentCount = teamMemberRepository.countByTeamAndStatus(team, "ACTIVE");
+        int sent = 0;
+        int skipped = 0;
+
+        for (User target : targets) {
+            // Skip admin/subadmin, disabled, self, already member, already requested
+            if (!"ROLE_STUDENT".equals(target.getRole())) continue;
+            if ("DISABLED".equalsIgnoreCase(target.getStatus())) continue;
+            if (target.getId().equals(inviter.getId())) continue;
+            if (teamMemberRepository.existsByTeamAndUserAndStatus(team, target, "ACTIVE")) { skipped++; continue; }
+            if (teamRequestRepository.existsByTeamAndRequesterAndStatus(team, target, "PENDING")) { skipped++; continue; }
+            if (currentCount >= team.getMaxMembers()) break;
+
+            TeamRequest request = new TeamRequest(team, team.getEvent(), target, "PENDING");
+            teamRequestRepository.save(request);
+
+            notificationService.createNotification(
+                target,
+                inviter,
+                "🤝 Team Invitation Received!",
+                inviter.getName() + " (" + inviter.getRegistrationNumber() + ") invited you to join team '" + team.getTeamName() + "' for hackathon '" + team.getEvent().getTitle() + "'.",
+                "TEAM_INVITE",
+                "teams"
+            );
+            sent++;
+        }
+
+        return new ApiResponse(true, "Team invitation sent to " + sent + " student(s). " + (skipped > 0 ? skipped + " already in team or pending." : ""));
     }
 
     @Transactional

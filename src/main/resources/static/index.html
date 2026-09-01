@@ -231,6 +231,7 @@
                     <button class="btn btn-secondary btn-sm" onclick="Admin.syncUnstopEvents()">🌐 Sync Unstop Hackathons</button>
                     <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.4);" onclick="Admin.clearUnstopEvents()">🗑️ Clear Unstop</button>
                     <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-admin-create-student')">+ Create Student Account</button>
+                    <button id="admin-create-subadmin-btn" class="btn btn-sm" style="background:#7c3aed; color:#fff; display:none;" onclick="App.openModal('modal-create-subadmin')">🛡️ Create Sub-Admin</button>
                 </div>
             </div>
 
@@ -271,6 +272,7 @@
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector & H2 Console</button>
+                <button id="admin-subtab-subadmins" class="btn btn-sm admin-subtab-btn" data-subtab="subadmins" onclick="Admin.switchSubTab('subadmins')" style="display:none; background:#7c3aed; color:#fff; border-color:#7c3aed;">🛡️ Sub-Admin Management</button>
             </div>
 
             <!-- DATABASE INSPECTOR & H2 CONSOLE LINK SECTION -->
@@ -370,10 +372,37 @@
                 </div>
             </div>
 
+            <!-- SUB-ADMIN MANAGEMENT SECTION (ROLE_ADMIN only) -->
+            <div id="admin-sec-subadmins" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: #7c3aed;">🛡️ Sub-Admin Management</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Create and manage Sub-Admins. Each Sub-Admin handles student accounts for their assigned department.</span>
+                    </div>
+                    <button class="btn btn-sm" style="background:#7c3aed; color:#fff;" onclick="App.openModal('modal-create-subadmin')">+ Create Sub-Admin</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-subadmins-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
             <!-- 3. Student Management Table -->
             <div id="admin-sec-students" style="margin-bottom: 30px;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
-                    <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (Initial CS001–CS049 & Admin Created CS050+)</h3>
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (CS2001–CS2049, CS3001–CS3048 & Admin Created)</h3>
                     <input type="text" id="admin-student-search-input" class="form-input admin-search-input" placeholder="Search Reg No or Name..." oninput="Admin.handleSearchStudents()">
                 </div>
 
@@ -381,9 +410,11 @@
                     <table class="data-table">
                         <thead>
                             <tr>
+                                <th>ID</th>
                                 <th>Reg No</th>
                                 <th>Name</th>
                                 <th>Email</th>
+                                <th>Dept</th>
                                 <th>Skills</th>
                                 <th>Status</th>
                                 <th>Actions</th>
@@ -481,7 +512,7 @@
             <form onsubmit="Auth.handleLogin(event)">
                 <div class="form-group">
                     <label class="form-label">Registration Number</label>
-                    <input type="text" id="login-reg-no" class="form-input" placeholder="CSXXX" required>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="Admin or CS2XXX / CS3XXX" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Password</label>
@@ -808,6 +839,16 @@
                     <label class="form-label">Skills (Comma-separated)</label>
                     <input type="text" id="admin-create-skills" class="form-input" placeholder="Python, Cybersecurity, Web Development">
                 </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select id="admin-create-dept" class="form-select">
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
                 <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password will be generated as <code>123</code>. First-login password change will be required.</p>
                 <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
             </form>
@@ -936,6 +977,77 @@
                 <div id="notifications-list" style="max-height: 380px; overflow-y: auto;">
                 </div>
             </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Sub-Admin Account (ROLE_ADMIN only) -->
+    <div id="modal-create-subadmin" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">🛡️ Create Sub-Admin Account</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-create-subadmin" onsubmit="Admin.handleCreateSubAdminSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Registration Number (Username) *</label>
+                    <input type="text" id="sa-create-reg-no" class="form-input" placeholder="e.g. SUBADMIN-CS, SA001" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="sa-create-name" class="form-input" placeholder="Sub-Admin Full Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="sa-create-email" class="form-input" placeholder="subadmin.cs@hackhub.dept.edu">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Department *</label>
+                    <select id="sa-create-dept" class="form-select" required>
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>. Sub-Admin can only manage students in their assigned department.</p>
+                <button type="submit" class="btn btn-sm" style="width:100%; background:#7c3aed; color:#fff;">Create Sub-Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Sub-Admin Account (ROLE_ADMIN only) -->
+    <div id="modal-edit-subadmin" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Modify Sub-Admin</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-edit-subadmin" onsubmit="Admin.handleEditSubAdminSubmit(event)">
+                <input type="hidden" id="sa-edit-id">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="sa-edit-name" class="form-input" placeholder="Sub-Admin Full Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="sa-edit-email" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Department</label>
+                    <select id="sa-edit-dept" class="form-select">
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:16px;">
+                    <button type="submit" class="btn btn-sm" style="flex:1; background:#7c3aed; color:#fff;">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-edit-subadmin')">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 

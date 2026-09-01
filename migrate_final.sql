@@ -1,0 +1,57 @@
+-- Insert Admin user (password: '123' BCrypt hash)
+INSERT IGNORE INTO users (registration_number, name, email, password_hash, role, status, first_login, department, created_at, updated_at)
+VALUES ('Admin','Department Admin','admin@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_ADMIN','ACTIVE',0,'CS',NOW(),NOW());
+
+-- Update existing students to have department = CS
+UPDATE users SET department = 'CS' WHERE department IS NULL OR department = '';
+
+-- Insert CS3001-CS3048 new 3rd year students
+INSERT IGNORE INTO users (registration_number, name, email, password_hash, role, status, first_login, department, skills, created_at, updated_at) VALUES
+('CS3001','Student CS3001','studentcs3001@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3002','Student CS3002','studentcs3002@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3003','Student CS3003','studentcs3003@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3004','Student CS3004','studentcs3004@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3005','Student CS3005','studentcs3005@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3006','Student CS3006','studentcs3006@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3007','Student CS3007','studentcs3007@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3008','Student CS3008','studentcs3008@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3009','Student CS3009','studentcs3009@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3010','Student CS3010','studentcs3010@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3011','Student CS3011','studentcs3011@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3012','Student CS3012','studentcs3012@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3013','Student CS3013','studentcs3013@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3014','Student CS3014','studentcs3014@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3015','Student CS3015','studentcs3015@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3016','Student CS3016','studentcs3016@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3017','Student CS3017','studentcs3017@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3018','Student CS3018','studentcs3018@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3019','Student CS3019','studentcs3019@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3020','Student CS3020','studentcs3020@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3021','Student CS3021','studentcs3021@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3022','Student CS3022','studentcs3022@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3023','Student CS3023','studentcs3023@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3024','Student CS3024','studentcs3024@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3025','Student CS3025','studentcs3025@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3026','Student CS3026','studentcs3026@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3027','Student CS3027','studentcs3027@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3028','Student CS3028','studentcs3028@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3029','Student CS3029','studentcs3029@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3030','Student CS3030','studentcs3030@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3031','Student CS3031','studentcs3031@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3032','Student CS3032','studentcs3032@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3033','Student CS3033','studentcs3033@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3034','Student CS3034','studentcs3034@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3035','Student CS3035','studentcs3035@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3036','Student CS3036','studentcs3036@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3037','Student CS3037','studentcs3037@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3038','Student CS3038','studentcs3038@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3039','Student CS3039','studentcs3039@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3040','Student CS3040','studentcs3040@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3041','Student CS3041','studentcs3041@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3042','Student CS3042','studentcs3042@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3043','Student CS3043','studentcs3043@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3044','Student CS3044','studentcs3044@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3045','Student CS3045','studentcs3045@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3046','Student CS3046','studentcs3046@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3047','Student CS3047','studentcs3047@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW()),
+('CS3048','Student CS3048','studentcs3048@hackhub.dept.edu','$2a$10$N.zmdr9k7uOCQb376NoUnuTJ8iAt6Z5EHsM8lE9lBpwTmVl9.b2hy','ROLE_STUDENT','ACTIVE',1,'CS','Python, Java',NOW(),NOW());

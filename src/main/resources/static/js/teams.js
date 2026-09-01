@@ -65,9 +65,68 @@ const Teams = {
     let inviteFormHtml = '';
     if (team.isUserMember && !isFull) {
       inviteFormHtml = `
-        <div style="margin-top: 10px; padding-top: 10px; border-top: 1px dashed var(--border-color); display: flex; gap: 8px;">
-          <input type="text" id="invite-input-${team.id}" class="form-input" placeholder="Enter Name or Reg No (e.g. CS005, CS012)" style="font-size: 0.8rem; padding: 6px 10px;">
-          <button class="btn btn-primary btn-sm" onclick="Teams.handleInviteTeammate(${team.id})">➕ Send Request</button>
+        <div style="margin-top: 12px; padding-top: 12px; border-top: 1px dashed var(--border-color);">
+          <!-- Broadcast / Invite Mode Selector -->
+          <div style="margin-bottom: 10px;">
+            <label style="font-size:0.8rem; font-weight:700; color:var(--text-main); display:block; margin-bottom:6px;">📤 Send Team Invitation To:</label>
+            <div style="display:flex; gap:6px; flex-wrap:wrap;">
+              <button class="btn btn-outline btn-sm team-invite-mode-btn active" 
+                data-mode="person" data-teamid="${team.id}"
+                onclick="Teams.selectInviteMode(${team.id}, 'person', this)" 
+                style="font-size:0.75rem; padding:4px 10px;">
+                👤 Specific Person
+              </button>
+              <button class="btn btn-outline btn-sm team-invite-mode-btn" 
+                data-mode="class" data-teamid="${team.id}"
+                onclick="Teams.selectInviteMode(${team.id}, 'class', this)" 
+                style="font-size:0.75rem; padding:4px 10px;">
+                🎓 Whole Class
+              </button>
+              <button class="btn btn-outline btn-sm team-invite-mode-btn" 
+                data-mode="department" data-teamid="${team.id}"
+                onclick="Teams.selectInviteMode(${team.id}, 'department', this)" 
+                style="font-size:0.75rem; padding:4px 10px;">
+                🏢 Whole Department
+              </button>
+            </div>
+          </div>
+
+          <!-- Person Invite Panel -->
+          <div id="invite-panel-person-${team.id}" style="display:flex; gap:8px;">
+            <input type="text" id="invite-input-${team.id}" class="form-input" 
+              placeholder="Enter Name or Reg No (e.g. CS2005, CS3012)" 
+              style="font-size: 0.8rem; padding: 6px 10px;">
+            <button class="btn btn-primary btn-sm" onclick="Teams.handleInviteTeammate(${team.id})">➕ Send</button>
+          </div>
+
+          <!-- Class Broadcast Panel -->
+          <div id="invite-panel-class-${team.id}" style="display:none; gap:8px;">
+            <select id="invite-class-${team.id}" class="form-select" style="font-size:0.8rem; padding:6px 10px;">
+              <option value="CS2">CS 2nd Year (CS2001–CS2049)</option>
+              <option value="CS3">CS 3rd Year (CS3001–CS3048)</option>
+              <option value="IT2">IT 2nd Year (IT2xxx)</option>
+              <option value="IT3">IT 3rd Year (IT3xxx)</option>
+              <option value="ECE2">ECE 2nd Year</option>
+              <option value="ECE3">ECE 3rd Year</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="Teams.handleBroadcastClass(${team.id})" style="white-space:nowrap;">
+              📢 Broadcast to Class
+            </button>
+          </div>
+
+          <!-- Department Broadcast Panel -->
+          <div id="invite-panel-department-${team.id}" style="display:none; gap:8px;">
+            <select id="invite-dept-${team.id}" class="form-select" style="font-size:0.8rem; padding:6px 10px;">
+              <option value="CS">CS Department</option>
+              <option value="IT">IT Department</option>
+              <option value="ECE">ECE Department</option>
+              <option value="MECH">MECH Department</option>
+              <option value="EEE">EEE Department</option>
+            </select>
+            <button class="btn btn-primary btn-sm" onclick="Teams.handleBroadcastDepartment(${team.id})" style="white-space:nowrap;">
+              📢 Broadcast to Dept
+            </button>
+          </div>
         </div>
       `;
     }
@@ -101,12 +160,29 @@ const Teams = {
     `;
   },
 
+  selectInviteMode(teamId, mode, clickedBtn) {
+    // Update active button styling
+    document.querySelectorAll(`.team-invite-mode-btn[data-teamid="${teamId}"]`).forEach(btn => {
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-outline');
+    });
+    clickedBtn.classList.add('btn-primary');
+    clickedBtn.classList.remove('btn-outline');
+
+    // Show/hide panels
+    const panels = ['person', 'class', 'department'];
+    panels.forEach(p => {
+      const el = document.getElementById(`invite-panel-${p}-${teamId}`);
+      if (el) el.style.display = (p === mode) ? 'flex' : 'none';
+    });
+  },
+
   async handleInviteTeammate(teamId) {
     const input = document.getElementById(`invite-input-${teamId}`);
     const regNoOrName = input ? input.value.trim() : '';
 
     if (!regNoOrName) {
-      App.showToast('Please enter a student Name or Registration Number (e.g. CS005).', 'danger');
+      App.showToast('Please enter a student Name or Registration Number (e.g. CS2005).', 'danger');
       return;
     }
 
@@ -123,6 +199,54 @@ const Teams = {
       }
     } catch (err) {
       App.showToast(err.message || 'Invitation failed', 'danger');
+    }
+  },
+
+  async handleBroadcastClass(teamId) {
+    const select = document.getElementById(`invite-class-${teamId}`);
+    const classPrefix = select ? select.value : '';
+
+    if (!classPrefix) {
+      App.showToast('Please select a class.', 'danger');
+      return;
+    }
+
+    if (!confirm(`Send team invitation to ALL students in class "${classPrefix}"? This will notify them all.`)) return;
+
+    try {
+      const res = await API.request('/teams/broadcast', {
+        method: 'POST',
+        body: JSON.stringify({ teamId, filterType: 'class', filterValue: classPrefix })
+      });
+
+      App.showToast(res.message, 'success');
+      if (this.currentEventId) this.fetchAndRenderTeams(this.currentEventId);
+    } catch (err) {
+      App.showToast(err.message || 'Broadcast failed', 'danger');
+    }
+  },
+
+  async handleBroadcastDepartment(teamId) {
+    const select = document.getElementById(`invite-dept-${teamId}`);
+    const dept = select ? select.value : '';
+
+    if (!dept) {
+      App.showToast('Please select a department.', 'danger');
+      return;
+    }
+
+    if (!confirm(`Send team invitation to ALL students in ${dept} Department? This will notify them all.`)) return;
+
+    try {
+      const res = await API.request('/teams/broadcast', {
+        method: 'POST',
+        body: JSON.stringify({ teamId, filterType: 'department', filterValue: dept })
+      });
+
+      App.showToast(res.message, 'success');
+      if (this.currentEventId) this.fetchAndRenderTeams(this.currentEventId);
+    } catch (err) {
+      App.showToast(err.message || 'Broadcast failed', 'danger');
     }
   },
 
@@ -223,7 +347,7 @@ const Teams = {
     try {
       const students = await API.request(`/teams/search-students?query=${encodeURIComponent(query)}`);
       if (!students || students.length === 0) {
-        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); padding: 8px;">No students found matching "${this.escapeHtml(query)}". Try e.g. CS001, CS027.</div>`;
+        container.innerHTML = `<div style="font-size: 0.85rem; color: var(--text-muted); padding: 8px;">No students found matching "${this.escapeHtml(query)}". Try e.g. CS2001, CS3027.</div>`;
         return;
       }
 
@@ -231,7 +355,7 @@ const Teams = {
         <div style="background: var(--bg-dark); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 10px 14px; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <div style="font-weight: 700; font-size: 0.9rem; color: var(--text-main);">🎓 ${this.escapeHtml(s.name)} (<span style="color: var(--accent-maroon);">${this.escapeHtml(s.registrationNumber)}</span>)</div>
-            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Skills: ${this.escapeHtml(s.skills || 'None listed')}</div>
+            <div style="font-size: 0.78rem; color: var(--text-muted); margin-top: 2px;">Skills: ${this.escapeHtml(s.skills || 'None listed')} ${s.department ? '• Dept: <strong>' + this.escapeHtml(s.department) + '</strong>' : ''}</div>
           </div>
           <div>
             <span style="font-size: 0.75rem; background: var(--accent-maroon-tint); color: var(--accent-maroon); font-weight: 700; padding: 4px 8px; border-radius: 6px;">Available Teammate</span>

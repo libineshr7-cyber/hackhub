@@ -204,7 +204,10 @@ const Auth = {
       document.getElementById('profile-name-input').value = user.name || '';
       document.getElementById('profile-email-input').value = user.email || '';
       document.getElementById('profile-skills-input').value = user.skills || '';
-      document.getElementById('profile-role').textContent = user.role === 'ROLE_ADMIN' ? 'Department Admin' : 'Student';
+      document.getElementById('profile-role').textContent = 
+        user.role === 'ROLE_ADMIN' ? 'Department Admin' : 
+        user.role === 'ROLE_SUBADMIN' ? ('Sub-Admin' + (user.department ? ' — ' + user.department + ' Dept' : '')) :
+        'Student';
     } catch (err) {
       App.showToast('Failed to load profile', 'danger');
     }

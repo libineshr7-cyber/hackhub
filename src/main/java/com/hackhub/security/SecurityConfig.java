@@ -64,7 +64,7 @@ public class SecurityConfig {
                         "/api/auth/**",
                         "/api/health"
                     ).permitAll()
-                    .requestMatchers("/api/admin/**").hasAuthority("ROLE_ADMIN")
+                    .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUBADMIN")
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().permitAll()
             );

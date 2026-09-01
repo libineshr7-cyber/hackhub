@@ -15,11 +15,28 @@ const Admin = {
       document.getElementById('stat-saved-events').textContent = stats.totalSavedEvents;
       document.getElementById('stat-total-reports').textContent = stats.totalReports;
 
+      const user = API.getUser();
+      // Sub-admin management tab: only visible to ROLE_ADMIN
+      const subAdminTab = document.getElementById('admin-subtab-subadmins');
+      const subAdminSection = document.getElementById('admin-sec-subadmins');
+      const subAdminCreateBtn = document.getElementById('admin-create-subadmin-btn');
+      if (user && user.role === 'ROLE_ADMIN') {
+        if (subAdminTab) subAdminTab.style.display = 'inline-flex';
+        if (subAdminCreateBtn) subAdminCreateBtn.style.display = 'inline-flex';
+      } else {
+        if (subAdminTab) subAdminTab.style.display = 'none';
+        if (subAdminSection) subAdminSection.style.display = 'none';
+        if (subAdminCreateBtn) subAdminCreateBtn.style.display = 'none';
+      }
+
       await this.loadPostingHistory();
       await this.loadUserLogs();
       await this.loadStudents();
       await this.loadEvents();
       await this.loadReports();
+      if (user && user.role === 'ROLE_ADMIN') {
+        await this.loadSubAdmins();
+      }
     } catch (err) {
       App.showToast('Failed to load Admin Dashboard', 'danger');
     }
@@ -60,14 +77,20 @@ const Admin = {
       'students': document.getElementById('admin-sec-students'),
       'events': document.getElementById('admin-sec-events'),
       'reports': document.getElementById('admin-sec-reports'),
-      'database': document.getElementById('admin-sec-database')
+      'database': document.getElementById('admin-sec-database'),
+      'subadmins': document.getElementById('admin-sec-subadmins')
     };
 
+    const user = API.getUser();
     if (tabName === 'all') {
       Object.keys(sections).forEach(key => {
-        if (sections[key]) {
-          sections[key].style.display = (key === 'database') ? 'none' : 'block';
+        if (!sections[key]) return;
+        if (key === 'database') { sections[key].style.display = 'none'; return; }
+        if (key === 'subadmins') {
+          sections[key].style.display = (user && user.role === 'ROLE_ADMIN') ? 'block' : 'none';
+          return;
         }
+        sections[key].style.display = 'block';
       });
     } else {
       Object.keys(sections).forEach(key => {
@@ -92,13 +115,14 @@ const Admin = {
       let data = [];
       if (tableName === 'users') {
         data = await API.request('/admin/users/log');
-        headersEl.innerHTML = '<th>ID</th><th>Reg No</th><th>Name</th><th>Role</th><th>Status</th><th>First Login</th>';
+        headersEl.innerHTML = '<th>ID</th><th>Reg No</th><th>Name</th><th>Role</th><th>Dept</th><th>Status</th><th>First Login</th>';
         rowsEl.innerHTML = data.map(u => `
           <tr>
             <td>#${u.id}</td>
             <td><strong>${this.escapeHtml(u.registrationNumber)}</strong></td>
             <td>${this.escapeHtml(u.name)}</td>
             <td><code>${u.role}</code></td>
+            <td><span style="font-size:0.75rem; color:var(--accent-cyan);">${this.escapeHtml(u.department || 'CS')}</span></td>
             <td><span class="badge ${u.status === 'ACTIVE' ? 'badge-upcoming' : 'badge-ended'}">${u.status}</span></td>
             <td>${u.firstLogin ? 'YES' : 'NO'}</td>
           </tr>`).join('');
@@ -203,7 +227,7 @@ const Admin = {
       if (!tbody) return;
 
       if (!users || users.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding:20px;">No user account logs found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color: var(--text-muted); padding:20px;">No user account logs found.</td></tr>`;
         return;
       }
 
@@ -218,14 +242,18 @@ const Admin = {
         const formattedCreated = this.formatDateTime(u.createdAt);
         const roleBadge = u.role === 'ROLE_ADMIN' ?
           `<span style="background:var(--accent-maroon); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:700;">ADMIN</span>` :
+          u.role === 'ROLE_SUBADMIN' ?
+          `<span style="background:#7c3aed; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:700;">SUB-ADMIN</span>` :
           `<span style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">STUDENT</span>`;
 
         return `
           <tr>
+            <td><strong style="color:var(--accent-cyan); font-size:0.8rem;">#${u.id}</strong></td>
             <td><strong style="color:var(--accent-cyan);">🆔 ${this.escapeHtml(u.registrationNumber)}</strong></td>
             <td><strong>${this.escapeHtml(u.name)}</strong></td>
             <td><span style="font-size:0.8rem;">${this.escapeHtml(u.email)}</span></td>
             <td>${roleBadge}</td>
+            <td><span style="font-size:0.75rem; color:var(--accent-cyan);">${this.escapeHtml(u.department || 'CS')}</span></td>
             <td><span style="font-size:0.8rem; font-weight:600;">📅 ${formattedCreated}</span></td>
             <td><span style="font-weight:700; color:var(--accent-maroon);">${u.postedEventsCount || 0} events</span></td>
             <td>${statusBadge}</td>
@@ -254,7 +282,7 @@ const Admin = {
       const tbody = document.getElementById('admin-students-tbody');
 
       if (!students || students.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No student accounts found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No student accounts found.</td></tr>`;
         return;
       }
 
@@ -269,9 +297,11 @@ const Admin = {
 
         return `
           <tr>
+            <td><strong style="color:var(--accent-cyan); font-size:0.85rem;">#${s.id}</strong></td>
             <td><strong>${this.escapeHtml(s.registrationNumber)}</strong></td>
             <td>${this.escapeHtml(s.name)}</td>
             <td>${this.escapeHtml(s.email)}</td>
+            <td><span style="font-size:0.75rem; background:rgba(14,165,233,0.1); color:var(--accent-cyan); padding:2px 6px; border-radius:4px;">${this.escapeHtml(s.department || 'CS')}</span></td>
             <td><span style="font-size:0.75rem; color: var(--accent-cyan);">${this.escapeHtml(s.skills || 'N/A')}</span></td>
             <td>${statusBadge}</td>
             <td>
@@ -297,16 +327,17 @@ const Admin = {
     event.preventDefault();
     let regNo = document.getElementById('admin-create-reg-no').value.trim().toUpperCase();
     if (/^\d+$/.test(regNo)) {
-      regNo = 'CS' + regNo.padStart(3, '0');
+      regNo = 'CS' + regNo.padStart(4, '0');
     }
     const name = document.getElementById('admin-create-name').value.trim();
     const email = document.getElementById('admin-create-email').value.trim();
     const skills = document.getElementById('admin-create-skills').value.trim();
+    const department = document.getElementById('admin-create-dept').value.trim().toUpperCase() || 'CS';
 
     try {
       const res = await API.request('/admin/students/create', {
         method: 'POST',
-        body: JSON.stringify({ registrationNumber: regNo, name, email, skills })
+        body: JSON.stringify({ registrationNumber: regNo, name, email, skills, department })
       });
 
       App.closeModal('modal-admin-create-student');
@@ -327,13 +358,14 @@ const Admin = {
 
       App.showToast(res.message, 'success');
       this.loadStudents();
+      this.loadUserLogs();
     } catch (err) {
       App.showToast(err.message || 'Status toggle failed', 'danger');
     }
   },
 
   async resetStudentPassword(studentId, regNo) {
-    if (!confirm(`Are you sure you want to reset password for student ${regNo}? Current password will not be revealed, and password will be reset to temporary password '123'.`)) {
+    if (!confirm(`Are you sure you want to reset password for ${regNo}? Password will be reset to temporary password '123'.`)) {
       return;
     }
 
@@ -347,6 +379,139 @@ const Admin = {
       App.showToast(err.message || 'Password reset failed', 'danger');
     }
   },
+
+  // =====================================================================
+  // SUB-ADMIN MANAGEMENT
+  // =====================================================================
+
+  async loadSubAdmins() {
+    try {
+      const subAdmins = await API.request('/admin/subadmins');
+      const tbody = document.getElementById('admin-subadmins-tbody');
+      if (!tbody) return;
+
+      if (!subAdmins || subAdmins.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding:20px;">No sub-admin accounts created yet. Click "Create Sub-Admin" to add one.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = subAdmins.map(sa => {
+        const isStatusActive = sa.status === 'ACTIVE';
+        const statusBadge = isStatusActive ?
+          `<span style="background: rgba(16,185,129,0.15); color: var(--status-upcoming); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">ACTIVE</span>` :
+          `<span style="background: rgba(239,68,68,0.15); color: var(--status-danger); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">DISABLED</span>`;
+        const newStatus = isStatusActive ? 'DISABLED' : 'ACTIVE';
+        const toggleText = isStatusActive ? 'Disable' : 'Enable';
+
+        return `
+          <tr>
+            <td><strong style="color:var(--accent-cyan);">#${sa.id}</strong></td>
+            <td><strong style="color:#7c3aed;">🛡️ ${this.escapeHtml(sa.registrationNumber)}</strong></td>
+            <td>${this.escapeHtml(sa.name)}</td>
+            <td><span style="font-size:0.8rem;">${this.escapeHtml(sa.email)}</span></td>
+            <td>
+              <span style="background:rgba(124,58,237,0.12); color:#7c3aed; font-weight:700; padding:3px 10px; border-radius:6px; font-size:0.78rem;">
+                ${this.escapeHtml(sa.department || 'N/A')}
+              </span>
+            </td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}')">✏️ Edit</button>
+                <button class="btn btn-outline btn-sm" onclick="Admin.toggleSubAdminStatus(${sa.id}, '${newStatus}')">${toggleText}</button>
+                <button class="btn btn-secondary btn-sm" onclick="Admin.resetSubAdminPassword(${sa.id}, '${sa.registrationNumber}')">🔑 Reset Pass</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load sub-admins:', err);
+    }
+  },
+
+  async handleCreateSubAdminSubmit(event) {
+    event.preventDefault();
+    const regNo = document.getElementById('sa-create-reg-no').value.trim().toUpperCase();
+    const name = document.getElementById('sa-create-name').value.trim();
+    const email = document.getElementById('sa-create-email').value.trim();
+    const department = document.getElementById('sa-create-dept').value.trim().toUpperCase();
+
+    if (!regNo || !department) {
+      App.showToast('Registration number and department are required.', 'danger');
+      return;
+    }
+
+    try {
+      const res = await API.request('/admin/subadmins/create', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, name, email, department })
+      });
+
+      App.closeModal('modal-create-subadmin');
+      document.getElementById('form-create-subadmin').reset();
+      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' for dept ${res.department} created! Temp password: '123'.`, 'success');
+      this.loadSubAdmins();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to create sub-admin', 'danger');
+    }
+  },
+
+  openEditSubAdminModal(id, name, email, department) {
+    document.getElementById('sa-edit-id').value = id;
+    document.getElementById('sa-edit-name').value = name;
+    document.getElementById('sa-edit-email').value = email;
+    document.getElementById('sa-edit-dept').value = department;
+    App.openModal('modal-edit-subadmin');
+  },
+
+  async handleEditSubAdminSubmit(event) {
+    event.preventDefault();
+    const id = document.getElementById('sa-edit-id').value;
+    const name = document.getElementById('sa-edit-name').value.trim();
+    const email = document.getElementById('sa-edit-email').value.trim();
+    const department = document.getElementById('sa-edit-dept').value.trim().toUpperCase();
+
+    try {
+      const res = await API.request(`/admin/subadmins/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, email, department })
+      });
+
+      App.closeModal('modal-edit-subadmin');
+      App.showToast(res.message, 'success');
+      this.loadSubAdmins();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to update sub-admin', 'danger');
+    }
+  },
+
+  async toggleSubAdminStatus(id, targetStatus) {
+    try {
+      const res = await API.request(`/admin/subadmins/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: targetStatus })
+      });
+      App.showToast(res.message, 'success');
+      this.loadSubAdmins();
+    } catch (err) {
+      App.showToast(err.message || 'Status toggle failed', 'danger');
+    }
+  },
+
+  async resetSubAdminPassword(id, regNo) {
+    if (!confirm(`Reset password for Sub-Admin ${regNo} to '123'?`)) return;
+    try {
+      const res = await API.request(`/admin/subadmins/${id}/reset-password`, { method: 'POST' });
+      App.showToast(res.message, 'success');
+    } catch (err) {
+      App.showToast(err.message || 'Password reset failed', 'danger');
+    }
+  },
+
+  // =====================================================================
+  // REPORTS
+  // =====================================================================
 
   async loadReports() {
     try {
@@ -392,6 +557,10 @@ const Admin = {
     }
   },
 
+  // =====================================================================
+  // EVENTS
+  // =====================================================================
+
   async loadEvents() {
     try {
       const events = await API.request('/admin/events');
@@ -436,7 +605,6 @@ const Admin = {
     document.getElementById('admin-edit-description').value = event.description || '';
     const typeSelect = document.getElementById('admin-edit-type');
     typeSelect.value = event.eventType || 'HACKATHON';
-    // Safety: if eventType value isn't in the dropdown options, default to HACKATHON
     if (!typeSelect.value || typeSelect.value !== (event.eventType || 'HACKATHON')) {
       typeSelect.value = 'HACKATHON';
     }
@@ -509,7 +677,7 @@ const Admin = {
       this.loadDashboard();
       if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
     } catch (err) {
-      done(); // Re-enable on error
+      done();
       App.showToast(err.message || 'Failed to modify event', 'danger');
     }
   },

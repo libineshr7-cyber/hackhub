@@ -76,11 +76,32 @@ public class TeamController {
     }
 
     @GetMapping("/search-students")
-    public ResponseEntity<?> searchStudents(@RequestParam("query") String query) {
+    public ResponseEntity<?> searchStudents(
+            @RequestParam("query") String query,
+            @RequestParam(value = "filterBy", required = false) String filterBy,
+            @RequestParam(value = "filterValue", required = false) String filterValue) {
         try {
-            List<Map<String, String>> students = teamService.searchStudents(query);
+            List<Map<String, String>> students = teamService.searchStudents(query, filterBy, filterValue);
             return ResponseEntity.ok(students);
         } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    /**
+     * Broadcast a team invitation to a whole class or department.
+     * filterType = "class" (e.g. CS2, CS3) or "department" (e.g. CS, IT, ECE)
+     */
+    @PostMapping("/broadcast")
+    public ResponseEntity<?> broadcastInvite(@RequestBody Map<String, Object> body, Authentication authentication) {
+        try {
+            User currentUser = getCurrentUser(authentication);
+            Long teamId = Long.valueOf(body.get("teamId").toString());
+            String filterType = (String) body.get("filterType"); // "class" or "department"
+            String filterValue = (String) body.get("filterValue"); // e.g. "CS2", "CS", "IT"
+            ApiResponse response = teamService.broadcastTeamInvite(teamId, filterType, filterValue, currentUser);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }

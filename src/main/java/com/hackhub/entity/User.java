@@ -24,10 +24,13 @@ public class User {
     private String passwordHash;
 
     @Column(nullable = false)
-    private String role; // ROLE_STUDENT, ROLE_ADMIN
+    private String role; // ROLE_STUDENT, ROLE_ADMIN, ROLE_SUBADMIN
 
     @Column(length = 1000)
     private String skills; // Comma-separated: Python, Java, Cybersecurity
+
+    @Column
+    private String department; // e.g. CS, IT, ECE, MECH, EEE
 
     @Column(nullable = false)
     private String status; // ACTIVE, DISABLED
@@ -85,6 +88,9 @@ public class User {
 
     public String getSkills() { return skills; }
     public void setSkills(String skills) { this.skills = skills; }
+
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
