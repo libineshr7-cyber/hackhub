@@ -26,6 +26,7 @@ public class AdminUserDto {
         private String name;
         private String email;
         private String department; // CS, IT, ECE, MECH, EEE
+        private String assignedYear; // "ALL", "2", "3", "4"
 
         public String getRegistrationNumber() { return registrationNumber; }
         public void setRegistrationNumber(String registrationNumber) { this.registrationNumber = registrationNumber; }
@@ -35,12 +36,15 @@ public class AdminUserDto {
         public void setEmail(String email) { this.email = email; }
         public String getDepartment() { return department; }
         public void setDepartment(String department) { this.department = department; }
+        public String getAssignedYear() { return assignedYear; }
+        public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
     }
 
     public static class UpdateSubAdminRequest {
         private String name;
         private String email;
         private String department;
+        private String assignedYear;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -48,6 +52,8 @@ public class AdminUserDto {
         public void setEmail(String email) { this.email = email; }
         public String getDepartment() { return department; }
         public void setDepartment(String department) { this.department = department; }
+        public String getAssignedYear() { return assignedYear; }
+        public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
     }
 
     public static class UpdateUserStatusRequest {
@@ -69,6 +75,7 @@ public class AdminUserDto {
         private String createdAt;
         private long postedEventsCount;
         private String department;
+        private String assignedYear;
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -92,6 +99,8 @@ public class AdminUserDto {
         public void setPostedEventsCount(long postedEventsCount) { this.postedEventsCount = postedEventsCount; }
         public String getDepartment() { return department; }
         public void setDepartment(String department) { this.department = department; }
+        public String getAssignedYear() { return assignedYear; }
+        public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
     }
 
     public static class DashboardStats {

@@ -45,9 +45,25 @@ public class AdminService {
     }
 
     /**
-     * Get students — Admin sees all, Sub-Admin sees their department only.
+     * Helper to verify if student's registration number matches assigned year scope
      */
-    public List<UserResponse> getStudents(String search, String callerRole, String callerDepartment) {
+    private boolean matchesYearScope(String regNo, String assignedYear) {
+        if (assignedYear == null || "ALL".equalsIgnoreCase(assignedYear.trim()) || assignedYear.trim().isEmpty()) {
+            return true;
+        }
+        if (regNo == null) return false;
+        String yearNum = assignedYear.replaceAll("[^0-9]", "").trim();
+        if (yearNum.isEmpty()) return true;
+
+        String upperReg = regNo.toUpperCase();
+        // Matches CS2xxx for year 2, CS3xxx for year 3, etc.
+        return upperReg.contains(yearNum + "0") || upperReg.startsWith("CS" + yearNum) || upperReg.matches("^.*" + yearNum + "[0-9]{3}$");
+    }
+
+    /**
+     * Get students — Admin sees all, Sub-Admin sees their department & assigned year only.
+     */
+    public List<UserResponse> getStudents(String search, String callerRole, String callerDepartment, String callerAssignedYear) {
         List<User> users;
         if (search != null && !search.trim().isEmpty()) {
             users = userRepository.findByRegistrationNumberContainingOrNameContaining(search.trim(), search.trim());
@@ -58,9 +74,15 @@ public class AdminService {
         return users.stream()
                 .filter(u -> "ROLE_STUDENT".equals(u.getRole()))
                 .filter(u -> {
-                    // Sub-admin: only see their own department students
-                    if ("ROLE_SUBADMIN".equals(callerRole) && callerDepartment != null) {
-                        return callerDepartment.equalsIgnoreCase(u.getDepartment());
+                    if ("ROLE_SUBADMIN".equals(callerRole)) {
+                        // Sub-admin: only see their own department students
+                        if (callerDepartment != null && !callerDepartment.equalsIgnoreCase(u.getDepartment())) {
+                            return false;
+                        }
+                        // Sub-admin: only see their assigned year batch
+                        if (!matchesYearScope(u.getRegistrationNumber(), callerAssignedYear)) {
+                            return false;
+                        }
                     }
                     return true; // Admin sees all
                 })
@@ -70,7 +92,7 @@ public class AdminService {
 
     // Keep old signature for backward compat
     public List<UserResponse> getStudents(String search) {
-        return getStudents(search, "ROLE_ADMIN", null);
+        return getStudents(search, "ROLE_ADMIN", null, "ALL");
     }
 
     @Transactional
@@ -100,12 +122,21 @@ public class AdminService {
     }
 
     @Transactional
-    public ApiResponse updateStudentStatus(Long studentId, String status) {
+    public ApiResponse updateStudentStatus(Long studentId, String status, User caller) {
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
 
         if ("ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
             throw new IllegalStateException("Cannot change status of Admin user.");
+        }
+
+        if (caller != null && "ROLE_SUBADMIN".equals(caller.getRole())) {
+            if (caller.getDepartment() != null && !caller.getDepartment().equalsIgnoreCase(user.getDepartment())) {
+                throw new IllegalArgumentException("Unauthorized: Cannot modify students outside your department.");
+            }
+            if (!matchesYearScope(user.getRegistrationNumber(), caller.getAssignedYear())) {
+                throw new IllegalArgumentException("Unauthorized: Cannot modify students outside your assigned year.");
+            }
         }
 
         if (!"ACTIVE".equalsIgnoreCase(status) && !"DISABLED".equalsIgnoreCase(status)) {
@@ -119,15 +150,41 @@ public class AdminService {
     }
 
     @Transactional
-    public ApiResponse resetStudentPassword(Long studentId) {
+    public ApiResponse resetStudentPassword(Long studentId, User caller) {
         User user = userRepository.findById(studentId)
                 .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+
+        if (caller != null && "ROLE_SUBADMIN".equals(caller.getRole())) {
+            if (caller.getDepartment() != null && !caller.getDepartment().equalsIgnoreCase(user.getDepartment())) {
+                throw new IllegalArgumentException("Unauthorized: Cannot reset password for students outside your department.");
+            }
+            if (!matchesYearScope(user.getRegistrationNumber(), caller.getAssignedYear())) {
+                throw new IllegalArgumentException("Unauthorized: Cannot reset password for students outside your assigned year.");
+            }
+        }
 
         user.setPasswordHash(passwordEncoder.encode("123"));
         user.setFirstLogin(true);
         userRepository.save(user);
 
-        return new ApiResponse(true, "Password for " + user.getRegistrationNumber() + " has been reset to temporary password '123'. First-login password change will be required.");
+        return new ApiResponse(true, "Password for " + user.getRegistrationNumber() + " has been reset to temporary password '123'.");
+    }
+
+    @Transactional
+    public ApiResponse deleteStudent(Long studentId, User caller) {
+        if (caller == null || !"ROLE_ADMIN".equals(caller.getRole())) {
+            throw new IllegalArgumentException("Unauthorized: Only Admin has permission to delete student accounts.");
+        }
+
+        User user = userRepository.findById(studentId)
+                .orElseThrow(() -> new IllegalArgumentException("Student not found with ID: " + studentId));
+
+        if ("ROLE_ADMIN".equalsIgnoreCase(user.getRole())) {
+            throw new IllegalStateException("Cannot delete Admin user.");
+        }
+
+        userRepository.delete(user);
+        return new ApiResponse(true, "Student account '" + user.getRegistrationNumber() + "' deleted successfully.");
     }
 
     // =====================================================================
@@ -162,6 +219,7 @@ public class AdminService {
         user.setStatus("ACTIVE");
         user.setSkills("");
         user.setDepartment(request.getDepartment().trim().toUpperCase());
+        user.setAssignedYear(request.getAssignedYear() != null && !request.getAssignedYear().trim().isEmpty() ? request.getAssignedYear().trim() : "ALL");
         user.setFirstLogin(true);
 
         User saved = userRepository.save(user);
@@ -185,6 +243,9 @@ public class AdminService {
         }
         if (request.getDepartment() != null && !request.getDepartment().trim().isEmpty()) {
             user.setDepartment(request.getDepartment().trim().toUpperCase());
+        }
+        if (request.getAssignedYear() != null && !request.getAssignedYear().trim().isEmpty()) {
+            user.setAssignedYear(request.getAssignedYear().trim());
         }
         userRepository.save(user);
 
@@ -227,10 +288,14 @@ public class AdminService {
     }
 
     // =====================================================================
-    // USER LOGS
+    // USER LOGS (Admin Only)
     // =====================================================================
 
-    public List<UserResponse> getAllUserLogs(String search) {
+    public List<UserResponse> getAllUserLogs(String search, User caller) {
+        if (caller == null || !"ROLE_ADMIN".equals(caller.getRole())) {
+            throw new IllegalArgumentException("Unauthorized: Only Admin can view database and audit logs.");
+        }
+
         List<User> users;
         if (search != null && !search.trim().isEmpty()) {
             users = userRepository.findByRegistrationNumberContainingOrNameContaining(search.trim(), search.trim());
@@ -256,6 +321,7 @@ public class AdminService {
         dto.setCreatedAt(user.getCreatedAt() != null ? user.getCreatedAt().toString() : null);
         dto.setPostedEventsCount(eventRepository.countByCreatedBy(user));
         dto.setDepartment(user.getDepartment());
+        dto.setAssignedYear(user.getAssignedYear());
         return dto;
     }
 }

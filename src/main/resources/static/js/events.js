@@ -117,7 +117,8 @@ const Events = {
     const mode = document.getElementById('filter-mode-select')?.value || 'ALL';
 
     try {
-      const events = await API.request(`/events/search?query=${encodeURIComponent(query)}&eventType=${eventType}&mode=${mode}`);
+      const currentView = App.currentView || 'upcoming';
+      const events = await API.request(`/events/search?query=${encodeURIComponent(query)}&eventType=${eventType}&mode=${mode}&view=${encodeURIComponent(currentView)}`);
       let gridId = 'upcoming-grid';
       if (App.currentView === 'home') gridId = 'home-upcoming-grid';
       else if (App.currentView === 'latest') gridId = 'latest-grid';

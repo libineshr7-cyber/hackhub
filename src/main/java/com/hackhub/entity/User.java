@@ -32,6 +32,9 @@ public class User {
     @Column
     private String department; // e.g. CS, IT, ECE, MECH, EEE
 
+    @Column(name = "assigned_year")
+    private String assignedYear; // "ALL", "2", "3", "4" for Sub-Admins
+
     @Column(nullable = false)
     private String status; // ACTIVE, DISABLED
 
@@ -91,6 +94,9 @@ public class User {
 
     public String getDepartment() { return department; }
     public void setDepartment(String department) { this.department = department; }
+
+    public String getAssignedYear() { return assignedYear; }
+    public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

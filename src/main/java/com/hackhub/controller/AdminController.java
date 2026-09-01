@@ -50,12 +50,20 @@ public class AdminController {
             @RequestParam(value = "search", required = false) String search,
             Authentication authentication) {
         User caller = getCurrentUser(authentication);
-        return ResponseEntity.ok(adminService.getStudents(search, caller.getRole(), caller.getDepartment()));
+        return ResponseEntity.ok(adminService.getStudents(search, caller.getRole(), caller.getDepartment(), caller.getAssignedYear()));
     }
 
     @GetMapping("/users/log")
-    public ResponseEntity<List<UserResponse>> getUsersLog(@RequestParam(value = "search", required = false) String search) {
-        return ResponseEntity.ok(adminService.getAllUserLogs(search));
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getUsersLog(
+            @RequestParam(value = "search", required = false) String search,
+            Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            return ResponseEntity.ok(adminService.getAllUserLogs(search, caller));
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
     }
 
     @PostMapping("/students/create")
@@ -69,9 +77,13 @@ public class AdminController {
     }
 
     @PutMapping("/students/{id}/status")
-    public ResponseEntity<?> updateStudentStatus(@PathVariable("id") Long id, @RequestBody UpdateUserStatusRequest request) {
+    public ResponseEntity<?> updateStudentStatus(
+            @PathVariable("id") Long id,
+            @RequestBody UpdateUserStatusRequest request,
+            Authentication authentication) {
         try {
-            ApiResponse response = adminService.updateStudentStatus(id, request.getStatus());
+            User caller = getCurrentUser(authentication);
+            ApiResponse response = adminService.updateStudentStatus(id, request.getStatus(), caller);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
@@ -79,11 +91,28 @@ public class AdminController {
     }
 
     @PostMapping("/students/{id}/reset-password")
-    public ResponseEntity<?> resetStudentPassword(@PathVariable("id") Long id) {
+    public ResponseEntity<?> resetStudentPassword(
+            @PathVariable("id") Long id,
+            Authentication authentication) {
         try {
-            ApiResponse response = adminService.resetStudentPassword(id);
+            User caller = getCurrentUser(authentication);
+            ApiResponse response = adminService.resetStudentPassword(id, caller);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/students/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> deleteStudent(
+            @PathVariable("id") Long id,
+            Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            ApiResponse response = adminService.deleteStudent(id, caller);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }

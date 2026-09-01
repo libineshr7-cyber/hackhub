@@ -82,23 +82,37 @@ const Admin = {
     };
 
     const user = API.getUser();
+    const isAdmin = user && user.role === 'ROLE_ADMIN';
+
+    // Hide logs, database, and subadmin tabs for non-full admins
+    const dbTabBtn = document.querySelector('.admin-tab-btn[data-tab="database"]');
+    const subadminTabBtn = document.querySelector('.admin-tab-btn[data-tab="subadmins"]');
+    const logsTabBtn = document.querySelector('.admin-tab-btn[data-tab="userlogs"]');
+    const historyTabBtn = document.querySelector('.admin-tab-btn[data-tab="posting-history"]');
+    if (dbTabBtn) dbTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (subadminTabBtn) subadminTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (logsTabBtn) logsTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (historyTabBtn) historyTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+
     if (tabName === 'all') {
       Object.keys(sections).forEach(key => {
         if (!sections[key]) return;
-        if (key === 'database') { sections[key].style.display = 'none'; return; }
-        if (key === 'subadmins') {
-          sections[key].style.display = (user && user.role === 'ROLE_ADMIN') ? 'block' : 'none';
+        if (key === 'database' || key === 'userlogs' || key === 'posting-history' || key === 'subadmins') {
+          sections[key].style.display = isAdmin ? (key === 'database' ? 'none' : 'block') : 'none';
           return;
         }
         sections[key].style.display = 'block';
       });
     } else {
+      if (!isAdmin && (tabName === 'database' || tabName === 'userlogs' || tabName === 'posting-history' || tabName === 'subadmins')) {
+        tabName = 'students';
+      }
       Object.keys(sections).forEach(key => {
         if (sections[key]) {
           sections[key].style.display = (key === tabName) ? 'block' : 'none';
         }
       });
-      if (tabName === 'database') {
+      if (tabName === 'database' && isAdmin) {
         this.loadDbTable('users');
       }
     }
@@ -281,10 +295,15 @@ const Admin = {
       const students = await API.request(`/admin/students?search=${encodeURIComponent(searchQuery)}`);
       const tbody = document.getElementById('admin-students-tbody');
 
+      if (!tbody) return;
+
       if (!students || students.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted);">No student accounts found.</td></tr>`;
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding:20px;">No student accounts found for your assigned department/year.</td></tr>`;
         return;
       }
+
+      const currentUser = API.getUser();
+      const isAdmin = currentUser && currentUser.role === 'ROLE_ADMIN';
 
       tbody.innerHTML = students.map(s => {
         const isStatusActive = s.status === 'ACTIVE';
@@ -294,6 +313,10 @@ const Admin = {
 
         const newStatusTarget = isStatusActive ? 'DISABLED' : 'ACTIVE';
         const toggleBtnText = isStatusActive ? 'Disable' : 'Enable';
+
+        const deleteBtnHtml = isAdmin ? `
+          <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.deleteStudent(${s.id}, '${this.escapeHtml(s.registrationNumber)}')">🗑️</button>
+        ` : '';
 
         return `
           <tr>
@@ -305,9 +328,10 @@ const Admin = {
             <td><span style="font-size:0.75rem; color: var(--accent-cyan);">${this.escapeHtml(s.skills || 'N/A')}</span></td>
             <td>${statusBadge}</td>
             <td>
-              <div style="display:flex; gap: 6px;">
+              <div style="display:flex; gap: 6px; flex-wrap:wrap;">
                 <button class="btn btn-outline btn-sm" onclick="Admin.toggleStudentStatus(${s.id}, '${newStatusTarget}')">${toggleBtnText}</button>
-                <button class="btn btn-secondary btn-sm" onclick="Admin.resetStudentPassword(${s.id}, '${s.registrationNumber}')">Reset Pass</button>
+                <button class="btn btn-secondary btn-sm" onclick="Admin.resetStudentPassword(${s.id}, '${s.registrationNumber}')">🔑 Reset Pass</button>
+                ${deleteBtnHtml}
               </div>
             </td>
           </tr>
@@ -315,6 +339,17 @@ const Admin = {
       }).join('');
     } catch (err) {
       console.error(err);
+    }
+  },
+
+  async deleteStudent(studentId, regNo) {
+    if (!confirm(`Are you sure you want to permanently delete student '${regNo}'? This cannot be undone.`)) return;
+    try {
+      const res = await API.request(`/admin/students/${studentId}`, { method: 'DELETE' });
+      App.showToast(res.message || 'Student account deleted.', 'success');
+      this.loadStudents();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete student account', 'danger');
     }
   },
 
@@ -358,30 +393,23 @@ const Admin = {
 
       App.showToast(res.message, 'success');
       this.loadStudents();
-      this.loadUserLogs();
     } catch (err) {
-      App.showToast(err.message || 'Status toggle failed', 'danger');
+      App.showToast(err.message || 'Failed to update student status', 'danger');
     }
   },
 
   async resetStudentPassword(studentId, regNo) {
-    if (!confirm(`Are you sure you want to reset password for ${regNo}? Password will be reset to temporary password '123'.`)) {
-      return;
-    }
-
+    if (!confirm(`Reset password for '${regNo}' to default '123'?`)) return;
     try {
-      const res = await API.request(`/admin/students/${studentId}/reset-password`, {
-        method: 'POST'
-      });
-
-      App.showToast(res.message, 'success');
+      const res = await API.request(`/admin/students/${studentId}/reset-password`, { method: 'POST' });
+      App.showToast(res.message || `Password for ${regNo} reset to '123'.`, 'success');
     } catch (err) {
       App.showToast(err.message || 'Password reset failed', 'danger');
     }
   },
 
   // =====================================================================
-  // SUB-ADMIN MANAGEMENT
+  // SUB-ADMIN MANAGEMENT (Admin Only)
   // =====================================================================
 
   async loadSubAdmins() {
@@ -403,6 +431,10 @@ const Admin = {
         const newStatus = isStatusActive ? 'DISABLED' : 'ACTIVE';
         const toggleText = isStatusActive ? 'Disable' : 'Enable';
 
+        const yearLabel = sa.assignedYear === '2' ? '2nd Year (CS2xxx)' : 
+                          sa.assignedYear === '3' ? '3rd Year (CS3xxx)' : 
+                          sa.assignedYear === '4' ? '4th Year' : 'All Years';
+
         return `
           <tr>
             <td><strong style="color:var(--accent-cyan);">#${sa.id}</strong></td>
@@ -410,14 +442,17 @@ const Admin = {
             <td>${this.escapeHtml(sa.name)}</td>
             <td><span style="font-size:0.8rem;">${this.escapeHtml(sa.email)}</span></td>
             <td>
-              <span style="background:rgba(124,58,237,0.12); color:#7c3aed; font-weight:700; padding:3px 10px; border-radius:6px; font-size:0.78rem;">
+              <span style="background:rgba(124,58,237,0.12); color:#7c3aed; font-weight:700; padding:3px 8px; border-radius:6px; font-size:0.75rem;">
                 ${this.escapeHtml(sa.department || 'N/A')}
+              </span>
+              <span style="background:rgba(14,165,233,0.1); color:var(--accent-cyan); font-weight:600; padding:3px 6px; border-radius:6px; font-size:0.72rem; margin-left:4px;">
+                ${yearLabel}
               </span>
             </td>
             <td>${statusBadge}</td>
             <td>
               <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}')">✏️ Edit</button>
+                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}', '${this.escapeHtml(sa.assignedYear || 'ALL')}')">✏️ Edit</button>
                 <button class="btn btn-outline btn-sm" onclick="Admin.toggleSubAdminStatus(${sa.id}, '${newStatus}')">${toggleText}</button>
                 <button class="btn btn-secondary btn-sm" onclick="Admin.resetSubAdminPassword(${sa.id}, '${sa.registrationNumber}')">🔑 Reset Pass</button>
               </div>
@@ -436,6 +471,7 @@ const Admin = {
     const name = document.getElementById('sa-create-name').value.trim();
     const email = document.getElementById('sa-create-email').value.trim();
     const department = document.getElementById('sa-create-dept').value.trim().toUpperCase();
+    const assignedYear = document.getElementById('sa-create-year').value;
 
     if (!regNo || !department) {
       App.showToast('Registration number and department are required.', 'danger');
@@ -445,23 +481,25 @@ const Admin = {
     try {
       const res = await API.request('/admin/subadmins/create', {
         method: 'POST',
-        body: JSON.stringify({ registrationNumber: regNo, name, email, department })
+        body: JSON.stringify({ registrationNumber: regNo, name, email, department, assignedYear })
       });
 
       App.closeModal('modal-create-subadmin');
       document.getElementById('form-create-subadmin').reset();
-      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' for dept ${res.department} created! Temp password: '123'.`, 'success');
+      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' created for Dept ${res.department} (Year: ${assignedYear})! Temp pass: '123'.`, 'success');
       this.loadSubAdmins();
     } catch (err) {
       App.showToast(err.message || 'Failed to create sub-admin', 'danger');
     }
   },
 
-  openEditSubAdminModal(id, name, email, department) {
+  openEditSubAdminModal(id, name, email, department, assignedYear = 'ALL') {
     document.getElementById('sa-edit-id').value = id;
     document.getElementById('sa-edit-name').value = name;
     document.getElementById('sa-edit-email').value = email;
     document.getElementById('sa-edit-dept').value = department;
+    const yearSelect = document.getElementById('sa-edit-year');
+    if (yearSelect) yearSelect.value = assignedYear || 'ALL';
     App.openModal('modal-edit-subadmin');
   },
 
@@ -471,11 +509,12 @@ const Admin = {
     const name = document.getElementById('sa-edit-name').value.trim();
     const email = document.getElementById('sa-edit-email').value.trim();
     const department = document.getElementById('sa-edit-dept').value.trim().toUpperCase();
+    const assignedYear = document.getElementById('sa-edit-year') ? document.getElementById('sa-edit-year').value : 'ALL';
 
     try {
       const res = await API.request(`/admin/subadmins/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ name, email, department })
+        body: JSON.stringify({ name, email, department, assignedYear })
       });
 
       App.closeModal('modal-edit-subadmin');

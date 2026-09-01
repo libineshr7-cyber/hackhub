@@ -1018,7 +1018,16 @@
                         <option value="EEE">EEE — Electrical &amp; Electronics</option>
                     </select>
                 </div>
-                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>. Sub-Admin can only manage students in their assigned department.</p>
+                <div class="form-group">
+                    <label class="form-label">Assigned Year / Batch *</label>
+                    <select id="sa-create-year" class="form-select" required>
+                        <option value="ALL">All Years (Whole Department)</option>
+                        <option value="2">2nd Year Only (CS2001–CS2049)</option>
+                        <option value="3">3rd Year Only (CS3001–CS3048)</option>
+                        <option value="4">4th Year Only</option>
+                    </select>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>. Sub-Admin can only manage and reset passwords for students in their assigned department &amp; year.</p>
                 <button type="submit" class="btn btn-sm" style="width:100%; background:#7c3aed; color:#fff;">Create Sub-Admin</button>
             </form>
         </div>
@@ -1029,7 +1038,7 @@
         <div class="modal-box">
             <div class="modal-header">
                 <h3 class="modal-title">✏️ Modify Sub-Admin</h3>
-                <button type="button" class="close-btn">&times;</button>
+                <button type="button" class="close-btn" onclick="App.closeModal('modal-edit-subadmin')">&times;</button>
             </div>
             <form id="form-edit-subadmin" onsubmit="Admin.handleEditSubAdminSubmit(event)">
                 <input type="hidden" id="sa-edit-id">
@@ -1049,6 +1058,15 @@
                         <option value="ECE">ECE — Electronics &amp; Communication</option>
                         <option value="MECH">MECH — Mechanical Engineering</option>
                         <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Year / Batch</label>
+                    <select id="sa-edit-year" class="form-select">
+                        <option value="ALL">All Years (Whole Department)</option>
+                        <option value="2">2nd Year Only (CS2001–CS2049)</option>
+                        <option value="3">3rd Year Only (CS3001–CS3048)</option>
+                        <option value="4">4th Year Only</option>
                     </select>
                 </div>
                 <div style="display:flex; gap:10px; margin-top:16px;">

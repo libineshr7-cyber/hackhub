@@ -94,10 +94,13 @@ public class EventService {
 
     public List<EventDto> getEndedEvents(User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
+        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         List<Event> events = eventRepository.findAll();
         return events.stream()
                 .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> "ENDED".equals(dto.getStatus()))
+                // Only show hackathons that ended within the last 7 days; older ones are removed
+                .filter(dto -> dto.getEndDate() != null && !dto.getEndDate().isBefore(sevenDaysAgo))
                 .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
                 .collect(Collectors.toList());
     }
@@ -135,13 +138,15 @@ public class EventService {
         return latest;
     }
 
-    public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
+    public List<EventDto> searchEvents(String query, String eventType, String mode, String view, User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
         List<Event> allEvents = eventRepository.findAll();
 
         String q = (query != null) ? query.trim().toLowerCase() : "";
         String type = (eventType != null) ? eventType.trim().toUpperCase() : "ALL";
         String m = (mode != null) ? mode.trim().toUpperCase() : "ALL";
+        String v = (view != null) ? view.trim().toLowerCase() : "upcoming";
+        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
 
         return allEvents.stream()
                 .filter(evt -> {
@@ -168,7 +173,25 @@ public class EventService {
                     return true;
                 })
                 .map(evt -> mapToDtoWithSavedSet(evt, user, savedIds))
+                .filter(dto -> {
+                    // When on 'ended' tab, only show ended events from last 7 days
+                    if ("ended".equals(v)) {
+                        return "ENDED".equals(dto.getStatus()) && dto.getEndDate() != null && !dto.getEndDate().isBefore(sevenDaysAgo);
+                    }
+                    // In ANY other tab (home, upcoming, latest, deadline-soon, saved), NEVER show ended events!
+                    return !"ENDED".equals(dto.getStatus());
+                })
+                .sorted((a, b) -> {
+                    if ("ended".equals(v)) {
+                        return b.getEndDate().compareTo(a.getEndDate());
+                    }
+                    return a.getStartDate().compareTo(b.getStartDate());
+                })
                 .collect(Collectors.toList());
+    }
+
+    public List<EventDto> searchEvents(String query, String eventType, String mode, User user) {
+        return searchEvents(query, eventType, mode, "upcoming", user);
     }
 
     public EventDto getEventDetails(Long eventId, User user) {

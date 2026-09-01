@@ -107,9 +107,10 @@ public class EventController {
             @RequestParam(value = "query", required = false) String query,
             @RequestParam(value = "eventType", required = false) String eventType,
             @RequestParam(value = "mode", required = false) String mode,
+            @RequestParam(value = "view", required = false) String view,
             Authentication authentication) {
         User currentUser = getCurrentUser(authentication);
-        return ResponseEntity.ok(eventService.searchEvents(query, eventType, mode, currentUser));
+        return ResponseEntity.ok(eventService.searchEvents(query, eventType, mode, view, currentUser));
     }
 
     @GetMapping("/{id}")
