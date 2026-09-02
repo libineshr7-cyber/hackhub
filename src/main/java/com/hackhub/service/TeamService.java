@@ -186,10 +186,14 @@ public class TeamService {
             throw new IllegalArgumentException("Team name is required.");
         }
 
-        int maxMembers = request.getMaxMembers() != null ? request.getMaxMembers() : event.getTeamSizeMax();
-        if (maxMembers < 1 || maxMembers > event.getTeamSizeMax()) {
+        int maxMembers = 4; // Default to 4
+        if (request.getMaxMembers() != null && request.getMaxMembers() >= 2) {
+            maxMembers = request.getMaxMembers();
+        } else if (event.getTeamSizeMax() != null && event.getTeamSizeMax() >= 2) {
             maxMembers = event.getTeamSizeMax();
         }
+        if (maxMembers > 10) maxMembers = 10;
+        if (maxMembers < 2) maxMembers = 2;
 
         Team team = new Team();
         team.setEvent(event);
@@ -205,12 +209,36 @@ public class TeamService {
         return mapToTeamResponse(savedTeam, creator);
     }
 
+    public List<TeamResponse> getAllTeams(User currentUser) {
+        List<Team> teams = teamRepository.findAllByOrderByCreatedAtDesc();
+        return teams.stream().map(t -> mapToTeamResponse(t, currentUser)).collect(Collectors.toList());
+    }
+
     public List<TeamResponse> getTeamsByEvent(Long eventId, User currentUser) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
 
         List<Team> teams = teamRepository.findByEventOrderByCreatedAtDesc(event);
         return teams.stream().map(t -> mapToTeamResponse(t, currentUser)).collect(Collectors.toList());
+    }
+
+    @Transactional
+    public ApiResponse deleteTeam(Long teamId, User caller) {
+        Team team = teamRepository.findById(teamId)
+                .orElseThrow(() -> new IllegalArgumentException("Team not found with ID: " + teamId));
+
+        boolean isAdmin = caller != null && ("ROLE_ADMIN".equals(caller.getRole()) || "ROLE_SUBADMIN".equals(caller.getRole()));
+        boolean isCreator = caller != null && team.getCreatedBy() != null && caller.getId().equals(team.getCreatedBy().getId());
+
+        if (!isAdmin && !isCreator) {
+            throw new IllegalArgumentException("Unauthorized: Only the team leader or an Administrator can delete this team.");
+        }
+
+        teamRequestRepository.deleteByTeam(team);
+        teamMemberRepository.deleteByTeam(team);
+        teamRepository.delete(team);
+
+        return new ApiResponse(true, "Team '" + team.getTeamName() + "' has been deleted successfully.");
     }
 
     @Transactional

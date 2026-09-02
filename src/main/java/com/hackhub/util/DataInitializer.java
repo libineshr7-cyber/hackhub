@@ -33,26 +33,45 @@ public class DataInitializer implements CommandLineRunner {
         logger.info("==================================================");
         logger.info("🚀 Initializing HackHub Database & Initial Accounts...");
 
-        // 1. Seed Admin Account (Admin / 123)
-        User admin = userRepository.findByRegistrationNumber("Admin").orElseGet(() -> {
+        // 1. Seed or preserve Admin Account
+        Optional<User> adminOpt = userRepository.findByRegistrationNumberIgnoreCase("Admin");
+        if (adminOpt.isEmpty()) {
+            List<User> admins = userRepository.findByRole("ROLE_ADMIN");
+            if (!admins.isEmpty()) {
+                adminOpt = Optional.of(admins.get(0));
+            }
+        }
+
+        if (adminOpt.isEmpty()) {
             User newAdmin = new User();
             newAdmin.setRegistrationNumber("Admin");
             newAdmin.setName("Department Admin");
             newAdmin.setEmail("admin@hackhub.dept.edu");
-            newAdmin.setPasswordHash(passwordEncoder.encode("123"));
+            newAdmin.setPasswordHash(passwordEncoder.encode("951415"));
             newAdmin.setRole("ROLE_ADMIN");
             newAdmin.setStatus("ACTIVE");
             newAdmin.setDepartment("CS");
             newAdmin.setSkills("Administration, Cybersecurity, Governance");
             newAdmin.setFirstLogin(false);
-            User saved = userRepository.save(newAdmin);
-            logger.info("✅ Admin account created: RegNo Admin | Password 123");
-            return saved;
-        });
+            userRepository.save(newAdmin);
+            logger.info("✅ Admin account created: RegNo Admin | Password 951415");
+        } else {
+            User existingAdmin = adminOpt.get();
+            // If admin password was reverted to temporary '123' by previous startup reset bug,
+            // restore it to the admin's chosen password '951415'
+            if (passwordEncoder.matches("123", existingAdmin.getPasswordHash())) {
+                existingAdmin.setPasswordHash(passwordEncoder.encode("951415"));
+                userRepository.save(existingAdmin);
+                logger.info("🔒 Restored Admin password to 951415 (fixed previous reset to 123).");
+            } else {
+                logger.info("🔒 Admin account exists with custom password preserved.");
+            }
+        }
 
-        // Safely reassign events created by legacy 000 to new Admin, then remove/disable 000
+        // Clean up legacy 000 if present
         try {
-            userRepository.findByRegistrationNumber("000").ifPresent(oldAdmin -> {
+            userRepository.findByRegistrationNumberIgnoreCase("000").ifPresent(oldAdmin -> {
+                User admin = userRepository.findByRegistrationNumberIgnoreCase("Admin").orElse(null);
                 try {
                     List<Event> allEvents = eventRepository.findAll();
                     for (Event event : allEvents) {
@@ -66,153 +85,65 @@ public class DataInitializer implements CommandLineRunner {
                 } catch (Exception ex) {
                     oldAdmin.setStatus("DISABLED");
                     userRepository.save(oldAdmin);
-                    logger.warn("⚠️ Legacy admin 000 disabled instead of deleted: {}", ex.getMessage());
                 }
             });
         } catch (Exception e) {
             logger.warn("⚠️ Legacy admin migration skipped: {}", e.getMessage());
         }
 
-        // 2. Map & Migrate all legacy database accounts to CS2001-CS2049 and CS3001-CS3048
-        List<String> sampleSkillsList = Arrays.asList(
-                "Python, Cybersecurity",
-                "Java, Web Development",
-                "UI/UX, HTML/CSS",
-                "AI/ML, Python",
-                "Networking, Cloud",
-                "Database, SQL",
-                "React, Node.js",
-                "C++, Algorithms"
-        );
+        // 2. Seed student accounts ONLY if database has no students yet (Initial setup)
+        // Existing students, their modified emails, skills, and passwords are NEVER touched or reset!
+        long existingStudentCount = userRepository.countByRole("ROLE_STUDENT");
+        if (existingStudentCount == 0) {
+            logger.info("🌱 No students found in database. Performing one-time initial seed for CS2001-CS2049 & CS3001-CS3048...");
+            List<String> sampleSkillsList = Arrays.asList(
+                    "Python, Cybersecurity",
+                    "Java, Web Development",
+                    "UI/UX, HTML/CSS",
+                    "AI/ML, Python",
+                    "Networking, Cloud",
+                    "Database, SQL",
+                    "React, Node.js",
+                    "C++, Algorithms"
+            );
 
-        String defaultPassHash = passwordEncoder.encode("123");
+            String defaultPassHash = passwordEncoder.encode("123");
 
-        // Map of legacy registration numbers -> target new registration numbers
-        Map<String, String> legacyMapping = new HashMap<>();
-        for (int i = 1; i <= 49; i++) {
-            String target = String.format("CS%04d", 2000 + i);
-            legacyMapping.put(String.format("CS%03d", i), target);
-            legacyMapping.put(String.format("%03d", i), target);
-            legacyMapping.put(String.format("CS0%02d", i), target);
-        }
-        for (int i = 1; i <= 48; i++) {
-            String target = String.format("CS%04d", 3000 + i);
-            legacyMapping.put(String.format("CS%03d", 100 + i), target);
-            legacyMapping.put(String.format("%03d", 100 + i), target);
-            legacyMapping.put(String.format("CS%03d", 50 + i), target);
-        }
-
-        // Migrate all existing database users
-        List<User> existingUsers = userRepository.findAll();
-        for (User u : existingUsers) {
-            String reg = u.getRegistrationNumber();
-            if (reg == null) continue;
-
-            // Admin & Sub-Admins
-            if (reg.equalsIgnoreCase("Admin") || "ROLE_SUBADMIN".equals(u.getRole())) {
-                u.setPasswordHash(defaultPassHash);
-                userRepository.save(u);
-                continue;
-            }
-
-            // Always reset password to 123
-            u.setPasswordHash(defaultPassHash);
-
-            if (legacyMapping.containsKey(reg)) {
-                String targetReg = legacyMapping.get(reg);
-                Optional<User> targetUser = userRepository.findByRegistrationNumber(targetReg);
-                if (targetUser.isPresent() && !targetUser.get().getId().equals(u.getId())) {
-                    User placeholder = targetUser.get();
-                    for (Event ev : eventRepository.findAll()) {
-                        if (ev.getCreatedBy() != null && placeholder.getId().equals(ev.getCreatedBy().getId())) {
-                            ev.setCreatedBy(u);
-                            eventRepository.save(ev);
-                        }
-                    }
-                    try {
-                        userRepository.delete(placeholder);
-                    } catch (Exception ex) {
-                        placeholder.setRegistrationNumber("TEMP_OLD_" + placeholder.getId());
-                        userRepository.save(placeholder);
-                    }
-                }
-                u.setRegistrationNumber(targetReg);
-                if (u.getName() == null || u.getName().startsWith("Student CS0") || u.getName().startsWith("Student 0") || u.getName().startsWith("Student CS1") || u.getName().startsWith("Student 1")) {
-                    u.setName("Student " + targetReg);
-                }
-                u.setEmail("student" + targetReg.toLowerCase() + "@hackhub.dept.edu");
-                u.setDepartment("CS");
-                u.setRole("ROLE_STUDENT");
-                u.setStatus("ACTIVE");
-                logger.info("🔄 Migrated database user {} -> {}", reg, targetReg);
-            } else if (!reg.matches("^CS[23][0-9]{3}$")) {
-                // Obsolete legacy accounts (000, 050, etc.)
-                try {
-                    for (Event ev : eventRepository.findAll()) {
-                        if (ev.getCreatedBy() != null && u.getId().equals(ev.getCreatedBy().getId())) {
-                            ev.setCreatedBy(admin);
-                            eventRepository.save(ev);
-                        }
-                    }
-                    userRepository.delete(u);
-                    logger.info("🗑️ Cleaned up obsolete user {}", reg);
-                    continue;
-                } catch (Exception ex) {
-                    u.setStatus("DISABLED");
-                }
-            }
-
-            userRepository.save(u);
-        }
-
-        // Ensure all CS2001-CS2049 (2nd Year) exist with password 123
-        for (int i = 1; i <= 49; i++) {
-            String regNo = String.format("CS%04d", 2000 + i);
-            User student = userRepository.findByRegistrationNumber(regNo).orElseGet(User::new);
-            student.setRegistrationNumber(regNo);
-            if (student.getName() == null || student.getName().startsWith("Student CS0") || student.getName().startsWith("Student 0")) {
+            // Seed CS2001-CS2049 (2nd Year)
+            for (int i = 1; i <= 49; i++) {
+                String regNo = String.format("CS%04d", 2000 + i);
+                User student = new User();
+                student.setRegistrationNumber(regNo);
                 student.setName("Student " + regNo);
-            }
-            student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
-            student.setPasswordHash(defaultPassHash);
-            student.setRole("ROLE_STUDENT");
-            student.setStatus("ACTIVE");
-            student.setDepartment("CS");
-            if (student.getSkills() == null || student.getSkills().isEmpty()) {
+                student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
+                student.setPasswordHash(defaultPassHash);
+                student.setRole("ROLE_STUDENT");
+                student.setStatus("ACTIVE");
+                student.setDepartment("CS");
                 student.setSkills(sampleSkillsList.get(i % sampleSkillsList.size()));
+                student.setFirstLogin(true);
+                userRepository.save(student);
             }
-            userRepository.save(student);
-        }
 
-        // Ensure all CS3001-CS3048 (3rd Year) exist with password 123
-        for (int i = 1; i <= 48; i++) {
-            String regNo = String.format("CS%04d", 3000 + i);
-            User student = userRepository.findByRegistrationNumber(regNo).orElseGet(User::new);
-            student.setRegistrationNumber(regNo);
-            if (student.getName() == null || student.getName().startsWith("Student CS1") || student.getName().startsWith("Student 1")) {
+            // Seed CS3001-CS3048 (3rd Year)
+            for (int i = 1; i <= 48; i++) {
+                String regNo = String.format("CS%04d", 3000 + i);
+                User student = new User();
+                student.setRegistrationNumber(regNo);
                 student.setName("Student " + regNo);
-            }
-            student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
-            student.setPasswordHash(defaultPassHash);
-            student.setRole("ROLE_STUDENT");
-            student.setStatus("ACTIVE");
-            student.setDepartment("CS");
-            if (student.getSkills() == null || student.getSkills().isEmpty()) {
+                student.setEmail("student" + regNo.toLowerCase() + "@hackhub.dept.edu");
+                student.setPasswordHash(defaultPassHash);
+                student.setRole("ROLE_STUDENT");
+                student.setStatus("ACTIVE");
+                student.setDepartment("CS");
                 student.setSkills(sampleSkillsList.get(i % sampleSkillsList.size()));
+                student.setFirstLogin(true);
+                userRepository.save(student);
             }
-            userRepository.save(student);
+            logger.info("✅ Initial student accounts seeded (49 2nd year + 48 3rd year).");
+        } else {
+            logger.info("✅ Database already has {} student accounts. Preserving all existing credentials, emails, and skills forever.", existingStudentCount);
         }
-
-        // Guarantee all users in database have password '123' and status 'ACTIVE'
-        for (User u : userRepository.findAll()) {
-            if (!"DISABLED".equals(u.getStatus())) {
-                u.setPasswordHash(defaultPassHash);
-                u.setStatus("ACTIVE");
-                userRepository.save(u);
-            }
-        }
-
-        logger.info("✅ Student accounts sync complete: CS2001-CS2049 (49) & CS3001-CS3048 (48) with password '123'.");
 
         // 3. Seed Sample Department Hackathons & Events if empty
         if (eventRepository.count() == 0) {

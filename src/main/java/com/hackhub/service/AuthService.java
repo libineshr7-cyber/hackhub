@@ -49,7 +49,13 @@ public class AuthService {
         }
 
         if (!passwordEncoder.matches(request.getPassword(), user.getPasswordHash())) {
-            throw new IllegalArgumentException("Invalid registration number, username, or password.");
+            // Self-heal: If admin enters 951415 and the DB hash was previously reverted to 123 by the daily reset bug
+            if ("ROLE_ADMIN".equalsIgnoreCase(user.getRole()) && "951415".equals(request.getPassword()) && passwordEncoder.matches("123", user.getPasswordHash())) {
+                user.setPasswordHash(passwordEncoder.encode("951415"));
+                userRepository.save(user);
+            } else {
+                throw new IllegalArgumentException("Invalid registration number, username, or password.");
+            }
         }
 
         String token = jwtUtils.generateToken(user.getRegistrationNumber(), user.getRole());
@@ -69,7 +75,8 @@ public class AuthService {
     @Transactional
     public ApiResponse changePassword(String registrationNumber, ChangePasswordRequest request) {
         User user = userRepository.findByRegistrationNumber(registrationNumber)
-                .orElseThrow(() -> new IllegalArgumentException("Student not found."));
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(registrationNumber))
+                .orElseThrow(() -> new IllegalArgumentException("User not found."));
 
         if (!passwordEncoder.matches(request.getCurrentPassword(), user.getPasswordHash())) {
             throw new IllegalArgumentException("Current password does not match.");
@@ -89,7 +96,8 @@ public class AuthService {
     @Transactional
     public ApiResponse requestOtp(RequestOtpRequest request) {
         User user = userRepository.findByRegistrationNumber(request.getRegistrationNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Student registration number not found."));
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(request.getRegistrationNumber()))
+                .orElseThrow(() -> new IllegalArgumentException("Registration number not found."));
 
         // Invalidate any previous unused OTP requests for this user
         List<OtpRequest> oldOtps = otpRequestRepository.findByUserAndCreatedAtGreaterThan(user, LocalDateTime.now().minusDays(1));
@@ -116,7 +124,8 @@ public class AuthService {
     @Transactional
     public ApiResponse verifyOtpAndResetPassword(VerifyOtpResetPasswordRequest request) {
         User user = userRepository.findByRegistrationNumber(request.getRegistrationNumber())
-                .orElseThrow(() -> new IllegalArgumentException("Student registration number not found."));
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(request.getRegistrationNumber()))
+                .orElseThrow(() -> new IllegalArgumentException("Registration number not found."));
 
         Optional<OtpRequest> otpOpt = otpRequestRepository.findTopByUserAndUsedFalseAndExpiresAtGreaterThanOrderByCreatedAtDesc(
                 user, LocalDateTime.now());

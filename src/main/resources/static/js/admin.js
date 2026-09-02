@@ -14,6 +14,8 @@ const Admin = {
       document.getElementById('stat-ended-events').textContent = stats.endedEvents;
       document.getElementById('stat-saved-events').textContent = stats.totalSavedEvents;
       document.getElementById('stat-total-reports').textContent = stats.totalReports;
+      const teamsStatEl = document.getElementById('stat-total-teams');
+      if (teamsStatEl) teamsStatEl.textContent = stats.totalTeams || 0;
 
       const user = API.getUser();
       // Sub-admin management tab: only visible to ROLE_ADMIN
@@ -76,6 +78,7 @@ const Admin = {
       'userlogs': document.getElementById('admin-sec-userlogs'),
       'students': document.getElementById('admin-sec-students'),
       'events': document.getElementById('admin-sec-events'),
+      'teams': document.getElementById('admin-sec-teams'),
       'reports': document.getElementById('admin-sec-reports'),
       'database': document.getElementById('admin-sec-database'),
       'subadmins': document.getElementById('admin-sec-subadmins')
@@ -114,6 +117,9 @@ const Admin = {
       });
       if (tabName === 'database' && isAdmin) {
         this.loadDbTable('users');
+      }
+      if (tabName === 'teams') {
+        this.loadTeams();
       }
     }
   },
@@ -759,6 +765,54 @@ const Admin = {
       this.loadDashboard();
     } catch (err) {
       App.showToast(err.message || 'Failed to clear Unstop hackathons', 'danger');
+    }
+  },
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  },
+
+  async loadTeams() {
+    const tbody = document.getElementById('admin-teams-tbody');
+    if (!tbody) return;
+    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Loading teams...</td></tr>';
+    try {
+      const teams = await API.request('/admin/teams');
+      if (!teams || teams.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">No teams have been created yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = teams.map(t => {
+        const memberNames = (t.members || []).map(m => `${this.escapeHtml(m.name)} (${this.escapeHtml(m.registrationNumber)})`).join(', ');
+        const memberSkills = [...new Set((t.members || []).flatMap(m => (m.skills || '').split(',').map(s => s.trim()).filter(Boolean)))].join(', ');
+        return `<tr>
+          <td style="font-size:0.8rem;color:var(--text-muted);">#${t.id}</td>
+          <td style="font-weight:700;">${this.escapeHtml(t.teamName)}</td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(t.eventTitle)}</td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(t.creatorName)}<br><span style="color:var(--text-muted);font-size:0.75rem;">${this.escapeHtml(t.creatorRegistrationNumber)}</span></td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(memberNames || 'None')}</td>
+          <td style="text-align:center;">${t.currentMemberCount}/${t.maxMembers}</td>
+          <td style="font-size:0.75rem;color:var(--accent-cyan,#22d3ee);">${this.escapeHtml(memberSkills || '—')}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="Admin.deleteTeam(${t.id}, '${this.escapeHtml(t.teamName)}')">🗑️ Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">${err.message || 'Failed to load teams'}</td></tr>`;
+    }
+  },
+
+  async deleteTeam(teamId, teamName) {
+    if (!confirm(`Delete team "${teamName}" permanently? All join requests and members will be removed.`)) return;
+    try {
+      const res = await API.request(`/admin/teams/${teamId}`, { method: 'DELETE' });
+      App.showToast(res.message, 'success');
+      this.loadTeams();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Delete failed', 'danger');
     }
   },
 

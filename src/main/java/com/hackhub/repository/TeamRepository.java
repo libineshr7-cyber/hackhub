@@ -12,4 +12,5 @@ import java.util.List;
 public interface TeamRepository extends JpaRepository<Team, Long> {
     List<Team> findByEventOrderByCreatedAtDesc(Event event);
     List<Team> findByCreatedBy(User user);
+    List<Team> findAllByOrderByCreatedAtDesc();
 }

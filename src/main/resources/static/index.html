@@ -165,23 +165,45 @@
 
         <!-- 6. FIND TEAM VIEW -->
         <section id="view-teams" class="view-section" style="display:none;">
-            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
-                <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">🤝 Department Teammate Finder</h2>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px;">Look for hackathon teams, request to join open slots, or invite department students by Name / Reg No (CS001–CS049).</p>
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon); margin: 0;">🤝 Department Teammate Finder & Open Teams</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; margin-bottom: 0;">Browse open hackathon teams, request to join vacancies, or create your own team!</p>
+                </div>
+                <button class="btn btn-primary" onclick="Teams.openCreateTeamModal()">+ Create a Team</button>
+            </div>
+
+            <!-- Incoming Join Requests for Leader's Teams -->
+            <div id="incoming-requests-section" style="margin-bottom: 24px; display: none;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--status-deadline);">📬 Incoming Join Requests for Your Teams</h3>
+                <div id="incoming-requests-list"></div>
+            </div>
+
+            <!-- Public Open Teams Feed (Shows to Everyone) -->
+            <div style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;">🌟 Open Teams Looking for Teammates</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 2px 0 0 0;">Visible to everyone logged in. Tap "Request to Join" on any team to send your request.</p>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <input type="text" id="teams-filter-search" class="form-input" placeholder="Filter by team or event..." style="font-size: 0.82rem; padding: 4px 10px; width: 200px;" oninput="Teams.filterRenderedTeams()">
+                        <button class="btn btn-secondary btn-sm" onclick="Teams.loadAllTeams()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div id="all-teams-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="text-align:center; padding: 24px; color: var(--text-muted);">Loading teams...</div>
+                </div>
             </div>
 
             <!-- Student Search & Quick Teammate Finder -->
             <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
-                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 10px;">🔎 Search Student by Name or Registration Number</h3>
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">🔎 Search Student Directory by Name or Reg No</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0; margin-bottom: 10px;">Find specific students and inspect their skills for hackathons</p>
                 <div style="display: flex; gap: 10px;">
-                    <input type="text" id="teams-student-search-input" class="form-input" placeholder="Enter Name or Reg No (e.g. CS001, CS027, Student CS015)..." oninput="Teams.handleSearchStudentInput()">
+                    <input type="text" id="teams-student-search-input" class="form-input" placeholder="Enter Name or Reg No (e.g. CS2001, CS3015)..." oninput="Teams.handleSearchStudentInput()">
                 </div>
                 <div id="teams-student-search-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
-            </div>
-
-            <div style="margin-bottom: 24px;">
-                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">Incoming Join Requests for Your Teams</h3>
-                <div id="incoming-requests-list"></div>
             </div>
         </section>
 
@@ -265,18 +287,51 @@
                     <span class="stat-number" id="stat-total-reports">0</span>
                     <span class="stat-label">Reports</span>
                 </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-teams">0</span>
+                    <span class="stat-label">Total Teams</span>
+                </div>
             </div>
 
             <!-- Sub-Navigation Filter Pills for Admin -->
             <div class="filters-row" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
-                <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs & Controls</button>
+                <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs &amp; Controls</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="posting-history" onclick="Admin.switchSubTab('posting-history')">📜 Hackathon Posting History Log</button>
-                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="userlogs" onclick="Admin.switchSubTab('userlogs')">👤 Active & Future User Logs</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="userlogs" onclick="Admin.switchSubTab('userlogs')">👤 Active &amp; Future User Logs</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="students" onclick="Admin.switchSubTab('students')">👥 Student Accounts</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="teams" onclick="Admin.switchSubTab('teams')">🤝 Teams Management</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
-                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector & H2 Console</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector &amp; H2 Console</button>
                 <button id="admin-subtab-subadmins" class="btn btn-sm admin-subtab-btn" data-subtab="subadmins" onclick="Admin.switchSubTab('subadmins')" style="display:none; background:#7c3aed; color:#fff; border-color:#7c3aed;">🛡️ Sub-Admin Management</button>
+            </div>
+
+            <!-- TEAMS MANAGEMENT SECTION -->
+            <div id="admin-sec-teams" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🤝 All Teams Management</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">View, inspect and delete all teams created across hackathons department-wide</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadTeams()">🔄 Refresh Teams</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Team Name</th>
+                                <th>Event / Hackathon</th>
+                                <th>Created By</th>
+                                <th>Members</th>
+                                <th>Max Size</th>
+                                <th>Skills in Team</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-teams-tbody"></tbody>
+                    </table>
+                </div>
             </div>
 
             <!-- DATABASE INSPECTOR & H2 CONSOLE LINK SECTION -->
@@ -706,11 +761,16 @@
     <div id="modal-create-team" class="modal-overlay">
         <div class="modal-box">
             <div class="modal-header">
-                <h3 class="modal-title">Create New Team</h3>
+                <h3 class="modal-title">🤝 Create New Team</h3>
                 <button type="button" class="close-btn">&times;</button>
             </div>
             <form onsubmit="Teams.handleCreateTeam(event)">
-                <input type="hidden" id="form-create-team-event-id">
+                <div class="form-group">
+                    <label class="form-label">Select Hackathon / Event *</label>
+                    <select id="form-create-team-event-id" class="form-input" required>
+                        <option value="">-- Loading events... --</option>
+                    </select>
+                </div>
                 <div class="form-group">
                     <label class="form-label">Team Name *</label>
                     <input type="text" id="team-name-input" class="form-input" placeholder="e.g. CyberShield Squad" required>
@@ -718,6 +778,7 @@
                 <div class="form-group">
                     <label class="form-label">Max Team Members</label>
                     <input type="number" id="team-max-input" class="form-input" value="4" min="2" max="10">
+                    <small style="color: var(--text-muted); font-size: 0.78rem;">Between 2 and 10 members (default: 4)</small>
                 </div>
                 <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Create Team</button>
             </form>

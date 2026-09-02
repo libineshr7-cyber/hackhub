@@ -2,6 +2,7 @@ package com.hackhub.service;
 
 import com.hackhub.dto.AdminUserDto.*;
 import com.hackhub.dto.AuthDtos.ApiResponse;
+import com.hackhub.dto.TeamDtos.TeamResponse;
 import com.hackhub.entity.User;
 import com.hackhub.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,6 +30,12 @@ public class AdminService {
     private ReportRepository reportRepository;
 
     @Autowired
+    private TeamRepository teamRepository;
+
+    @Autowired
+    private TeamService teamService;
+
+    @Autowired
     private PasswordEncoder passwordEncoder;
 
     public DashboardStats getDashboardStats() {
@@ -41,7 +48,20 @@ public class AdminService {
         stats.setTotalSavedEvents(savedEventRepository.count());
         stats.setTotalReports(reportRepository.count());
         stats.setPendingReports(reportRepository.countByStatus("PENDING"));
+        stats.setTotalTeams(teamRepository.count());
         return stats;
+    }
+
+    public List<TeamResponse> getAllTeamsForAdmin() {
+        return teamService.getAllTeams(null);
+    }
+
+    @Transactional
+    public ApiResponse deleteTeamByAdmin(Long teamId, User caller) {
+        if (caller == null || (!"ROLE_ADMIN".equals(caller.getRole()) && !"ROLE_SUBADMIN".equals(caller.getRole()))) {
+            throw new IllegalArgumentException("Unauthorized: Admin privilege required.");
+        }
+        return teamService.deleteTeam(teamId, caller);
     }
 
     /**

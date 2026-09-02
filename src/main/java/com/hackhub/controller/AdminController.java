@@ -30,6 +30,9 @@ public class AdminController {
     private com.hackhub.service.EventService eventService;
 
     @Autowired
+    private com.hackhub.service.TeamService teamService;
+
+    @Autowired
     private UserRepository userRepository;
 
     private User getCurrentUser(Authentication authentication) {
@@ -37,6 +40,7 @@ public class AdminController {
             throw new IllegalStateException("Authentication required.");
         }
         return userRepository.findByRegistrationNumber(authentication.getName())
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(authentication.getName()))
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + authentication.getName()));
     }
 
@@ -219,6 +223,31 @@ public class AdminController {
             eventService.deleteEvent(id);
             return ResponseEntity.ok(new ApiResponse(true, "Event deleted successfully."));
         } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    // =====================================================================
+    // TEAMS MANAGEMENT
+    // =====================================================================
+
+    @GetMapping("/teams")
+    public ResponseEntity<?> getAllTeamsForAdmin(Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            return ResponseEntity.ok(teamService.getAllTeams(caller));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/teams/{id}")
+    public ResponseEntity<?> deleteTeamByAdmin(@PathVariable("id") Long id, Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            ApiResponse response = adminService.deleteTeamByAdmin(id, caller);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }

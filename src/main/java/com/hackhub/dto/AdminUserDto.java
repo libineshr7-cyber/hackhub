@@ -111,6 +111,7 @@ public class AdminUserDto {
         private long totalSavedEvents;
         private long totalReports;
         private long pendingReports;
+        private long totalTeams;
 
         public long getTotalStudents() { return totalStudents; }
         public void setTotalStudents(long totalStudents) { this.totalStudents = totalStudents; }
@@ -126,5 +127,7 @@ public class AdminUserDto {
         public void setTotalReports(long totalReports) { this.totalReports = totalReports; }
         public long getPendingReports() { return pendingReports; }
         public void setPendingReports(long pendingReports) { this.pendingReports = pendingReports; }
+        public long getTotalTeams() { return totalTeams; }
+        public void setTotalTeams(long totalTeams) { this.totalTeams = totalTeams; }
     }
 }

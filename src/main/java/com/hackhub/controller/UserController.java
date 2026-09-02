@@ -27,6 +27,7 @@ public class UserController {
             throw new IllegalStateException("User is not authenticated.");
         }
         return userRepository.findByRegistrationNumber(authentication.getName())
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(authentication.getName()))
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + authentication.getName()));
     }
 

@@ -28,7 +28,24 @@ public class TeamController {
             throw new IllegalStateException("Authentication required.");
         }
         return userRepository.findByRegistrationNumber(authentication.getName())
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(authentication.getName()))
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + authentication.getName()));
+    }
+
+    @GetMapping
+    public ResponseEntity<?> getAllTeams(Authentication authentication) {
+        try {
+            User currentUser = getCurrentUser(authentication);
+            List<TeamResponse> teams = teamService.getAllTeams(currentUser);
+            return ResponseEntity.ok(teams);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @GetMapping("/all")
+    public ResponseEntity<?> getAllTeamsAlias(Authentication authentication) {
+        return getAllTeams(authentication);
     }
 
     @PostMapping
@@ -36,6 +53,17 @@ public class TeamController {
         try {
             User currentUser = getCurrentUser(authentication);
             TeamResponse response = teamService.createTeam(request, currentUser);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/{teamId}")
+    public ResponseEntity<?> deleteTeam(@PathVariable("teamId") Long teamId, Authentication authentication) {
+        try {
+            User currentUser = getCurrentUser(authentication);
+            ApiResponse response = teamService.deleteTeam(teamId, currentUser);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));

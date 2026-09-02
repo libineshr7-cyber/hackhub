@@ -19,7 +19,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Override
     public UserDetails loadUserByUsername(String registrationNumber) throws UsernameNotFoundException {
         User user = userRepository.findByRegistrationNumber(registrationNumber)
-                .orElseThrow(() -> new UsernameNotFoundException("Student not found with reg number: " + registrationNumber));
+                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(registrationNumber))
+                .orElseThrow(() -> new UsernameNotFoundException("User not found with reg number: " + registrationNumber));
 
         if ("DISABLED".equalsIgnoreCase(user.getStatus())) {
             throw new DisabledException("Account is disabled. Contact department admin.");

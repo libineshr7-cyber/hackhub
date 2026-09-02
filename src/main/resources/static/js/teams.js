@@ -4,9 +4,136 @@
 
 const Teams = {
   currentEventId: null,
+  _allTeamsCache: [],
 
   async loadTeamsView() {
+    this.loadAllTeams();
     this.loadIncomingRequests();
+    this.populateEventDropdown();
+  },
+
+  async populateEventDropdown() {
+    try {
+      const events = await API.request('/events');
+      const select = document.getElementById('form-create-team-event-id');
+      if (!select || !events) return;
+      select.innerHTML = '<option value="">-- Select Hackathon --</option>' +
+        events.map(e => `<option value="${e.id}">${this.escapeHtml(e.title)}</option>`).join('');
+    } catch (err) {
+      console.warn('Could not load events for team creation', err);
+    }
+  },
+
+  openCreateTeamModal() {
+    this.populateEventDropdown();
+    document.getElementById('team-name-input').value = '';
+    document.getElementById('team-max-input').value = '4';
+    App.openModal('modal-create-team');
+  },
+
+  async loadAllTeams() {
+    const container = document.getElementById('all-teams-container');
+    if (!container) return;
+    container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">Loading teams...</div>`;
+    try {
+      const teams = await API.request('/teams/all');
+      this._allTeamsCache = teams || [];
+      this._renderAllTeams(this._allTeamsCache);
+    } catch (err) {
+      container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">Could not load teams. Try refreshing.</div>`;
+    }
+  },
+
+  _renderAllTeams(teams) {
+    const container = document.getElementById('all-teams-container');
+    if (!container) return;
+    if (!teams || teams.length === 0) {
+      container.innerHTML = `<div style="text-align:center;padding:24px;color:var(--text-muted);">No teams have been created yet. Be the first to create one!</div>`;
+      return;
+    }
+    container.innerHTML = teams.map(t => this.createAllTeamCardHtml(t)).join('');
+  },
+
+  filterRenderedTeams() {
+    const q = (document.getElementById('teams-filter-search')?.value || '').toLowerCase().trim();
+    if (!q) { this._renderAllTeams(this._allTeamsCache); return; }
+    const filtered = this._allTeamsCache.filter(t =>
+      (t.teamName || '').toLowerCase().includes(q) ||
+      (t.eventTitle || '').toLowerCase().includes(q) ||
+      (t.creatorName || '').toLowerCase().includes(q)
+    );
+    this._renderAllTeams(filtered);
+  },
+
+  createAllTeamCardHtml(team) {
+    const isFull = team.currentMemberCount >= team.maxMembers;
+    const slots = team.maxMembers - team.currentMemberCount;
+    const matchBadge = team.skillMatchScore != null
+      ? `<span style="font-size:0.75rem;background:var(--accent-maroon-tint,#3a0000);color:var(--accent-maroon);padding:3px 8px;border-radius:12px;font-weight:700;">🎯 ${team.skillMatchScore}% match</span>`
+      : '';
+
+    let actionBtn = '';
+    if (team.isUserMember) {
+      actionBtn = `<span style="font-size:0.8rem;color:var(--status-upcoming,#22c55e);font-weight:700;">✓ You are in this team</span>`;
+    } else if (team.hasUserRequested) {
+      actionBtn = `<span style="font-size:0.8rem;color:var(--status-deadline,#f59e0b);font-weight:700;">⏳ Request Pending</span>`;
+    } else if (isFull) {
+      actionBtn = `<span style="font-size:0.8rem;color:var(--text-muted);font-weight:600;">🔒 Team Full</span>`;
+    } else {
+      actionBtn = `<button class="btn btn-primary btn-sm" onclick="Teams.handleJoinRequestFromFeed(${team.id})">Request to Join</button>`;
+    }
+
+    const memberSkills = [...new Set((team.members || []).flatMap(m => (m.skills || '').split(',').map(s => s.trim()).filter(Boolean)))].join(', ');
+    const memberNames = (team.members || []).map(m => `<span style="font-size:0.75rem;background:var(--bg-dark);padding:2px 7px;border-radius:8px;border:1px solid var(--border-color);">${this.escapeHtml(m.name)}</span>`).join(' ');
+
+    // Delete button for own teams
+    const user = API.getUser();
+    const regNo = user?.registrationNumber || '';
+    const deleteBtn = (regNo && team.creatorRegistrationNumber === regNo)
+      ? `<button class="btn btn-danger btn-sm" onclick="Teams.deleteMyTeam(${team.id},'${this.escapeHtml(team.teamName)}')" style="margin-left:8px;">🗑 Delete</button>`
+      : '';
+
+    return `
+      <div style="background:var(--bg-card);border:1px solid var(--border-color);border-radius:var(--radius-md);padding:16px;">
+        <div style="display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:8px;">
+          <div>
+            <div style="font-size:1rem;font-weight:700;color:var(--text-main);">🏷 ${this.escapeHtml(team.teamName)}</div>
+            <div style="font-size:0.8rem;color:var(--text-muted);margin-top:2px;">📌 ${this.escapeHtml(team.eventTitle)} &nbsp;|&nbsp; 👑 ${this.escapeHtml(team.creatorName)} (${this.escapeHtml(team.creatorRegistrationNumber)})</div>
+          </div>
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+            ${matchBadge}
+            <span style="font-size:0.82rem;font-weight:700;padding:4px 10px;border-radius:12px;background:${isFull ? 'var(--bg-dark)' : 'rgba(34,197,94,0.12)'};color:${isFull ? 'var(--text-muted)' : 'var(--status-upcoming,#22c55e)'};">
+              ${team.currentMemberCount}/${team.maxMembers} ${isFull ? '(Full)' : `(${slots} open)`}
+            </span>
+          </div>
+        </div>
+        ${memberNames ? `<div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:4px;">${memberNames}</div>` : ''}
+        ${memberSkills ? `<div style="margin-top:6px;font-size:0.75rem;color:var(--accent-cyan,#22d3ee);">🔧 Skills: ${this.escapeHtml(memberSkills)}</div>` : ''}
+        <div style="margin-top:10px;display:flex;justify-content:flex-end;align-items:center;gap:8px;">
+          ${actionBtn}${deleteBtn}
+        </div>
+      </div>`;
+  },
+
+  async handleJoinRequestFromFeed(teamId) {
+    try {
+      const res = await API.request('/teams/request', { method: 'POST', body: JSON.stringify({ teamId }) });
+      App.showToast(res.message, 'success');
+      this.loadAllTeams();
+    } catch (err) {
+      App.showToast(err.message || 'Join request failed', 'danger');
+    }
+  },
+
+  async deleteMyTeam(teamId, teamName) {
+    if (!confirm(`Delete team "${teamName}"? This cannot be undone.`)) return;
+    try {
+      const res = await API.request(`/teams/${teamId}`, { method: 'DELETE' });
+      App.showToast(res.message, 'success');
+      this.loadAllTeams();
+    } catch (err) {
+      App.showToast(err.message || 'Delete failed', 'danger');
+    }
   },
 
   async openFindTeamModal(eventId, eventTitle) {
@@ -256,16 +383,19 @@ const Teams = {
     const teamName = document.getElementById('team-name-input').value.trim();
     const maxMembers = parseInt(document.getElementById('team-max-input').value) || 4;
 
+    if (!eventId) { App.showToast('Please select a hackathon/event.', 'danger'); return; }
+
     try {
       await API.request('/teams', {
         method: 'POST',
-        body: JSON.stringify({ eventId, teamName, maxMembers })
+        body: JSON.stringify({ eventId: parseInt(eventId), teamName, maxMembers })
       });
 
       App.closeModal('modal-create-team');
       document.getElementById('team-name-input').value = '';
       App.showToast('🎉 Team created successfully! You are the team leader.', 'success');
-      this.fetchAndRenderTeams(eventId);
+      this.loadAllTeams();
+      if (this.currentEventId) this.fetchAndRenderTeams(this.currentEventId);
     } catch (err) {
       App.showToast(err.message || 'Failed to create team', 'danger');
     }
@@ -288,15 +418,18 @@ const Teams = {
   },
 
   async loadIncomingRequests() {
+    const section = document.getElementById('incoming-requests-section');
     const container = document.getElementById('incoming-requests-list');
     if (!container) return;
 
     try {
       const requests = await API.request('/teams/requests/incoming');
       if (!requests || requests.length === 0) {
-        container.innerHTML = `<p style="color: var(--text-muted); font-size: 0.9rem;">No pending join requests for your teams.</p>`;
+        if (section) section.style.display = 'none';
+        container.innerHTML = '';
         return;
       }
+      if (section) section.style.display = 'block';
 
       container.innerHTML = requests.map(req => `
         <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 12px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center;">
