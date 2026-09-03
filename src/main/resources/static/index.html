@@ -1093,15 +1093,24 @@
 
     <!-- MODAL: Notifications & Requests -->
     <div id="modal-notifications" class="modal-overlay">
-        <div class="modal-box" style="max-width: 540px;">
-            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
-                <h3 class="modal-title" style="margin:0;">🔔 Notifications & Requests</h3>
+        <div class="modal-box" style="max-width: 550px; border-radius: 18px; border: 2px solid rgba(128, 0, 32, 0.18); overflow: hidden;">
+            <div style="height: 4px; background: linear-gradient(90deg, #800020, #9e1b32);"></div>
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px; background: linear-gradient(180deg, rgba(128,0,32,0.04) 0%, rgba(255,255,255,0) 100%); border-bottom: 1px solid rgba(128,0,32,0.1);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1.5px solid rgba(128,0,32,0.2); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(128,0,32,0.18);">
+                        <img src="/logo.png" alt="HackHub Logo" style="width: 24px; height: 24px; object-fit: contain; border-radius: 50%;">
+                    </div>
+                    <div>
+                        <h3 class="modal-title" style="margin:0; font-size: 1.15rem; color: #800020; font-weight: 800;">🔔 Notifications &amp; Requests</h3>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time teammate alerts &amp; requests</span>
+                    </div>
+                </div>
                 <button class="close-btn" onclick="App.closeModal('modal-notifications')">&times;</button>
             </div>
-            <div class="modal-body" style="padding:16px;">
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px;">
-                    <span style="font-size:0.85rem; color:var(--text-muted);">Teammate invitations & join requests</span>
-                    <button class="btn btn-outline btn-sm" onclick="Notifications.clearAll()" style="font-size:0.75rem; padding:4px 8px;">🗑️ Clear All</button>
+            <div class="modal-body" style="padding:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding: 8px 12px; background: rgba(128,0,32,0.04); border-radius: 8px; border: 1px solid rgba(128,0,32,0.08);">
+                    <span style="font-size:0.8rem; color: #800020; font-weight: 600;">⚡ Instant updates &amp; invitations</span>
+                    <button class="btn btn-outline btn-sm" onclick="Notifications.clearAll()" style="font-size:0.75rem; padding:4px 10px; color: #800020; border-color: rgba(128,0,32,0.3);">🗑️ Clear All</button>
                 </div>
                 <div id="notifications-list" style="max-height: 380px; overflow-y: auto;">
                 </div>

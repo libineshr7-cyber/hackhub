@@ -357,7 +357,14 @@ const Admin = {
   },
 
   async deleteStudent(studentId, regNo) {
-    if (!confirm(`Are you sure you want to permanently delete student '${regNo}'? This cannot be undone.`)) return;
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete student '${regNo}'? This cannot be undone.`, {
+      title: 'Delete Student Account?',
+      icon: '🗑️',
+      confirmText: 'Delete Account',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/admin/students/${studentId}`, { method: 'DELETE' });
       App.showToast(res.message || 'Student account deleted.', 'success');
@@ -413,7 +420,14 @@ const Admin = {
   },
 
   async resetStudentPassword(studentId, regNo) {
-    if (!confirm(`Reset password for '${regNo}' to default '123'?`)) return;
+    const confirmed = await App.confirm(`Reset password for student '${regNo}' to default temporary password '123'?`, {
+      title: 'Reset Student Password?',
+      icon: '🔑',
+      confirmText: 'Reset to 123',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/admin/students/${studentId}/reset-password`, { method: 'POST' });
       App.showToast(res.message || `Password for ${regNo} reset to '123'.`, 'success');
@@ -555,7 +569,14 @@ const Admin = {
   },
 
   async deleteSubAdmin(id, regNo) {
-    if (!confirm(`Are you sure you want to permanently delete Sub-Admin '${regNo}'?`)) return;
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete Sub-Admin '${regNo}'?`, {
+      title: 'Delete Sub-Admin Account?',
+      icon: '🛡️',
+      confirmText: 'Delete Sub-Admin',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/admin/subadmins/${id}`, { method: 'DELETE' });
       App.showToast(res.message || 'Sub-Admin deleted.', 'success');
@@ -580,7 +601,14 @@ const Admin = {
   },
 
   async resetSubAdminPassword(id, regNo) {
-    if (!confirm(`Reset password for Sub-Admin ${regNo} to '123'?`)) return;
+    const confirmed = await App.confirm(`Reset password for Sub-Admin ${regNo} to '123'?`, {
+      title: 'Reset Sub-Admin Password?',
+      icon: '🔑',
+      confirmText: 'Reset Password',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/admin/subadmins/${id}/reset-password`, { method: 'POST' });
       App.showToast(res.message, 'success');
@@ -763,9 +791,14 @@ const Admin = {
   },
 
   async deleteEvent(eventId, eventTitle) {
-    if (!confirm(`Are you sure you want to permanently delete event "${eventTitle}"? This action cannot be undone.`)) {
-      return;
-    }
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete event "${eventTitle}"? This action cannot be undone.`, {
+      title: 'Delete Hackathon Event?',
+      icon: '🗑️',
+      confirmText: 'Delete Event',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
 
     try {
       const res = await API.request(`/admin/events/${eventId}`, { method: 'DELETE' });
@@ -790,9 +823,14 @@ const Admin = {
   },
 
   async clearUnstopEvents() {
-    if (!confirm('Are you sure you want to remove all synced Unstop hackathons from the website database?')) {
-      return;
-    }
+    const confirmed = await App.confirm('Are you sure you want to remove all synced Unstop hackathons from the website database?', {
+      title: 'Clear Unstop Hackathons?',
+      icon: '🧹',
+      confirmText: 'Remove All',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request('/events/clear-unstop', { method: 'DELETE' });
       App.showToast(res.message || 'Cleared Unstop events', 'info');
@@ -840,7 +878,14 @@ const Admin = {
   },
 
   async deleteTeam(teamId, teamName) {
-    if (!confirm(`Delete team "${teamName}" permanently? All join requests and members will be removed.`)) return;
+    const confirmed = await App.confirm(`Delete team "${teamName}" permanently? All join requests and members will be removed.`, {
+      title: 'Delete Team?',
+      icon: '👥',
+      confirmText: 'Delete Team',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/admin/teams/${teamId}`, { method: 'DELETE' });
       App.showToast(res.message, 'success');
@@ -907,7 +952,14 @@ const Admin = {
   },
 
   async clearActivityLogs() {
-    if (!confirm('Purge all live audit logs? This action cannot be undone.')) return;
+    const confirmed = await App.confirm('Purge all live audit logs? This action cannot be undone.', {
+      title: 'Purge Audit Logs?',
+      icon: '🔴',
+      confirmText: 'Purge Logs',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request('/admin/activity-logs', { method: 'DELETE' });
       App.showToast(res.message, 'success');

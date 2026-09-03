@@ -146,7 +146,14 @@ const Teams = {
   },
 
   async deleteMyTeam(teamId, teamName) {
-    if (!confirm(`Delete team "${teamName}"? This cannot be undone.`)) return;
+    const confirmed = await App.confirm(`Delete team "${teamName}"? This action cannot be undone.`, {
+      title: 'Delete Team?',
+      icon: '🗑️',
+      confirmText: 'Delete Team',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
     try {
       const res = await API.request(`/teams/${teamId}`, { method: 'DELETE' });
       App.showToast(res.message, 'success');
@@ -358,7 +365,14 @@ const Teams = {
       return;
     }
 
-    if (!confirm(`Send team invitation to ALL students in class "${classPrefix}"? This will notify them all.`)) return;
+    const confirmed = await App.confirm(`Send team invitation to ALL students in class "${classPrefix}"? This will notify all eligible students.`, {
+      title: 'Broadcast Class Invitation?',
+      icon: '📢',
+      confirmText: 'Send Broadcast',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
 
     try {
       const res = await API.request('/teams/broadcast', {
@@ -382,7 +396,14 @@ const Teams = {
       return;
     }
 
-    if (!confirm(`Send team invitation to ALL students in ${dept} Department? This will notify them all.`)) return;
+    const confirmed = await App.confirm(`Send team invitation to ALL students in ${dept} Department? This will notify all department students.`, {
+      title: 'Broadcast Department Invitation?',
+      icon: '📢',
+      confirmText: 'Send Broadcast',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
 
     try {
       const res = await API.request('/teams/broadcast', {

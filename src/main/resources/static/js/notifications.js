@@ -39,8 +39,15 @@ const Notifications = {
       const newCount = res.count || 0;
 
       if (newCount > this.unreadCount) {
-        // New request received! Play toast alert
-        App.showToast(`🔔 You have ${newCount - this.unreadCount} new request/notification!`, 'info');
+        const diff = newCount - this.unreadCount;
+        App.showNotificationPopup({
+          title: 'New Notification Received!',
+          message: `You have ${diff} new teammate alert/notification waiting for you!`,
+          icon: '🔔',
+          actionText: 'View Alerts',
+          onAction: () => Notifications.toggleModal(),
+          duration: 6500
+        });
         this.fetchNotificationsList();
       }
 
@@ -116,20 +123,20 @@ const Notifications = {
     else if (n.type === 'REQUEST_ACCEPTED') icon = '🎉';
     else if (n.type === 'REQUEST_REJECTED') icon = '❌';
 
-    const unreadBg = n.isRead ? 'transparent' : 'rgba(14, 165, 233, 0.08)';
-    const borderLeft = n.isRead ? '1px solid var(--border-color)' : '3px solid #0284c7';
+    const unreadBg = n.isRead ? '#ffffff' : 'rgba(128, 0, 32, 0.05)';
+    const borderLeft = n.isRead ? '1px solid var(--border-color)' : '3.5px solid var(--accent-maroon)';
 
     return `
-      <div class="notification-item" style="display:flex; gap:12px; padding:12px 14px; margin-bottom:8px; border-radius:10px; background:${unreadBg}; border:${borderLeft}; align-items:flex-start;">
+      <div class="notification-item" style="display:flex; gap:12px; padding:12px 14px; margin-bottom:10px; border-radius:12px; background:${unreadBg}; border:${borderLeft}; box-shadow: 0 2px 8px rgba(0,0,0,0.04); align-items:flex-start; transition: transform 0.2s;">
         <span style="font-size:1.4rem; line-height:1; padding-top:2px;">${icon}</span>
         <div style="flex:1;">
           <div style="display:flex; justify-content:space-between; align-items:baseline;">
             <h4 style="font-size:0.92rem; font-weight:700; color:var(--text-main); margin:0;">${this.escapeHtml(n.title)}</h4>
-            <span style="font-size:0.75rem; color:var(--text-muted);">${n.createdAt || ''}</span>
+            <span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">${n.createdAt || ''}</span>
           </div>
           <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 8px 0; line-height:1.4;">${this.escapeHtml(n.message)}</p>
           ${(n.type === 'TEAM_INVITE' || n.type === 'TEAM_REQUEST')
-            ? `<button class="btn btn-primary btn-sm" onclick="Notifications.goToTeamsView()" style="font-size:0.78rem; padding:4px 12px;">👥 Open Teammates & Respond</button>`
+            ? `<button class="btn btn-sm" onclick="Notifications.goToTeamsView()" style="font-size:0.78rem; padding:4px 14px; background:linear-gradient(135deg, #800020, #9e1b32); color:#fff; border-radius:6px; box-shadow: 0 2px 8px rgba(128,0,32,0.25);">👥 Open Teammates &amp; Respond</button>`
             : ''
           }
         </div>
@@ -142,10 +149,21 @@ const Notifications = {
   },
 
   async clearAll() {
-    if (!confirm('Clear all notification history?')) return;
+    const confirmed = await App.confirm('Are you sure you want to clear all your notification history? This cannot be undone.', {
+      title: 'Clear Notification History?',
+      icon: '🗑️',
+      confirmText: 'Yes, Clear All',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
     try {
       await API.request('/notifications/clear', { method: 'DELETE' });
-      App.showToast('Cleared notifications', 'info');
+      App.showToast('All notifications have been cleared successfully.', 'success', {
+        title: 'Cleared',
+        icon: '🧹'
+      });
       this.fetchNotificationsList();
       this.unreadCount = 0;
       this.updateBadgeUI(0);
