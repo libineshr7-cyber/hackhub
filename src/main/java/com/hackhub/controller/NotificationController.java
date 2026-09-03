@@ -64,4 +64,13 @@ public class NotificationController {
         }
         return ResponseEntity.ok(new ApiResponse(true, "All notifications cleared."));
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<?> deleteNotification(@PathVariable("id") Long id, Authentication auth) {
+        User user = getAuthenticatedUser(auth);
+        if (user != null) {
+            notificationService.deleteNotification(id, user);
+        }
+        return ResponseEntity.ok(new ApiResponse(true, "Notification deleted."));
+    }
 }

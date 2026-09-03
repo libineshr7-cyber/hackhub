@@ -66,4 +66,13 @@ public class NotificationService {
     public void clearAllNotifications(User recipient) {
         notificationRepository.deleteByRecipient(recipient);
     }
+
+    @Transactional
+    public void deleteNotification(Long id, User recipient) {
+        notificationRepository.findById(id).ifPresent(n -> {
+            if (n.getRecipient() != null && n.getRecipient().getId().equals(recipient.getId())) {
+                notificationRepository.delete(n);
+            }
+        });
+    }
 }

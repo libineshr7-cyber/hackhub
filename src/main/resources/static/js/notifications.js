@@ -135,10 +135,13 @@ const Notifications = {
             <span style="font-size:0.72rem; color:var(--text-muted); font-weight:500;">${n.createdAt || ''}</span>
           </div>
           <p style="font-size:0.85rem; color:var(--text-muted); margin:4px 0 8px 0; line-height:1.4;">${this.escapeHtml(n.message)}</p>
-          ${(n.type === 'TEAM_INVITE' || n.type === 'TEAM_REQUEST')
-            ? `<button class="btn btn-sm" onclick="Notifications.goToTeamsView()" style="font-size:0.78rem; padding:4px 14px; background:linear-gradient(135deg, #800020, #9e1b32); color:#fff; border-radius:6px; box-shadow: 0 2px 8px rgba(128,0,32,0.25);">👥 Open Teammates &amp; Respond</button>`
-            : ''
-          }
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-top:6px;">
+            ${(n.type === 'TEAM_INVITE' || n.type === 'TEAM_REQUEST')
+              ? `<button class="btn btn-sm" onclick="Notifications.goToTeamsView()" style="font-size:0.78rem; padding:4px 14px; background:linear-gradient(135deg, #800020, #9e1b32); color:#fff; border-radius:6px; box-shadow: 0 2px 8px rgba(128,0,32,0.25);">👥 Open Teammates &amp; Respond</button>`
+              : '<span></span>'
+            }
+            <button class="btn btn-outline btn-sm" onclick="Notifications.deleteSingle(${n.id})" title="Delete message" style="font-size:0.75rem; padding:2px 8px; color:var(--status-danger); border-color:rgba(220,38,38,0.25); border-radius:6px;">🗑️ Delete</button>
+          </div>
         </div>
       </div>`;
   },
@@ -146,6 +149,29 @@ const Notifications = {
   goToTeamsView() {
     App.closeModal('modal-notifications');
     App.navigateTo('teams');
+  },
+
+  async deleteSingle(id) {
+    const confirmed = await App.confirm('Permanently delete this notification message?', {
+      title: 'Delete Notification?',
+      icon: '🗑️',
+      confirmText: 'Delete Message',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      await API.request(`/notifications/${id}`, { method: 'DELETE' });
+      App.showToast('Notification deleted', 'success', {
+        title: 'Deleted',
+        icon: '🗑️'
+      });
+      this.fetchNotificationsList();
+      this.fetchUnreadCount();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete notification', 'danger');
+    }
   },
 
   async clearAll() {
