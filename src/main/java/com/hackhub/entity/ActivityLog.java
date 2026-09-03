@@ -1,4 +1,4 @@
-﻿package com.hackhub.entity;
+package com.hackhub.entity;
 
 import jakarta.persistence.*;
 import java.time.LocalDateTime;

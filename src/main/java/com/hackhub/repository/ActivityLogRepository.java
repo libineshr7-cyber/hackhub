@@ -1,4 +1,4 @@
-﻿package com.hackhub.repository;
+package com.hackhub.repository;
 
 import com.hackhub.entity.ActivityLog;
 import org.springframework.data.jpa.repository.JpaRepository;

@@ -1,4 +1,4 @@
-﻿package com.hackhub.service;
+package com.hackhub.service;
 
 import com.hackhub.entity.ActivityLog;
 import com.hackhub.entity.User;
