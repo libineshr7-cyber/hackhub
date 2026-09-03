@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/logo.png">
-    <link rel="stylesheet" href="/css/styles.css?v=4.0">
+    <link rel="stylesheet" href="/css/styles.css?v=5.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -250,8 +250,15 @@
         <section id="view-admin" class="view-section" style="display:none;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
                 <div>
-                    <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon); margin: 0;">Protected Admin Dashboard</h2>
-                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Audit posting history, manage student accounts & hackathons</p>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon); margin: 0;">Protected Admin Dashboard</h2>
+                        <span id="admin-live-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; animation: hackhubPulseDot 1.5s infinite;"></span>
+                            LIVE 24/7 AUTO-SYNC
+                        </span>
+                        <span id="admin-last-sync-time" style="font-size: 0.72rem; color: var(--text-muted);">Synced just now</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Real-time audit history, student accounts, teams &amp; live logs auto-syncing without page reload</p>
                 </div>
                 <div style="display: flex; gap: 8px; flex-wrap: wrap;">
                     <button class="btn btn-secondary btn-sm" onclick="Admin.syncUnstopEvents()">🌐 Sync Unstop Hackathons</button>
@@ -1219,12 +1226,12 @@
     </div>
 
     <!-- JavaScript Modules -->
-    <script src="/js/api.js?v=4.0"></script>
-    <script src="/js/auth.js?v=4.0"></script>
-    <script src="/js/events.js?v=4.0"></script>
-    <script src="/js/teams.js?v=4.0"></script>
-    <script src="/js/notifications.js?v=4.0"></script>
-    <script src="/js/admin.js?v=4.0"></script>
-    <script src="/js/app.js?v=4.0"></script>
+    <script src="/js/api.js?v=5.0"></script>
+    <script src="/js/auth.js?v=5.0"></script>
+    <script src="/js/events.js?v=5.0"></script>
+    <script src="/js/teams.js?v=5.0"></script>
+    <script src="/js/notifications.js?v=5.0"></script>
+    <script src="/js/admin.js?v=5.0"></script>
+    <script src="/js/app.js?v=5.0"></script>
 </body>
 </html>

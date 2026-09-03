@@ -4,6 +4,98 @@
 
 const Admin = {
   cachedEvents: [],
+  currentSubTab: 'all',
+  _autoRefreshTimer: null,
+  _isRefreshing: false,
+
+  startLiveAutoRefresh() {
+    this.stopLiveAutoRefresh();
+    // Live update every 4 seconds
+    this._autoRefreshTimer = setInterval(() => {
+      this.pollLiveData();
+    }, 4000);
+  },
+
+  stopLiveAutoRefresh() {
+    if (this._autoRefreshTimer) {
+      clearInterval(this._autoRefreshTimer);
+      this._autoRefreshTimer = null;
+    }
+  },
+
+  async pollLiveData() {
+    if (App.currentView !== 'admin' || document.hidden) return;
+    if (this._isRefreshing) return;
+    this._isRefreshing = true;
+
+    try {
+      // 1. Silently update dashboard stats with smooth pulse effect on change
+      const stats = await API.request('/admin/dashboard');
+      const updateStat = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && el.textContent != val) {
+          el.textContent = val;
+          el.classList.remove('stat-updated-pulse');
+          void el.offsetWidth; // trigger reflow
+          el.classList.add('stat-updated-pulse');
+          setTimeout(() => el.classList.remove('stat-updated-pulse'), 800);
+        }
+      };
+
+      updateStat('stat-total-students', stats.totalStudents);
+      updateStat('stat-total-events', stats.totalEvents);
+      updateStat('stat-upcoming-events', stats.upcomingEvents);
+      updateStat('stat-ended-events', stats.endedEvents);
+      updateStat('stat-saved-events', stats.totalSavedEvents);
+      updateStat('stat-total-reports', stats.totalReports);
+      updateStat('stat-total-teams', stats.totalTeams || 0);
+      updateStat('stat-total-logs', stats.totalLogs || 0);
+
+      // Update sync time badge
+      const timeEl = document.getElementById('admin-last-sync-time');
+      if (timeEl) {
+        const now = new Date();
+        timeEl.textContent = `Synced: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      }
+
+      // 2. Silently update active tab data
+      const activeTab = this.currentSubTab || 'all';
+
+      if (activeTab === 'activity-logs' || activeTab === 'all') {
+        await this.loadActivityLogs(true);
+      }
+
+      if (activeTab === 'teams' || activeTab === 'all') {
+        await this.loadTeams(true);
+      }
+
+      if (activeTab === 'students' || activeTab === 'all') {
+        const studentSearch = document.getElementById('admin-student-search');
+        if (!studentSearch || document.activeElement !== studentSearch) {
+          await this.loadStudents(undefined, true);
+        }
+      }
+
+      if (activeTab === 'subadmins' || activeTab === 'all') {
+        const user = API.getUser();
+        if (user && user.role === 'ROLE_ADMIN') {
+          await this.loadSubAdmins(true);
+        }
+      }
+
+      if (activeTab === 'posting-history' || activeTab === 'all') {
+        await this.loadPostingHistory(true);
+      }
+
+      if (activeTab === 'userlogs' || activeTab === 'all') {
+        await this.loadUserLogs(undefined, true);
+      }
+    } catch (e) {
+      // Quiet background polling
+    } finally {
+      this._isRefreshing = false;
+    }
+  },
 
   async loadDashboard() {
     try {
@@ -18,6 +110,11 @@ const Admin = {
       if (teamsStatEl) teamsStatEl.textContent = stats.totalTeams || 0;
       const logsStatEl = document.getElementById('stat-total-logs');
       if (logsStatEl) logsStatEl.textContent = stats.totalLogs || 0;
+
+      const timeEl = document.getElementById('admin-last-sync-time');
+      if (timeEl) {
+        timeEl.textContent = `Synced: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      }
 
       const user = API.getUser();
       // Sub-admin management tab: only visible to ROLE_ADMIN
@@ -41,6 +138,9 @@ const Admin = {
       if (user && user.role === 'ROLE_ADMIN') {
         await this.loadSubAdmins();
       }
+
+      // Start continuous background live updates
+      this.startLiveAutoRefresh();
     } catch (err) {
       App.showToast('Failed to load Admin Dashboard', 'danger');
     }
@@ -65,6 +165,8 @@ const Admin = {
   },
 
   switchSubTab(tabName) {
+    this.currentSubTab = tabName;
+
     document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
       if (btn.getAttribute('data-subtab') === tabName) {
         btn.classList.add('active', 'btn-primary');
@@ -114,6 +216,7 @@ const Admin = {
     } else {
       if (!isAdmin && (tabName === 'database' || tabName === 'userlogs' || tabName === 'posting-history' || tabName === 'subadmins' || tabName === 'activity-logs')) {
         tabName = 'students';
+        this.currentSubTab = 'students';
       }
       Object.keys(sections).forEach(key => {
         if (sections[key]) {
@@ -304,9 +407,10 @@ const Admin = {
     this.loadUserLogs(q);
   },
 
-  async loadStudents(searchQuery = '') {
+  async loadStudents(searchQuery = '', isSilent = false) {
     try {
-      const students = await API.request(`/admin/students?search=${encodeURIComponent(searchQuery)}`);
+      const q = (searchQuery !== undefined && searchQuery !== '') ? searchQuery : (document.getElementById('admin-student-search')?.value || '');
+      const students = await API.request(`/admin/students?search=${encodeURIComponent(q)}`);
       const tbody = document.getElementById('admin-students-tbody');
 
       if (!tbody) return;
@@ -846,10 +950,12 @@ const Admin = {
     return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
   },
 
-  async loadTeams() {
+  async loadTeams(isSilent = false) {
     const tbody = document.getElementById('admin-teams-tbody');
     if (!tbody) return;
-    tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Loading teams...</td></tr>';
+    if (!isSilent && (!tbody.children.length || tbody.innerHTML.includes('No teams'))) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Loading teams...</td></tr>';
+    }
     try {
       const teams = await API.request('/admin/teams');
       if (!teams || teams.length === 0) {

@@ -21,6 +21,19 @@ const App = {
     window.alert = (msg) => this.alert(msg);
     this.setupEventListeners();
     this.checkAuthentication();
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        if (typeof Admin !== 'undefined' && Admin.stopLiveAutoRefresh) {
+          Admin.stopLiveAutoRefresh();
+        }
+      } else if (this.currentView === 'admin') {
+        if (typeof Admin !== 'undefined' && Admin.startLiveAutoRefresh) {
+          Admin.startLiveAutoRefresh();
+          Admin.pollLiveData();
+        }
+      }
+    });
   },
 
   checkAuthentication() {
@@ -195,6 +208,14 @@ const App = {
         break;
       case 'admin':
         Admin.loadDashboard();
+        if (typeof Admin !== 'undefined' && Admin.startLiveAutoRefresh) {
+          Admin.startLiveAutoRefresh();
+        }
+        break;
+      default:
+        if (typeof Admin !== 'undefined' && Admin.stopLiveAutoRefresh) {
+          Admin.stopLiveAutoRefresh();
+        }
         break;
     }
 

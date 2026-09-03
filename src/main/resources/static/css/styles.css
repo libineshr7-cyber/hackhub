@@ -1933,3 +1933,20 @@ a {
     font-size: 1.3rem;
   }
 }
+
+/* Live 24/7 Admin Sync Animations */
+@keyframes hackhubPulseDot {
+  0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7); opacity: 0.8; }
+  70% { transform: scale(1.2); box-shadow: 0 0 0 6px rgba(16, 185, 129, 0); opacity: 1; }
+  100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); opacity: 0.8; }
+}
+
+.stat-updated-pulse {
+  animation: hackhubStatHighlight 0.8s ease;
+}
+
+@keyframes hackhubStatHighlight {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.15); color: #059669 !important; }
+  100% { transform: scale(1); }
+}
