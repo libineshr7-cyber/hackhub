@@ -12,22 +12,42 @@ const Teams = {
     this.populateEventDropdown();
   },
 
-  async populateEventDropdown() {
+  async populateEventDropdown(selectedEventId = null) {
+    const select = document.getElementById('form-create-team-event-id');
+    if (!select) return;
     try {
-      const events = await API.request('/events');
-      const select = document.getElementById('form-create-team-event-id');
-      if (!select || !events) return;
-      select.innerHTML = '<option value="">-- Select Hackathon --</option>' +
+      let events = await API.request('/events').catch(() => null);
+      if (!events || !Array.isArray(events) || events.length === 0) {
+        events = await API.request('/events/calendar').catch(() => []);
+      }
+      if (!events || events.length === 0) {
+        select.innerHTML = '<option value="">-- No Active Hackathons Available --</option>';
+        return;
+      }
+      select.innerHTML = '<option value="">-- Choose a Hackathon / Event --</option>' +
         events.map(e => `<option value="${e.id}">${this.escapeHtml(e.title)}</option>`).join('');
+
+      const targetId = selectedEventId || this.currentEventId;
+      if (targetId) {
+        select.value = targetId;
+      }
     } catch (err) {
       console.warn('Could not load events for team creation', err);
+      select.innerHTML = '<option value="">-- Choose a Hackathon / Event --</option>';
     }
   },
 
-  openCreateTeamModal() {
-    this.populateEventDropdown();
+  async openCreateTeamModal(preselectedEventId = null) {
+    if (preselectedEventId) {
+      this.currentEventId = preselectedEventId;
+    }
+    await this.populateEventDropdown(this.currentEventId);
     document.getElementById('team-name-input').value = '';
     document.getElementById('team-max-input').value = '4';
+    if (this.currentEventId) {
+      const select = document.getElementById('form-create-team-event-id');
+      if (select && this.currentEventId) select.value = this.currentEventId;
+    }
     App.openModal('modal-create-team');
   },
 
@@ -139,7 +159,7 @@ const Teams = {
   async openFindTeamModal(eventId, eventTitle) {
     this.currentEventId = eventId;
     document.getElementById('findteam-event-title').textContent = eventTitle;
-    document.getElementById('form-create-team-event-id').value = eventId;
+    this.populateEventDropdown(eventId);
 
     await this.fetchAndRenderTeams(eventId);
     App.openModal('modal-find-team');

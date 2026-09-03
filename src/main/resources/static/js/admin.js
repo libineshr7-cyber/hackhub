@@ -16,6 +16,8 @@ const Admin = {
       document.getElementById('stat-total-reports').textContent = stats.totalReports;
       const teamsStatEl = document.getElementById('stat-total-teams');
       if (teamsStatEl) teamsStatEl.textContent = stats.totalTeams || 0;
+      const logsStatEl = document.getElementById('stat-total-logs');
+      if (logsStatEl) logsStatEl.textContent = stats.totalLogs || 0;
 
       const user = API.getUser();
       // Sub-admin management tab: only visible to ROLE_ADMIN
@@ -79,6 +81,7 @@ const Admin = {
       'students': document.getElementById('admin-sec-students'),
       'events': document.getElementById('admin-sec-events'),
       'teams': document.getElementById('admin-sec-teams'),
+      'activity-logs': document.getElementById('admin-sec-activity-logs'),
       'reports': document.getElementById('admin-sec-reports'),
       'database': document.getElementById('admin-sec-database'),
       'subadmins': document.getElementById('admin-sec-subadmins')
@@ -87,27 +90,29 @@ const Admin = {
     const user = API.getUser();
     const isAdmin = user && user.role === 'ROLE_ADMIN';
 
-    // Hide logs, database, and subadmin tabs for non-full admins
-    const dbTabBtn = document.querySelector('.admin-tab-btn[data-tab="database"]');
-    const subadminTabBtn = document.querySelector('.admin-tab-btn[data-tab="subadmins"]');
-    const logsTabBtn = document.querySelector('.admin-tab-btn[data-tab="userlogs"]');
-    const historyTabBtn = document.querySelector('.admin-tab-btn[data-tab="posting-history"]');
+    // Hide logs, database, activity logs, and subadmin tabs for non-full admins
+    const dbTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="database"]');
+    const subadminTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="subadmins"]');
+    const logsTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="userlogs"]');
+    const historyTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="posting-history"]');
+    const actTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="activity-logs"]');
     if (dbTabBtn) dbTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
     if (subadminTabBtn) subadminTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
     if (logsTabBtn) logsTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
     if (historyTabBtn) historyTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (actTabBtn) actTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
 
     if (tabName === 'all') {
       Object.keys(sections).forEach(key => {
         if (!sections[key]) return;
-        if (key === 'database' || key === 'userlogs' || key === 'posting-history' || key === 'subadmins') {
-          sections[key].style.display = isAdmin ? (key === 'database' ? 'none' : 'block') : 'none';
+        if (key === 'database' || key === 'userlogs' || key === 'posting-history' || key === 'subadmins' || key === 'activity-logs') {
+          sections[key].style.display = isAdmin ? (key === 'database' || key === 'activity-logs' ? 'none' : 'block') : 'none';
           return;
         }
         sections[key].style.display = 'block';
       });
     } else {
-      if (!isAdmin && (tabName === 'database' || tabName === 'userlogs' || tabName === 'posting-history' || tabName === 'subadmins')) {
+      if (!isAdmin && (tabName === 'database' || tabName === 'userlogs' || tabName === 'posting-history' || tabName === 'subadmins' || tabName === 'activity-logs')) {
         tabName = 'students';
       }
       Object.keys(sections).forEach(key => {
@@ -120,6 +125,9 @@ const Admin = {
       }
       if (tabName === 'teams') {
         this.loadTeams();
+      }
+      if (tabName === 'activity-logs') {
+        this.loadActivityLogs();
       }
     }
   },
@@ -437,9 +445,14 @@ const Admin = {
         const newStatus = isStatusActive ? 'DISABLED' : 'ACTIVE';
         const toggleText = isStatusActive ? 'Disable' : 'Enable';
 
-        const yearLabel = sa.assignedYear === '2' ? '2nd Year (CS2xxx)' : 
-                          sa.assignedYear === '3' ? '3rd Year (CS3xxx)' : 
-                          sa.assignedYear === '4' ? '4th Year' : 'All Years';
+        const yearLabel = sa.assignedYear === '2' ? 'Class 2 (2nd Yr)' : 
+                          sa.assignedYear === '3' ? 'Class 3 (3rd Yr)' : 
+                          sa.assignedYear === '1' ? 'Class 1 (1st Yr)' : 
+                          sa.assignedYear === '4' ? 'Class 4 (4th Yr)' : 'All Classes';
+
+        const limitLabel = sa.studentLimit && sa.studentLimit > 0
+          ? `<span style="background:rgba(245,158,11,0.12); color:#f59e0b; font-weight:700; padding:2px 6px; border-radius:4px; font-size:0.72rem; margin-left:4px;">Quota: ${sa.studentLimit} Students</span>`
+          : `<span style="background:rgba(107,114,128,0.15); color:var(--text-muted); padding:2px 6px; border-radius:4px; font-size:0.72rem; margin-left:4px;">Quota: Unlimited</span>`;
 
         return `
           <tr>
@@ -454,13 +467,15 @@ const Admin = {
               <span style="background:rgba(14,165,233,0.1); color:var(--accent-cyan); font-weight:600; padding:3px 6px; border-radius:6px; font-size:0.72rem; margin-left:4px;">
                 ${yearLabel}
               </span>
+              ${limitLabel}
             </td>
             <td>${statusBadge}</td>
             <td>
               <div style="display:flex; gap:4px; flex-wrap:wrap;">
-                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}', '${this.escapeHtml(sa.assignedYear || 'ALL')}')">✏️ Edit</button>
+                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}', '${this.escapeHtml(sa.assignedYear || 'ALL')}', ${sa.studentLimit || 'null'})">✏️ Edit</button>
                 <button class="btn btn-outline btn-sm" onclick="Admin.toggleSubAdminStatus(${sa.id}, '${newStatus}')">${toggleText}</button>
                 <button class="btn btn-secondary btn-sm" onclick="Admin.resetSubAdminPassword(${sa.id}, '${sa.registrationNumber}')">🔑 Reset Pass</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.deleteSubAdmin(${sa.id}, '${this.escapeHtml(sa.registrationNumber)}')">🗑️</button>
               </div>
             </td>
           </tr>
@@ -478,6 +493,8 @@ const Admin = {
     const email = document.getElementById('sa-create-email').value.trim();
     const department = document.getElementById('sa-create-dept').value.trim().toUpperCase();
     const assignedYear = document.getElementById('sa-create-year').value;
+    const studentLimitVal = document.getElementById('sa-create-student-limit')?.value;
+    const studentLimit = studentLimitVal && parseInt(studentLimitVal) > 0 ? parseInt(studentLimitVal) : null;
 
     if (!regNo || !department) {
       App.showToast('Registration number and department are required.', 'danger');
@@ -487,25 +504,28 @@ const Admin = {
     try {
       const res = await API.request('/admin/subadmins/create', {
         method: 'POST',
-        body: JSON.stringify({ registrationNumber: regNo, name, email, department, assignedYear })
+        body: JSON.stringify({ registrationNumber: regNo, name, email, department, assignedYear, studentLimit })
       });
 
       App.closeModal('modal-create-subadmin');
       document.getElementById('form-create-subadmin').reset();
-      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' created for Dept ${res.department} (Year: ${assignedYear})! Temp pass: '123'.`, 'success');
+      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' created for Class ${assignedYear} (Limit: ${studentLimit || 'Unlimited'})! Temp pass: '123'.`, 'success');
       this.loadSubAdmins();
+      this.loadDashboard();
     } catch (err) {
       App.showToast(err.message || 'Failed to create sub-admin', 'danger');
     }
   },
 
-  openEditSubAdminModal(id, name, email, department, assignedYear = 'ALL') {
+  openEditSubAdminModal(id, name, email, department, assignedYear = 'ALL', studentLimit = null) {
     document.getElementById('sa-edit-id').value = id;
     document.getElementById('sa-edit-name').value = name;
     document.getElementById('sa-edit-email').value = email;
     document.getElementById('sa-edit-dept').value = department;
     const yearSelect = document.getElementById('sa-edit-year');
     if (yearSelect) yearSelect.value = assignedYear || 'ALL';
+    const limitInput = document.getElementById('sa-edit-student-limit');
+    if (limitInput) limitInput.value = (studentLimit && studentLimit > 0) ? studentLimit : '';
     App.openModal('modal-edit-subadmin');
   },
 
@@ -516,18 +536,33 @@ const Admin = {
     const email = document.getElementById('sa-edit-email').value.trim();
     const department = document.getElementById('sa-edit-dept').value.trim().toUpperCase();
     const assignedYear = document.getElementById('sa-edit-year') ? document.getElementById('sa-edit-year').value : 'ALL';
+    const studentLimitVal = document.getElementById('sa-edit-student-limit')?.value;
+    const studentLimit = studentLimitVal && parseInt(studentLimitVal) > 0 ? parseInt(studentLimitVal) : null;
 
     try {
       const res = await API.request(`/admin/subadmins/${id}`, {
         method: 'PUT',
-        body: JSON.stringify({ name, email, department, assignedYear })
+        body: JSON.stringify({ name, email, department, assignedYear, studentLimit })
       });
 
       App.closeModal('modal-edit-subadmin');
       App.showToast(res.message, 'success');
       this.loadSubAdmins();
+      this.loadDashboard();
     } catch (err) {
       App.showToast(err.message || 'Failed to update sub-admin', 'danger');
+    }
+  },
+
+  async deleteSubAdmin(id, regNo) {
+    if (!confirm(`Are you sure you want to permanently delete Sub-Admin '${regNo}'?`)) return;
+    try {
+      const res = await API.request(`/admin/subadmins/${id}`, { method: 'DELETE' });
+      App.showToast(res.message || 'Sub-Admin deleted.', 'success');
+      this.loadSubAdmins();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete Sub-Admin', 'danger');
     }
   },
 
@@ -813,6 +848,73 @@ const Admin = {
       this.loadDashboard();
     } catch (err) {
       App.showToast(err.message || 'Delete failed', 'danger');
+    }
+  },
+
+  async loadActivityLogs() {
+    const tbody = document.getElementById('admin-activity-logs-tbody');
+    if (!tbody) return;
+    const actionFilter = document.getElementById('admin-logs-action-filter')?.value || 'ALL';
+    const searchQuery = document.getElementById('admin-logs-search-input')?.value || '';
+
+    try {
+      let url = `/admin/activity-logs?action=${encodeURIComponent(actionFilter)}`;
+      if (searchQuery.trim()) {
+        url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      }
+      const logs = await API.request(url);
+      if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No activity logs recorded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => {
+        let roleBadge = '';
+        if (l.userRole === 'ROLE_ADMIN') {
+          roleBadge = '<span style="background:rgba(220,38,38,0.15); color:var(--accent-maroon); font-weight:700; padding:2px 7px; border-radius:10px; font-size:0.75rem;">ADMIN</span>';
+        } else if (l.userRole === 'ROLE_SUBADMIN') {
+          roleBadge = '<span style="background:rgba(124,58,237,0.15); color:#7c3aed; font-weight:700; padding:2px 7px; border-radius:10px; font-size:0.75rem;">SUB-ADMIN</span>';
+        } else {
+          roleBadge = '<span style="background:rgba(14,165,233,0.15); color:var(--accent-cyan); font-weight:600; padding:2px 7px; border-radius:10px; font-size:0.75rem;">STUDENT</span>';
+        }
+
+        let actionColor = 'var(--text-main)';
+        if (l.action.includes('CREATE')) actionColor = 'var(--status-upcoming)';
+        else if (l.action.includes('DELETE')) actionColor = 'var(--status-danger)';
+        else if (l.action.includes('LOGIN')) actionColor = '#06b6d4';
+        else if (l.action.includes('PASSWORD')) actionColor = '#f59e0b';
+        else if (l.action.includes('JOIN')) actionColor = '#8b5cf6';
+        else if (l.action.includes('STATUS')) actionColor = '#ec4899';
+
+        return `
+          <tr>
+            <td style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">${this.formatDateTime(l.createdAt)}</td>
+            <td><strong>${this.escapeHtml(l.userRegNo)}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(l.userName || '')}</span></td>
+            <td>${roleBadge}</td>
+            <td><span style="font-weight:700; font-size:0.78rem; color:${actionColor}; border:1px solid currentColor; padding:2px 6px; border-radius:4px;">${this.escapeHtml(l.action)}</span></td>
+            <td style="font-size:0.85rem; color:var(--text-main);">${this.escapeHtml(l.details)}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">${err.message || 'Failed to load logs'}</td></tr>`;
+    }
+  },
+
+  handleSearchActivityLogs() {
+    clearTimeout(this._logSearchTimer);
+    this._logSearchTimer = setTimeout(() => this.loadActivityLogs(), 300);
+  },
+
+  async clearActivityLogs() {
+    if (!confirm('Purge all live audit logs? This action cannot be undone.')) return;
+    try {
+      const res = await API.request('/admin/activity-logs', { method: 'DELETE' });
+      App.showToast(res.message, 'success');
+      this.loadActivityLogs();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to clear logs', 'danger');
     }
   },
 

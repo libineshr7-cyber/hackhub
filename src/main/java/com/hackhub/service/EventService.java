@@ -41,6 +41,9 @@ public class EventService {
     @Autowired
     private FileStorageService fileStorageService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     @Transactional
     public EventDto createEvent(EventDto dto, MultipartFile posterFile, User creator) {
         if (dto.getTitle() == null || dto.getTitle().trim().isEmpty()) {
@@ -79,6 +82,16 @@ public class EventService {
         }
 
         Event saved = eventRepository.save(event);
+
+        activityLogService.log(
+                creator != null ? creator.getRegistrationNumber() : "SYSTEM",
+                creator != null ? creator.getName() : "System",
+                creator != null ? creator.getRole() : "ROLE_ADMIN",
+                "EVENT_CREATE",
+                "Created hackathon event '" + saved.getTitle() + "' (#" + saved.getId() + ")",
+                null
+        );
+
         return mapToDto(saved, creator);
     }
 
@@ -300,6 +313,16 @@ public class EventService {
         }
 
         Event saved = eventRepository.save(event);
+
+        activityLogService.log(
+                "ADMIN",
+                "Admin",
+                "ROLE_ADMIN",
+                "EVENT_UPDATE",
+                "Updated hackathon event '" + saved.getTitle() + "' (#" + saved.getId() + ")",
+                null
+        );
+
         return mapToDto(saved, null);
     }
 
@@ -307,6 +330,8 @@ public class EventService {
     public void deleteEvent(Long eventId) {
         Event event = eventRepository.findById(eventId)
                 .orElseThrow(() -> new IllegalArgumentException("Event not found with ID: " + eventId));
+
+        String title = event.getTitle();
 
         // Step 1: Delete and flush saved events & reports & team requests for this event
         savedEventRepository.deleteByEvent(event);
@@ -336,5 +361,14 @@ public class EventService {
         // Step 4: Delete and flush event
         eventRepository.delete(event);
         eventRepository.flush();
+
+        activityLogService.log(
+                "ADMIN",
+                "Admin",
+                "ROLE_ADMIN",
+                "EVENT_DELETE",
+                "Deleted hackathon event '" + title + "' (#" + eventId + ")",
+                null
+        );
     }
 }

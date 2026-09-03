@@ -35,6 +35,9 @@ public class User {
     @Column(name = "assigned_year")
     private String assignedYear; // "ALL", "2", "3", "4" for Sub-Admins
 
+    @Column(name = "student_limit")
+    private Integer studentLimit; // Limit of students sub-admin can access/manage (null or 0 = unlimited)
+
     @Column(nullable = false)
     private String status; // ACTIVE, DISABLED
 
@@ -97,6 +100,9 @@ public class User {
 
     public String getAssignedYear() { return assignedYear; }
     public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
+
+    public Integer getStudentLimit() { return studentLimit; }
+    public void setStudentLimit(Integer studentLimit) { this.studentLimit = studentLimit; }
 
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }

@@ -34,6 +34,9 @@ public class AuthService {
     @Autowired
     private MailService mailService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     private static final SecureRandom random = new SecureRandom();
 
     public LoginResponse login(LoginRequest request) {
@@ -59,6 +62,15 @@ public class AuthService {
         }
 
         String token = jwtUtils.generateToken(user.getRegistrationNumber(), user.getRole());
+
+        activityLogService.log(
+                user.getRegistrationNumber(),
+                user.getName(),
+                user.getRole(),
+                "LOGIN",
+                "User successfully logged in to HackHub",
+                null
+        );
 
         return new LoginResponse(
                 token,
@@ -89,6 +101,15 @@ public class AuthService {
         user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
         user.setFirstLogin(false);
         userRepository.save(user);
+
+        activityLogService.log(
+                user.getRegistrationNumber(),
+                user.getName(),
+                user.getRole(),
+                "PASSWORD_CHANGE",
+                "Successfully changed account password",
+                null
+        );
 
         return new ApiResponse(true, "Password changed successfully.");
     }

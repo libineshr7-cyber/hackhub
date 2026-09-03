@@ -72,6 +72,12 @@ public class EventController {
         }
     }
 
+    @GetMapping
+    public ResponseEntity<List<EventDto>> getAllEvents(Authentication authentication) {
+        User currentUser = getCurrentUser(authentication);
+        return ResponseEntity.ok(eventService.getAllEventsForCalendar(currentUser));
+    }
+
     @GetMapping("/upcoming")
     public ResponseEntity<List<EventDto>> getUpcomingEvents(Authentication authentication) {
         User currentUser = getCurrentUser(authentication);

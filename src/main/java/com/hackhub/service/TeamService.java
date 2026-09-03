@@ -32,6 +32,9 @@ public class TeamService {
     @Autowired
     private NotificationService notificationService;
 
+    @Autowired
+    private ActivityLogService activityLogService;
+
     public List<Map<String, String>> searchStudents(String query, String filterBy, String filterValue) {
         if (query == null || query.trim().isEmpty()) {
             return Collections.emptyList();
@@ -206,6 +209,15 @@ public class TeamService {
         TeamMember creatorMember = new TeamMember(savedTeam, creator, "ACTIVE");
         teamMemberRepository.save(creatorMember);
 
+        activityLogService.log(
+                creator.getRegistrationNumber(),
+                creator.getName(),
+                creator.getRole(),
+                "TEAM_CREATE",
+                "Created team '" + savedTeam.getTeamName() + "' (Capacity: " + savedTeam.getMaxMembers() + ") for event '" + event.getTitle() + "'",
+                null
+        );
+
         return mapToTeamResponse(savedTeam, creator);
     }
 
@@ -237,6 +249,15 @@ public class TeamService {
         teamRequestRepository.deleteByTeam(team);
         teamMemberRepository.deleteByTeam(team);
         teamRepository.delete(team);
+
+        activityLogService.log(
+                caller != null ? caller.getRegistrationNumber() : "SYSTEM",
+                caller != null ? caller.getName() : "System",
+                caller != null ? caller.getRole() : "ROLE_USER",
+                "TEAM_DELETE",
+                "Deleted team '" + team.getTeamName() + "' (Event: " + (team.getEvent() != null ? team.getEvent().getTitle() : "N/A") + ")",
+                null
+        );
 
         return new ApiResponse(true, "Team '" + team.getTeamName() + "' has been deleted successfully.");
     }
@@ -277,6 +298,15 @@ public class TeamService {
             requester.getName() + " (" + requester.getRegistrationNumber() + ") requested to join your team '" + team.getTeamName() + "' for hackathon '" + team.getEvent().getTitle() + "'.",
             "TEAM_REQUEST",
             "teams"
+        );
+
+        activityLogService.log(
+                requester.getRegistrationNumber(),
+                requester.getName(),
+                requester.getRole(),
+                "JOIN_REQUEST",
+                "Requested to join team '" + team.getTeamName() + "' (Leader: " + teamLeader.getRegistrationNumber() + ")",
+                null
         );
 
         return new ApiResponse(true, "Request to join team '" + team.getTeamName() + "' submitted successfully!");
@@ -321,6 +351,15 @@ public class TeamService {
                 "teams"
             );
 
+            activityLogService.log(
+                    user.getRegistrationNumber(),
+                    user.getName(),
+                    user.getRole(),
+                    "JOIN_ACCEPTED",
+                    "Accepted " + request.getRequester().getRegistrationNumber() + "'s join request for team '" + team.getTeamName() + "'",
+                    null
+            );
+
             return new ApiResponse(true, "Student " + request.getRequester().getName() + " accepted into the team!");
 
         } else if ("REJECTED".equalsIgnoreCase(status)) {
@@ -335,6 +374,15 @@ public class TeamService {
                 user.getName() + " declined your join request for team '" + team.getTeamName() + "'.",
                 "REQUEST_REJECTED",
                 "teams"
+            );
+
+            activityLogService.log(
+                    user.getRegistrationNumber(),
+                    user.getName(),
+                    user.getRole(),
+                    "JOIN_REJECTED",
+                    "Declined " + request.getRequester().getRegistrationNumber() + "'s join request for team '" + team.getTeamName() + "'",
+                    null
             );
 
             return new ApiResponse(true, "Join request rejected.");

@@ -27,6 +27,7 @@ public class AdminUserDto {
         private String email;
         private String department; // CS, IT, ECE, MECH, EEE
         private String assignedYear; // "ALL", "2", "3", "4"
+        private Integer studentLimit; // Limit of students sub-admin can access (null or 0 = unlimited)
 
         public String getRegistrationNumber() { return registrationNumber; }
         public void setRegistrationNumber(String registrationNumber) { this.registrationNumber = registrationNumber; }
@@ -38,6 +39,8 @@ public class AdminUserDto {
         public void setDepartment(String department) { this.department = department; }
         public String getAssignedYear() { return assignedYear; }
         public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
+        public Integer getStudentLimit() { return studentLimit; }
+        public void setStudentLimit(Integer studentLimit) { this.studentLimit = studentLimit; }
     }
 
     public static class UpdateSubAdminRequest {
@@ -45,6 +48,7 @@ public class AdminUserDto {
         private String email;
         private String department;
         private String assignedYear;
+        private Integer studentLimit;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -54,6 +58,8 @@ public class AdminUserDto {
         public void setDepartment(String department) { this.department = department; }
         public String getAssignedYear() { return assignedYear; }
         public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
+        public Integer getStudentLimit() { return studentLimit; }
+        public void setStudentLimit(Integer studentLimit) { this.studentLimit = studentLimit; }
     }
 
     public static class UpdateUserStatusRequest {
@@ -76,6 +82,7 @@ public class AdminUserDto {
         private long postedEventsCount;
         private String department;
         private String assignedYear;
+        private Integer studentLimit;
 
         public Long getId() { return id; }
         public void setId(Long id) { this.id = id; }
@@ -101,6 +108,8 @@ public class AdminUserDto {
         public void setDepartment(String department) { this.department = department; }
         public String getAssignedYear() { return assignedYear; }
         public void setAssignedYear(String assignedYear) { this.assignedYear = assignedYear; }
+        public Integer getStudentLimit() { return studentLimit; }
+        public void setStudentLimit(Integer studentLimit) { this.studentLimit = studentLimit; }
     }
 
     public static class DashboardStats {
@@ -112,6 +121,7 @@ public class AdminUserDto {
         private long totalReports;
         private long pendingReports;
         private long totalTeams;
+        private long totalLogs;
 
         public long getTotalStudents() { return totalStudents; }
         public void setTotalStudents(long totalStudents) { this.totalStudents = totalStudents; }
@@ -129,5 +139,7 @@ public class AdminUserDto {
         public void setPendingReports(long pendingReports) { this.pendingReports = pendingReports; }
         public long getTotalTeams() { return totalTeams; }
         public void setTotalTeams(long totalTeams) { this.totalTeams = totalTeams; }
+        public long getTotalLogs() { return totalLogs; }
+        public void setTotalLogs(long totalLogs) { this.totalLogs = totalLogs; }
     }
 }

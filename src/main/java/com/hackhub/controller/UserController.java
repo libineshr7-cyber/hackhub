@@ -22,6 +22,9 @@ public class UserController {
     @Autowired
     private UserRepository userRepository;
 
+    @Autowired
+    private com.hackhub.service.ActivityLogService activityLogService;
+
     private User getCurrentUser(Authentication authentication) {
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new IllegalStateException("User is not authenticated.");
@@ -50,6 +53,16 @@ public class UserController {
             String email = body.get("email");
             String skills = body.get("skills");
             UserResponse response = userService.updateProfile(currentUser, name, email, skills);
+
+            activityLogService.log(
+                    currentUser.getRegistrationNumber(),
+                    currentUser.getName(),
+                    currentUser.getRole(),
+                    "PROFILE_UPDATE",
+                    "Updated profile information (Skills: " + (skills != null ? skills : "N/A") + ")",
+                    null
+            );
+
             return ResponseEntity.ok(response);
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));

@@ -54,7 +54,7 @@ public class AdminController {
             @RequestParam(value = "search", required = false) String search,
             Authentication authentication) {
         User caller = getCurrentUser(authentication);
-        return ResponseEntity.ok(adminService.getStudents(search, caller.getRole(), caller.getDepartment(), caller.getAssignedYear()));
+        return ResponseEntity.ok(adminService.getStudents(search, caller));
     }
 
     @GetMapping("/users/log")
@@ -71,9 +71,10 @@ public class AdminController {
     }
 
     @PostMapping("/students/create")
-    public ResponseEntity<?> createStudent(@RequestBody CreateStudentRequest request) {
+    public ResponseEntity<?> createStudent(@RequestBody CreateStudentRequest request, Authentication authentication) {
         try {
-            UserResponse response = adminService.createStudent(request);
+            User caller = getCurrentUser(authentication);
+            UserResponse response = adminService.createStudent(request, caller);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
@@ -171,6 +172,46 @@ public class AdminController {
             ApiResponse response = adminService.resetSubAdminPassword(id);
             return ResponseEntity.ok(response);
         } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/subadmins/{id}")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> deleteSubAdmin(@PathVariable("id") Long id, Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            ApiResponse response = adminService.deleteSubAdmin(id, caller);
+            return ResponseEntity.ok(response);
+        } catch (IllegalArgumentException | IllegalStateException e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    // =====================================================================
+    // 24/7 LIVE AUDIT & ACTIVITY LOGS
+    // =====================================================================
+
+    @GetMapping("/activity-logs")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> getActivityLogs(
+            @RequestParam(value = "search", required = false) String search,
+            @RequestParam(value = "action", required = false) String action,
+            Authentication authentication) {
+        try {
+            return ResponseEntity.ok(adminService.getActivityLogs(search, action));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        }
+    }
+
+    @DeleteMapping("/activity-logs")
+    @PreAuthorize("hasAuthority('ROLE_ADMIN')")
+    public ResponseEntity<?> clearActivityLogs(Authentication authentication) {
+        try {
+            User caller = getCurrentUser(authentication);
+            return ResponseEntity.ok(adminService.clearActivityLogs(caller));
+        } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
         }
     }

@@ -291,11 +291,16 @@
                     <span class="stat-number" id="stat-total-teams">0</span>
                     <span class="stat-label">Total Teams</span>
                 </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-logs">0</span>
+                    <span class="stat-label">🔴 24/7 Logs</span>
+                </div>
             </div>
 
             <!-- Sub-Navigation Filter Pills for Admin -->
             <div class="filters-row" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
                 <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs &amp; Controls</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="activity-logs" onclick="Admin.switchSubTab('activity-logs')">🔴 24/7 Live Audit Log</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="posting-history" onclick="Admin.switchSubTab('posting-history')">📜 Hackathon Posting History Log</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="userlogs" onclick="Admin.switchSubTab('userlogs')">👤 Active &amp; Future User Logs</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="students" onclick="Admin.switchSubTab('students')">👥 Student Accounts</button>
@@ -330,6 +335,61 @@
                             </tr>
                         </thead>
                         <tbody id="admin-teams-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 24/7 LIVE AUDIT & ACTIVITY LOG SECTION -->
+            <div id="admin-sec-activity-logs" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon); display: flex; align-items: center; gap: 8px;">
+                            <span>🔴 24/7 Live Audit &amp; Activity Log</span>
+                            <span style="font-size: 0.7rem; background: rgba(34,197,94,0.15); color: var(--status-upcoming); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(34,197,94,0.3);">● LIVE TRACKING ACTIVE</span>
+                        </h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Real-time tracking of every login, password change, team creation, event edit, and sub-admin action</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select id="admin-logs-action-filter" class="form-select" style="font-size: 0.8rem; padding: 4px 10px; width: 140px;" onchange="Admin.loadActivityLogs()">
+                            <option value="ALL">All Actions</option>
+                            <option value="LOGIN">Logins</option>
+                            <option value="TEAM_CREATE">Team Creations</option>
+                            <option value="TEAM_DELETE">Team Deletions</option>
+                            <option value="JOIN_REQUEST">Join Requests</option>
+                            <option value="JOIN_ACCEPTED">Join Accepted</option>
+                            <option value="JOIN_REJECTED">Join Rejected</option>
+                            <option value="EVENT_CREATE">Event Creations</option>
+                            <option value="EVENT_UPDATE">Event Updates</option>
+                            <option value="EVENT_DELETE">Event Deletions</option>
+                            <option value="PASSWORD_RESET">Password Resets</option>
+                            <option value="PASSWORD_CHANGE">Password Changes</option>
+                            <option value="SUBADMIN_CREATE">Sub-Admin Create</option>
+                            <option value="SUBADMIN_UPDATE">Sub-Admin Update</option>
+                            <option value="SUBADMIN_DELETE">Sub-Admin Delete</option>
+                            <option value="STUDENT_CREATE">Student Create</option>
+                            <option value="STUDENT_STATUS">Student Status</option>
+                            <option value="PROFILE_UPDATE">Profile Updates</option>
+                        </select>
+                        <input type="text" id="admin-logs-search-input" class="form-input" placeholder="Search user, action, details..." style="font-size: 0.82rem; padding: 4px 10px; width: 200px;" oninput="Admin.handleSearchActivityLogs()">
+                        <button class="btn btn-secondary btn-sm" onclick="Admin.loadActivityLogs()">🔄 Refresh</button>
+                        <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.clearActivityLogs()">🗑️ Purge Logs</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 155px;">Timestamp</th>
+                                <th style="width: 130px;">User</th>
+                                <th style="width: 110px;">Role</th>
+                                <th style="width: 135px;">Action</th>
+                                <th>Activity Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-activity-logs-tbody">
+                            <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading live logs...</td></tr>
+                        </tbody>
                     </table>
                 </div>
             </div>
@@ -750,7 +810,7 @@
 
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
                 <span style="font-size: 0.9rem; color: var(--text-muted);">Existing teams looking for teammates:</span>
-                <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-create-team')">+ Create Team</button>
+                <button class="btn btn-primary btn-sm" onclick="Teams.openCreateTeamModal(Teams.currentEventId)">+ Create Team</button>
             </div>
 
             <div id="findteam-teams-container" style="max-height: 400px; overflow-y: auto;"></div>
@@ -1080,15 +1140,21 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Assigned Year / Batch *</label>
+                    <label class="form-label">Assigned Class / Year *</label>
                     <select id="sa-create-year" class="form-select" required>
-                        <option value="ALL">All Years (Whole Department)</option>
-                        <option value="2">2nd Year Only (CS2001–CS2049)</option>
-                        <option value="3">3rd Year Only (CS3001–CS3048)</option>
-                        <option value="4">4th Year Only</option>
+                        <option value="2">Class 2 Only (2nd Year: CS2001–CS2049)</option>
+                        <option value="3">Class 3 Only (3rd Year: CS3001–CS3048)</option>
+                        <option value="1">Class 1 Only (1st Year)</option>
+                        <option value="4">Class 4 Only (4th Year)</option>
+                        <option value="ALL">All Classes (Whole Department)</option>
                     </select>
                 </div>
-                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>. Sub-Admin can only manage and reset passwords for students in their assigned department &amp; year.</p>
+                <div class="form-group">
+                    <label class="form-label">Student Quota Limit (Max Students Access)</label>
+                    <input type="number" id="sa-create-student-limit" class="form-input" min="0" placeholder="e.g. 50 (Leave blank or 0 for unlimited)">
+                    <small style="color: var(--text-muted); font-size: 0.75rem; display:block; margin-top:4px;">Sub-admin is strictly isolated to their assigned class and department, and cannot access other classes or exceed this student limit.</small>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>.</p>
                 <button type="submit" class="btn btn-sm" style="width:100%; background:#7c3aed; color:#fff;">Create Sub-Admin</button>
             </form>
         </div>
@@ -1122,13 +1188,18 @@
                     </select>
                 </div>
                 <div class="form-group">
-                    <label class="form-label">Assigned Year / Batch</label>
+                    <label class="form-label">Assigned Class / Year</label>
                     <select id="sa-edit-year" class="form-select">
-                        <option value="ALL">All Years (Whole Department)</option>
-                        <option value="2">2nd Year Only (CS2001–CS2049)</option>
-                        <option value="3">3rd Year Only (CS3001–CS3048)</option>
-                        <option value="4">4th Year Only</option>
+                        <option value="2">Class 2 Only (2nd Year: CS2001–CS2049)</option>
+                        <option value="3">Class 3 Only (3rd Year: CS3001–CS3048)</option>
+                        <option value="1">Class 1 Only (1st Year)</option>
+                        <option value="4">Class 4 Only (4th Year)</option>
+                        <option value="ALL">All Classes (Whole Department)</option>
                     </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Student Quota Limit</label>
+                    <input type="number" id="sa-edit-student-limit" class="form-input" min="0" placeholder="e.g. 50 (Leave blank or 0 for unlimited)">
                 </div>
                 <div style="display:flex; gap:10px; margin-top:16px;">
                     <button type="submit" class="btn btn-sm" style="flex:1; background:#7c3aed; color:#fff;">Save Changes</button>
