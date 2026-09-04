@@ -171,6 +171,9 @@ const Admin = {
       if (btn.getAttribute('data-subtab') === tabName) {
         btn.classList.add('active', 'btn-primary');
         btn.classList.remove('btn-outline');
+        try {
+          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
       } else {
         btn.classList.remove('active', 'btn-primary');
         btn.classList.add('btn-outline');

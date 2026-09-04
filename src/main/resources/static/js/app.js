@@ -164,6 +164,9 @@ const App = {
     document.querySelectorAll('.mobile-tab-pill').forEach(pill => {
       if (pill.getAttribute('data-view') === viewName) {
         pill.classList.add('active');
+        try {
+          pill.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
       } else {
         pill.classList.remove('active');
       }

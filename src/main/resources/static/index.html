@@ -8,7 +8,7 @@
     <link rel="icon" type="image/png" href="/favicon.png">
     <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/logo.png">
-    <link rel="stylesheet" href="/css/styles.css?v=8.0">
+    <link rel="stylesheet" href="/css/styles.css?v=9.0">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -186,9 +186,9 @@
                         <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;">🌟 Open Teams Looking for Teammates</h3>
                         <p style="color: var(--text-muted); font-size: 0.8rem; margin: 2px 0 0 0;">Visible to everyone logged in. Tap "Request to Join" on any team to send your request.</p>
                     </div>
-                    <div style="display: flex; gap: 8px;">
-                        <input type="text" id="teams-filter-search" class="form-input" placeholder="Filter by team or event..." style="font-size: 0.82rem; padding: 4px 10px; width: 200px;" oninput="Teams.filterRenderedTeams()">
-                        <button class="btn btn-secondary btn-sm" onclick="Teams.loadAllTeams()">🔄 Refresh</button>
+                    <div style="display: flex; gap: 8px; flex: 1; max-width: 320px;">
+                        <input type="text" id="teams-filter-search" class="form-input" placeholder="Filter by team or event..." style="font-size: 0.82rem; padding: 6px 12px; width: 100%; min-width: 0;" oninput="Teams.filterRenderedTeams()">
+                        <button class="btn btn-secondary btn-sm" style="white-space: nowrap; flex-shrink: 0;" onclick="Teams.loadAllTeams()">🔄 Refresh</button>
                     </div>
                 </div>
                 <div id="all-teams-container" style="display: flex; flex-direction: column; gap: 12px;">
@@ -305,7 +305,7 @@
             </div>
 
             <!-- Sub-Navigation Filter Pills for Admin -->
-            <div class="filters-row" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+            <div class="admin-subtabs-bar">
                 <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs &amp; Controls</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="activity-logs" onclick="Admin.switchSubTab('activity-logs')">🔴 24/7 Live Audit Log</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="posting-history" onclick="Admin.switchSubTab('posting-history')">📜 Hackathon Posting History Log</button>
@@ -421,10 +421,10 @@
                     </ul>
                 </div>
 
-                <div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">
-                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('users')">👥 Users Data</button>
-                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('events')">💻 Events Data</button>
-                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadDbTable('reports')">🚩 Reports Data</button>
+                <div class="admin-subtabs-bar" style="border-bottom:none; margin-bottom:14px; padding-bottom:4px;">
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('users')">👥 Users Data</button>
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('events')">💻 Events Data</button>
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('reports')">🚩 Reports Data</button>
                 </div>
 
                 <div class="table-responsive">
@@ -1250,12 +1250,12 @@
     </div>
 
     <!-- JavaScript Modules -->
-    <script src="/js/api.js?v=8.0"></script>
-    <script src="/js/auth.js?v=8.0"></script>
-    <script src="/js/events.js?v=8.0"></script>
-    <script src="/js/teams.js?v=8.0"></script>
-    <script src="/js/notifications.js?v=8.0"></script>
-    <script src="/js/admin.js?v=8.0"></script>
-    <script src="/js/app.js?v=8.0"></script>
+    <script src="/js/api.js?v=9.0"></script>
+    <script src="/js/auth.js?v=9.0"></script>
+    <script src="/js/events.js?v=9.0"></script>
+    <script src="/js/teams.js?v=9.0"></script>
+    <script src="/js/notifications.js?v=9.0"></script>
+    <script src="/js/admin.js?v=9.0"></script>
+    <script src="/js/app.js?v=9.0"></script>
 </body>
 </html>
