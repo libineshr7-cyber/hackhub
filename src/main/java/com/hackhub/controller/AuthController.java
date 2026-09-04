@@ -44,8 +44,8 @@ public class AuthController {
         try {
             ApiResponse response = authService.requestOtp(request);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage() != null ? e.getMessage() : "Failed to process OTP request"));
         }
     }
 
@@ -54,8 +54,8 @@ public class AuthController {
         try {
             ApiResponse response = authService.verifyOtpAndResetPassword(request);
             return ResponseEntity.ok(response);
-        } catch (IllegalArgumentException | IllegalStateException e) {
-            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(new ApiResponse(false, e.getMessage() != null ? e.getMessage() : "Failed to verify OTP"));
         }
     }
 }

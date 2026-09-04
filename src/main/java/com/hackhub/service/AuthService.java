@@ -116,9 +116,47 @@ public class AuthService {
 
     @Transactional
     public ApiResponse requestOtp(RequestOtpRequest request) {
-        User user = userRepository.findByRegistrationNumber(request.getRegistrationNumber())
-                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(request.getRegistrationNumber()))
-                .orElseThrow(() -> new IllegalArgumentException("Registration number not found."));
+        String regInput = request.getRegistrationNumber() != null ? request.getRegistrationNumber().trim() : "";
+        String emailInput = request.getEmail() != null ? request.getEmail().trim() : "";
+
+        if (regInput.isEmpty() && emailInput.isEmpty()) {
+            throw new IllegalArgumentException("Please enter your Registration Number and valid email address.");
+        }
+
+        // Find user by registration number or email
+        User user = null;
+        if (!regInput.isEmpty()) {
+            user = userRepository.findByRegistrationNumberIgnoreCase(regInput)
+                    .or(() -> userRepository.findByRegistrationNumber(regInput))
+                    .orElse(null);
+        }
+        if (user == null && !emailInput.isEmpty()) {
+            user = userRepository.findByEmailIgnoreCase(emailInput)
+                    .or(() -> userRepository.findByEmail(emailInput))
+                    .orElse(null);
+        }
+        if (user == null) {
+            // Also try regInput as email
+            user = userRepository.findByEmailIgnoreCase(regInput)
+                    .or(() -> userRepository.findByEmail(regInput))
+                    .orElse(null);
+        }
+
+        if (user == null) {
+            throw new IllegalArgumentException("No account found matching Registration Number '" + regInput + "'.");
+        }
+
+        // Determine destination email
+        String destinationEmail = null;
+        if (!emailInput.isEmpty() && emailInput.contains("@") && emailInput.contains(".")) {
+            destinationEmail = emailInput;
+        } else if (user.getEmail() != null && !user.getEmail().trim().isEmpty() && !user.getEmail().contains("@dept.edu") && !user.getEmail().contains("@hackhub.dept.edu")) {
+            destinationEmail = user.getEmail().trim();
+        }
+
+        if (destinationEmail == null || destinationEmail.isEmpty() || !destinationEmail.contains("@") || !destinationEmail.contains(".")) {
+            throw new IllegalArgumentException("Please enter a valid personal email address (e.g. your Gmail) to receive your 6-digit OTP code.");
+        }
 
         // Invalidate any previous unused OTP requests for this user
         List<OtpRequest> oldOtps = otpRequestRepository.findByUserAndCreatedAtGreaterThan(user, LocalDateTime.now().minusDays(1));
@@ -136,17 +174,45 @@ public class AuthService {
         OtpRequest otpRequest = new OtpRequest(user, otpHash, LocalDateTime.now().plusMinutes(5));
         otpRequestRepository.save(otpRequest);
 
-        // Send email
-        mailService.sendOtpEmail(user.getEmail(), user.getRegistrationNumber(), otpCode);
+        // Send email via Brevo
+        mailService.sendOtpEmail(destinationEmail, user.getRegistrationNumber(), otpCode);
 
-        return new ApiResponse(true, "OTP verification code sent to registered email: " + maskEmail(user.getEmail()));
+        activityLogService.log(
+                user.getRegistrationNumber(),
+                user.getName(),
+                user.getRole(),
+                "OTP_REQUESTED",
+                "Password reset OTP sent to email (" + maskEmail(destinationEmail) + ")",
+                null
+        );
+
+        Map<String, String> data = new HashMap<>();
+        data.put("registrationNumber", user.getRegistrationNumber());
+        data.put("email", destinationEmail);
+
+        return new ApiResponse(true, "OTP verification code sent to: " + maskEmail(destinationEmail), data);
     }
 
     @Transactional
     public ApiResponse verifyOtpAndResetPassword(VerifyOtpResetPasswordRequest request) {
-        User user = userRepository.findByRegistrationNumber(request.getRegistrationNumber())
-                .or(() -> userRepository.findByRegistrationNumberIgnoreCase(request.getRegistrationNumber()))
-                .orElseThrow(() -> new IllegalArgumentException("Registration number not found."));
+        String regInput = request.getRegistrationNumber() != null ? request.getRegistrationNumber().trim() : "";
+        String emailInput = request.getEmail() != null ? request.getEmail().trim() : "";
+
+        User user = null;
+        if (!regInput.isEmpty()) {
+            user = userRepository.findByRegistrationNumberIgnoreCase(regInput)
+                    .or(() -> userRepository.findByRegistrationNumber(regInput))
+                    .orElse(null);
+        }
+        if (user == null && !emailInput.isEmpty()) {
+            user = userRepository.findByEmailIgnoreCase(emailInput)
+                    .or(() -> userRepository.findByEmail(emailInput))
+                    .orElse(null);
+        }
+
+        if (user == null) {
+            throw new IllegalArgumentException("Account not found. Please try requesting OTP again.");
+        }
 
         Optional<OtpRequest> otpOpt = otpRequestRepository.findTopByUserAndUsedFalseAndExpiresAtGreaterThanOrderByCreatedAtDesc(
                 user, LocalDateTime.now());
@@ -177,14 +243,29 @@ public class AuthService {
         }
 
         // OTP Verified successfully
-        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword()));
+        user.setPasswordHash(passwordEncoder.encode(request.getNewPassword().trim()));
         user.setFirstLogin(false);
+
+        // Update user email to the verified email
+        if (!emailInput.isEmpty() && emailInput.contains("@") && emailInput.contains(".")) {
+            user.setEmail(emailInput);
+        }
+
         userRepository.save(user);
 
         otpRequest.setUsed(true);
         otpRequestRepository.save(otpRequest);
 
-        return new ApiResponse(true, "Password reset successfully. You can now login with your new password.");
+        activityLogService.log(
+                user.getRegistrationNumber(),
+                user.getName(),
+                user.getRole(),
+                "PASSWORD_RESET",
+                "Successfully changed password via Brevo email OTP verification",
+                null
+        );
+
+        return new ApiResponse(true, "Password changed successfully! You can now login with your new password.");
     }
 
     private String maskEmail(String email) {

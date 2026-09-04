@@ -55,18 +55,24 @@ public class AuthDtos {
 
     public static class RequestOtpRequest {
         private String registrationNumber;
+        private String email;
 
         public String getRegistrationNumber() { return registrationNumber; }
         public void setRegistrationNumber(String registrationNumber) { this.registrationNumber = registrationNumber; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
     }
 
     public static class VerifyOtpResetPasswordRequest {
         private String registrationNumber;
+        private String email;
         private String otp;
         private String newPassword;
 
         public String getRegistrationNumber() { return registrationNumber; }
         public void setRegistrationNumber(String registrationNumber) { this.registrationNumber = registrationNumber; }
+        public String getEmail() { return email; }
+        public void setEmail(String email) { this.email = email; }
         public String getOtp() { return otp; }
         public void setOtp(String otp) { this.otp = otp; }
         public String getNewPassword() { return newPassword; }
@@ -76,13 +82,21 @@ public class AuthDtos {
     public static class ApiResponse {
         private boolean success;
         private String message;
+        private Object data;
 
         public ApiResponse(boolean success, String message) {
             this.success = success;
             this.message = message;
         }
 
+        public ApiResponse(boolean success, String message, Object data) {
+            this.success = success;
+            this.message = message;
+            this.data = data;
+        }
+
         public boolean isSuccess() { return success; }
         public String getMessage() { return message; }
+        public Object getData() { return data; }
     }
 }

@@ -223,7 +223,7 @@ const App = {
   },
 
   openModal(modalId) {
-    if (modalId !== 'modal-login') {
+    if (modalId !== 'modal-login' && modalId !== 'modal-forgot-password') {
       const token = API.getToken();
       const user = API.getUser();
       if (!token || !user) {
@@ -267,44 +267,7 @@ const App = {
   },
 
   playNotificationSound() {
-    try {
-      const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      if (!AudioCtx) return;
-      if (!this._audioCtx) {
-        this._audioCtx = new AudioCtx();
-      }
-      const ctx = this._audioCtx;
-      if (ctx.state === 'suspended') {
-        ctx.resume();
-      }
-      const now = ctx.currentTime;
-      
-      const osc1 = ctx.createOscillator();
-      const osc2 = ctx.createOscillator();
-      const gainNode = ctx.createGain();
-
-      osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(587.33, now); // D5
-      osc1.frequency.exponentialRampToValueAtTime(880, now + 0.1); // A5
-
-      osc2.type = 'triangle';
-      osc2.frequency.setValueAtTime(880, now);
-      osc2.frequency.exponentialRampToValueAtTime(1174.66, now + 0.14); // D6
-
-      gainNode.gain.setValueAtTime(0.04, now);
-      gainNode.gain.exponentialRampToValueAtTime(0.001, now + 0.32);
-
-      osc1.connect(gainNode);
-      osc2.connect(gainNode);
-      gainNode.connect(ctx.destination);
-
-      osc1.start(now);
-      osc2.start(now);
-      osc1.stop(now + 0.32);
-      osc2.stop(now + 0.32);
-    } catch (e) {
-      // Audio not supported or blocked
-    }
+    // Sound completely removed from web application per user request
   },
 
   /**
@@ -321,10 +284,6 @@ const App = {
     const duration = options.duration || 4500;
     const title = options.title || (type === 'danger' ? 'Error Alert' : type === 'success' ? 'Success' : type === 'warning' ? 'Notice' : 'Notification');
     const icon = options.icon || (type === 'danger' ? '❌' : type === 'success' ? '✅' : type === 'warning' ? '⚠️' : '🔔');
-
-    if (options.sound !== false) {
-      this.playNotificationSound();
-    }
 
     const toast = document.createElement('div');
     toast.className = `hackhub-toast hackhub-toast-${type}`;
@@ -394,7 +353,7 @@ const App = {
       actionText: options.actionText || 'Open Notifications',
       onAction: options.onAction,
       duration: options.duration || 6500,
-      sound: true
+      sound: false
     });
   },
 

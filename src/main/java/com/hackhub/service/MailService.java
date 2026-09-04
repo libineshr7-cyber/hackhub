@@ -36,6 +36,9 @@ public class MailService {
     @Value("${brevo.sender.name:HackHub Security Team}")
     private String brevoSenderName;
 
+    @Value("${hackhub.app.url:https://hackhub-h1uf.onrender.com}")
+    private String appUrl;
+
     private final ObjectMapper objectMapper = new ObjectMapper();
     private final HttpClient httpClient = HttpClient.newBuilder()
             .connectTimeout(Duration.ofSeconds(10))
@@ -164,6 +167,114 @@ public class MailService {
             logger.info("Gmail SMTP OTP successfully dispatched to {}", toEmail);
         } catch (Exception e) {
             logger.error("Failed to dispatch email via Gmail SMTP: ", e);
+        }
+    }
+
+    public void sendTeamRequestEmail(String toEmail, String recipientName, String senderName, String senderRegNo, String teamName, String eventTitle, String roleOrType) {
+        if (toEmail == null || toEmail.trim().isEmpty() || toEmail.contains("@dept.edu")) {
+            logger.info("Skipping team email for placeholder or missing email: {}", toEmail);
+            return;
+        }
+
+        String subject;
+        String actionTitle;
+        String actionDescription;
+        String buttonText;
+
+        if ("JOIN_REQUEST".equalsIgnoreCase(roleOrType)) {
+            subject = "HackHub — New Join Request for Team '" + teamName + "'";
+            actionTitle = "New Join Request Received";
+            actionDescription = "<strong>" + senderName + "</strong> (" + senderRegNo + ") has requested to join your team <strong>'" + teamName + "'</strong> for the hackathon <strong>'" + eventTitle + "'</strong>.";
+            buttonText = "Review & Respond to Request";
+        } else if ("ACCEPTED".equalsIgnoreCase(roleOrType)) {
+            subject = "HackHub — You have been Accepted into Team '" + teamName + "'! 🎉";
+            actionTitle = "Join Request Accepted!";
+            actionDescription = "Great news! <strong>" + senderName + "</strong> has accepted your request to join team <strong>'" + teamName + "'</strong> for hackathon <strong>'" + eventTitle + "'</strong>. You are now officially an active team member!";
+            buttonText = "Open Team in HackHub";
+        } else {
+            subject = "HackHub — Team Invitation from " + senderName + " (" + teamName + ")";
+            actionTitle = "You are Invited to Join a Hackathon Team!";
+            actionDescription = "<strong>" + senderName + "</strong> (" + senderRegNo + ") has invited you to join team <strong>'" + teamName + "'</strong> for the upcoming hackathon <strong>'" + eventTitle + "'</strong>.";
+            buttonText = "View Invitation & Accept";
+        }
+
+        String activeBrevoKey = getResolvedBrevoApiKey();
+        if (activeBrevoKey.isEmpty()) {
+            logger.warn("Brevo API key not configured, skipping team request email to {}", toEmail);
+            return;
+        }
+
+        try {
+            String link = (appUrl != null && !appUrl.trim().isEmpty()) ? appUrl.trim() : "https://hackhub-h1uf.onrender.com";
+
+            String htmlContent = "<!DOCTYPE html>"
+                    + "<html><head><meta charset='utf-8'></head>"
+                    + "<body style='margin:0; padding:0; background-color:#f8fafc; font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, sans-serif;'>"
+                    + "<div style='max-width:560px; margin:30px auto; background:#ffffff; border-radius:18px; overflow:hidden; border:1px solid #e2e8f0; box-shadow:0 10px 30px rgba(0,0,0,0.06);'>"
+                    + "<div style='background:linear-gradient(135deg, #800020, #9e1b32); padding:26px 32px; text-align:center; color:#ffffff;'>"
+                    + "<h1 style='margin:0; font-size:24px; font-weight:800; letter-spacing:1px;'>HACKHUB</h1>"
+                    + "<p style='margin:6px 0 0 0; font-size:13px; opacity:0.9;'>Department Innovation & Hackathon Teammates</p>"
+                    + "</div>"
+                    + "<div style='padding:32px; color:#1e293b;'>"
+                    + "<h2 style='margin:0 0 16px 0; font-size:19px; color:#800020; font-weight:700;'>" + actionTitle + "</h2>"
+                    + "<p style='font-size:14px; line-height:1.6; color:#475569;'>Hello <strong>" + recipientName + "</strong>,</p>"
+                    + "<p style='font-size:14px; line-height:1.6; color:#334155;'>" + actionDescription + "</p>"
+                    + "<div style='background:rgba(128,0,32,0.04); border-left:4px solid #800020; border-radius:8px; padding:16px; margin:24px 0;'>"
+                    + "<p style='margin:0 0 6px 0; font-size:13px; color:#64748b;'><strong>Hackathon:</strong> " + eventTitle + "</p>"
+                    + "<p style='margin:0; font-size:13px; color:#64748b;'><strong>Team:</strong> " + teamName + "</p>"
+                    + "</div>"
+                    + "<div style='text-align:center; margin:30px 0 20px 0;'>"
+                    + "<a href='" + link + "' target='_blank' style='display:inline-block; background:linear-gradient(135deg, #800020, #9e1b32); color:#ffffff; font-weight:700; font-size:15px; text-decoration:none; padding:14px 32px; border-radius:10px; box-shadow:0 4px 12px rgba(128,0,32,0.3);'>"
+                    + buttonText + " &rarr;</a>"
+                    + "</div>"
+                    + "<p style='font-size:12px; color:#94a3b8; text-align:center; margin-top:16px;'>Or open HackHub directly in your browser:<br>"
+                    + "<a href='" + link + "' style='color:#800020; font-size:12px;'>" + link + "</a></p>"
+                    + "</div>"
+                    + "<div style='background:#f1f5f9; padding:16px 30px; text-align:center; font-size:12px; color:#94a3b8; border-top:1px solid #e2e8f0;'>"
+                    + "© " + java.time.Year.now().getValue() + " HackHub Platform • Automated Team Alert"
+                    + "</div>"
+                    + "</div>"
+                    + "</body></html>";
+
+            String textContent = "Hello " + recipientName + ",\n\n"
+                    + senderName + " (" + senderRegNo + ") has sent a team request/invitation for team '" + teamName + "' (Hackathon: " + eventTitle + ").\n\n"
+                    + "Log in to HackHub to accept and join:\n" + link + "\n\n"
+                    + "HackHub Platform Team";
+
+            Map<String, Object> payload = new HashMap<>();
+            payload.put("sender", Map.of("name", brevoSenderName, "email", brevoSenderEmail));
+            payload.put("to", List.of(Map.of("email", toEmail, "name", recipientName)));
+            payload.put("subject", subject);
+            payload.put("htmlContent", htmlContent);
+            payload.put("textContent", textContent);
+
+            String requestBody = objectMapper.writeValueAsString(payload);
+
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create("https://api.brevo.com/v3/smtp/email"))
+                    .header("api-key", activeBrevoKey)
+                    .header("Content-Type", "application/json")
+                    .header("Accept", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(requestBody))
+                    .timeout(Duration.ofSeconds(15))
+                    .build();
+
+            // Asynchronous dispatch so team creation / invitation returns immediately without delay
+            httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                    .thenAccept(resp -> {
+                        if (resp.statusCode() >= 200 && resp.statusCode() < 300) {
+                            logger.info("✅ Brevo API: Team email dispatched to {} for team '{}'", toEmail, teamName);
+                        } else {
+                            logger.error("❌ Brevo API team email failed {}: {}", resp.statusCode(), resp.body());
+                        }
+                    })
+                    .exceptionally(ex -> {
+                        logger.error("❌ Exception during Brevo team email dispatch: {}", ex.getMessage());
+                        return null;
+                    });
+
+        } catch (Exception e) {
+            logger.error("Failed to construct Brevo team email: {}", e.getMessage(), e);
         }
     }
 }

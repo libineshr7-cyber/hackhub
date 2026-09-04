@@ -33,6 +33,9 @@ public class TeamService {
     private NotificationService notificationService;
 
     @Autowired
+    private MailService mailService;
+
+    @Autowired
     private ActivityLogService activityLogService;
 
     public List<Map<String, String>> searchStudents(String query, String filterBy, String filterValue) {
@@ -120,6 +123,18 @@ public class TeamService {
                 "TEAM_INVITE",
                 "teams"
             );
+
+            // Send Brevo email notification to teammate's registered email
+            mailService.sendTeamRequestEmail(
+                target.getEmail(),
+                target.getName(),
+                inviter.getName(),
+                inviter.getRegistrationNumber(),
+                team.getTeamName(),
+                team.getEvent().getTitle(),
+                "INVITATION"
+            );
+
             sent++;
         }
 
@@ -177,7 +192,18 @@ public class TeamService {
             "teams"
         );
 
-        return new ApiResponse(true, "Team request sent successfully to " + targetStudent.getName() + " (" + targetStudent.getRegistrationNumber() + ")!");
+        // Send Brevo email notification to teammate's registered email
+        mailService.sendTeamRequestEmail(
+            targetStudent.getEmail(),
+            targetStudent.getName(),
+            inviter.getName(),
+            inviter.getRegistrationNumber(),
+            team.getTeamName(),
+            team.getEvent().getTitle(),
+            "INVITATION"
+        );
+
+        return new ApiResponse(true, "Team request sent successfully to " + targetStudent.getName() + " (" + targetStudent.getRegistrationNumber() + ")! An email alert was also sent to their registered email.");
     }
 
     @Transactional
@@ -300,6 +326,19 @@ public class TeamService {
             "teams"
         );
 
+        // Dispatch Brevo email to team leader's registered email address
+        if (teamLeader != null && teamLeader.getEmail() != null) {
+            mailService.sendTeamRequestEmail(
+                teamLeader.getEmail(),
+                teamLeader.getName(),
+                requester.getName(),
+                requester.getRegistrationNumber(),
+                team.getTeamName(),
+                team.getEvent().getTitle(),
+                "JOIN_REQUEST"
+            );
+        }
+
         activityLogService.log(
                 requester.getRegistrationNumber(),
                 requester.getName(),
@@ -350,6 +389,19 @@ public class TeamService {
                 "REQUEST_ACCEPTED",
                 "teams"
             );
+
+            // Send Brevo email notification to student
+            if (request.getRequester() != null && request.getRequester().getEmail() != null) {
+                mailService.sendTeamRequestEmail(
+                    request.getRequester().getEmail(),
+                    request.getRequester().getName(),
+                    user.getName(),
+                    user.getRegistrationNumber(),
+                    team.getTeamName(),
+                    team.getEvent().getTitle(),
+                    "ACCEPTED"
+                );
+            }
 
             activityLogService.log(
                     user.getRegistrationNumber(),

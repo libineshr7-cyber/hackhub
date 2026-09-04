@@ -155,44 +155,67 @@ const Auth = {
     }
   },
 
+  _otpRegistrationNumber: '',
+  _otpEmailAddress: '',
+
   showForgotPasswordModal() {
+    App.closeModal('modal-login');
     document.getElementById('otp-step-1').style.display = 'block';
     document.getElementById('otp-step-2').style.display = 'none';
     const regInput = document.getElementById('otp-reg-no');
+    const emailInput = document.getElementById('otp-email');
     const otpInput = document.getElementById('otp-code-input');
     const passInput = document.getElementById('otp-new-password');
     if (regInput) regInput.value = '';
+    if (emailInput) emailInput.value = '';
     if (otpInput) otpInput.value = '';
     if (passInput) passInput.value = '';
+    this._otpRegistrationNumber = '';
+    this._otpEmailAddress = '';
     App.openModal('modal-forgot-password');
   },
 
   async handleRequestOtp(event) {
     event.preventDefault();
     const regNo = document.getElementById('otp-reg-no').value.trim();
+    const email = document.getElementById('otp-email')?.value.trim() || '';
+
     if (!regNo) {
-      App.showToast('Please enter your registration number.', 'danger');
+      App.showToast('Please enter your Registration Number.', 'danger');
+      return;
+    }
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      App.showToast('Please enter a valid personal email address (e.g. your Gmail).', 'danger');
       return;
     }
 
-    const btn = event.target.querySelector('button[type="submit"]');
-    const originalText = btn ? btn.innerHTML : 'Send 6-Digit Gmail OTP';
+    const btn = document.getElementById('btn-request-otp') || event.target.querySelector('button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : '📩 Send Verification OTP';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '⏳ Sending OTP to Gmail...';
+      btn.innerHTML = '⏳ Sending OTP to Email...';
     }
 
     try {
       const res = await API.request('/auth/forgot-password/request-otp', {
         method: 'POST',
-        body: JSON.stringify({ registrationNumber: regNo })
+        body: JSON.stringify({ registrationNumber: regNo, email: email })
       });
+
+      this._otpRegistrationNumber = (res.data && res.data.registrationNumber) ? res.data.registrationNumber : regNo;
+      this._otpEmailAddress = (res.data && res.data.email) ? res.data.email : email;
+
+      const infoEl = document.getElementById('otp-sent-info');
+      if (infoEl) {
+        infoEl.innerHTML = `📬 <strong>OTP Dispatched!</strong><br>A 6-digit verification code was sent to <strong>${this._otpEmailAddress}</strong>.<br><small style="opacity:0.9;">Please check your Inbox (or Spam/Junk folder). Code expires in 5 minutes.</small>`;
+      }
 
       document.getElementById('otp-step-1').style.display = 'none';
       document.getElementById('otp-step-2').style.display = 'block';
-      App.showToast(res.message, 'success');
+      App.showToast(res.message || 'OTP sent successfully!', 'success');
+      setTimeout(() => document.getElementById('otp-code-input')?.focus(), 250);
     } catch (err) {
-      App.showToast(err.message || 'Failed to request OTP', 'danger');
+      App.showToast(err.message || 'Failed to send OTP', 'danger');
     } finally {
       if (btn) {
         btn.disabled = false;
@@ -203,31 +226,39 @@ const Auth = {
 
   async handleVerifyOtpAndResetPassword(event) {
     event.preventDefault();
-    const regNo = document.getElementById('otp-reg-no').value.trim();
+    const regNo = this._otpRegistrationNumber || document.getElementById('otp-reg-no').value.trim();
+    const email = this._otpEmailAddress || document.getElementById('otp-email')?.value.trim() || '';
     const otp = document.getElementById('otp-code-input').value.trim();
     const newPassword = document.getElementById('otp-new-password').value;
 
     if (!otp || !newPassword) {
-      App.showToast('Please enter OTP and new password.', 'danger');
+      App.showToast('Please enter the 6-digit OTP and your new password.', 'danger');
+      return;
+    }
+    if (newPassword.length < 3) {
+      App.showToast('Password must be at least 3 characters long.', 'danger');
       return;
     }
 
-    const btn = event.target.querySelector('button[type="submit"]');
-    const originalText = btn ? btn.innerHTML : 'Verify OTP & Set New Password';
+    const btn = document.getElementById('btn-verify-otp') || event.target.querySelector('button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : '✅ Verify OTP & Change Password';
     if (btn) {
       btn.disabled = true;
-      btn.innerHTML = '⏳ Verifying OTP...';
+      btn.innerHTML = '⏳ Verifying & Updating Password...';
     }
 
     try {
       const res = await API.request('/auth/forgot-password/verify-otp', {
         method: 'POST',
-        body: JSON.stringify({ registrationNumber: regNo, otp: otp, newPassword: newPassword })
+        body: JSON.stringify({ registrationNumber: regNo, email: email, otp: otp, newPassword: newPassword })
       });
 
       App.closeModal('modal-forgot-password');
-      App.showToast(res.message, 'success');
+      App.showToast(res.message || 'Password reset successfully!', 'success');
       this.showLoginModal();
+      const loginReg = document.getElementById('login-reg-no');
+      if (loginReg) loginReg.value = regNo;
+      document.getElementById('login-password')?.focus();
     } catch (err) {
       App.showToast(err.message || 'OTP verification failed', 'danger');
     } finally {
