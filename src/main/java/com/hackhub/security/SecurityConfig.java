@@ -63,6 +63,8 @@ public class SecurityConfig {
                         "/favicon.png",
                         "/favicon.ico",
                         "/google*.html",
+                        "/robots.txt",
+                        "/sitemap.xml",
                         "/h2-console/**",
                         "/api/auth/**",
                         "/api/health"
