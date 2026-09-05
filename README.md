@@ -1,5 +1,7 @@
 # HackHub — Department Hackathon & Event Platform
 
+🌐 **Live Website**: [https://hackhub-h1uf.onrender.com/](https://hackhub-h1uf.onrender.com/)
+
 **HackHub** is a mobile-first, department-only platform built specifically for students to discover hackathons, post events instantly, find teammates using skill matching, track registration deadlines, bookmark saved events, view interactive calendars, and report problematic events.
 
 ---
