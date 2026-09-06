@@ -29,19 +29,30 @@ const Events = {
   },
 
   async loadHomeDashboard() {
-    this.showGridLoading('home-upcoming-grid', 'Loading department & Unstop hackathons...');
+    this.showGridLoading('home-upcoming-grid', 'Loading department hackathons...');
     this.showGridLoading('home-deadline-grid', 'Checking application deadlines...');
     try {
-      const [upcoming, deadlineSoon] = await Promise.all([
+      const [upcomingRes, deadlineRes] = await Promise.allSettled([
         API.request('/events/upcoming'),
         API.request('/events/deadline-soon')
       ]);
+
+      const upcoming = upcomingRes.status === 'fulfilled' && Array.isArray(upcomingRes.value) ? upcomingRes.value : [];
+      const deadlineSoon = deadlineRes.status === 'fulfilled' && Array.isArray(deadlineRes.value) ? deadlineRes.value : [];
+
+      if (upcomingRes.status === 'rejected') {
+        console.warn('Upcoming events load issue:', upcomingRes.reason);
+      }
+      if (deadlineRes.status === 'rejected') {
+        console.warn('Deadline-soon events load issue:', deadlineRes.reason);
+      }
 
       this.renderEventsGrid('home-upcoming-grid', upcoming);
       this.renderEventsGrid('home-deadline-grid', deadlineSoon);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
-      this.showGridError('home-upcoming-grid', 'Events.loadHomeDashboard()');
+      this.renderEventsGrid('home-upcoming-grid', []);
+      this.renderEventsGrid('home-deadline-grid', []);
     }
   },
 
@@ -146,11 +157,20 @@ const Events = {
     if (!container) return;
 
     if (!events || events.length === 0) {
-      container.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-muted);">
-          <p style="font-size: 1.1rem; font-weight: 600;">No events found</p>
-          <p style="font-size: 0.85rem; margin-top: 4px;">Check back later or adjust your search filters.</p>
-        </div>`;
+      if (containerId.includes('deadline')) {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 28px 20px; color: var(--text-muted); background: rgba(255,255,255,0.03); border: 1px dashed rgba(255,255,255,0.12); border-radius: var(--radius-md);">
+            <div style="font-size: 1.5rem; margin-bottom: 6px;">🎉</div>
+            <p style="font-size: 1rem; font-weight: 700; color: var(--text-main);">No urgent deadlines closing in the next 5 days</p>
+            <p style="font-size: 0.83rem; margin-top: 4px;">All active hackathons have comfortable registration windows.</p>
+          </div>`;
+      } else {
+        container.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 36px 20px; color: var(--text-muted);">
+            <p style="font-size: 1.05rem; font-weight: 600;">No events found</p>
+            <p style="font-size: 0.85rem; margin-top: 4px;">Check back later or click '+ Post Event' to submit one!</p>
+          </div>`;
+      }
       return;
     }
 

@@ -49,15 +49,7 @@ public class JwtUtils {
 
     public boolean validateToken(String token) {
         try {
-            Claims claims = Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token).getBody();
-            Date issuedAt = claims.getIssuedAt();
-            if (issuedAt != null) {
-                java.time.LocalDate issuedDate = issuedAt.toInstant().atZone(java.time.ZoneId.systemDefault()).toLocalDate();
-                java.time.LocalDate today = java.time.LocalDate.now();
-                if (today.isAfter(issuedDate)) {
-                    return false; // Force fresh login prompt on a new calendar day
-                }
-            }
+            Jwts.parserBuilder().setSigningKey(getSigningKey()).build().parseClaimsJws(token);
             return true;
         } catch (JwtException | IllegalArgumentException e) {
             return false;

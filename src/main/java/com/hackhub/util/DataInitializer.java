@@ -145,16 +145,26 @@ public class DataInitializer implements CommandLineRunner {
             logger.info("✅ Database already has {} student accounts. Preserving all existing credentials, emails, and skills forever.", existingStudentCount);
         }
 
-        // 3. Seed Sample Department Hackathons & Events if empty
-        if (eventRepository.count() == 0) {
-            User creator = userRepository.findByRegistrationNumber("CS2001").orElse(null);
+        // 3. Ensure active department hackathons and events always exist
+        LocalDate today = LocalDate.now();
+        List<Event> allEvents = eventRepository.findAll();
+        long activeUpcomingCount = allEvents.stream()
+                .filter(e -> e.getEndDate() != null && !today.isAfter(e.getEndDate()))
+                .filter(e -> e.getRegistrationDeadline() == null || !today.isAfter(e.getRegistrationDeadline()))
+                .count();
+
+        if (activeUpcomingCount < 2) {
+            logger.info("⚡ Zero/low active upcoming hackathons detected. Refreshing sample department hackathons with fresh future dates...");
+            User creator = userRepository.findByRegistrationNumber("Admin").orElse(null);
             if (creator == null) {
-                creator = userRepository.findAll().get(0);
+                creator = userRepository.findAll().stream().findFirst().orElse(null);
             }
 
-            LocalDate today = LocalDate.now();
-
-            Event e1 = new Event();
+            // 1. National Cyber Security Hackathon (Upcoming — 10 days away)
+            Event e1 = allEvents.stream()
+                    .filter(e -> e.getTitle() != null && e.getTitle().contains("National Cyber Security"))
+                    .findFirst()
+                    .orElse(new Event());
             e1.setTitle("National Cyber Security Hackathon 2026");
             e1.setDescription("Build next-generation threat detection algorithms, CTF defense tools, and zero-trust security prototypes in a 48-hour intensive department hackathon!");
             e1.setEventType("HACKATHON");
@@ -166,46 +176,54 @@ public class DataInitializer implements CommandLineRunner {
             e1.setMode("HYBRID");
             e1.setVenue("Auditorium B & Discord Server");
             e1.setRegistrationLink("https://cyberhack2026.dept.edu/register");
-            e1.setSkills("Python, Cybersecurity, Networking");
+            e1.setSkills("Python, Cybersecurity, Networking, CTF");
             e1.setPosterPath("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80");
-            e1.setCreatedBy(creator);
+            if (e1.getCreatedBy() == null) e1.setCreatedBy(creator);
             eventRepository.save(e1);
 
-            Event e2 = new Event();
+            // 2. AI & Machine Learning Challenge (Deadline Soon — 2 days away)
+            Event e2 = allEvents.stream()
+                    .filter(e -> e.getTitle() != null && e.getTitle().contains("AI & Machine Learning"))
+                    .findFirst()
+                    .orElse(new Event());
             e2.setTitle("AI & Machine Learning Innovation Challenge");
             e2.setDescription("Solve real-world healthcare and automated security classification challenges using PyTorch, TensorFlow, and LLM fine-tuning.");
             e2.setEventType("COMPETITION");
             e2.setTeamSizeMin(1);
             e2.setTeamSizeMax(3);
-            e2.setStartDate(today.plusDays(3));
-            e2.setEndDate(today.plusDays(4));
-            e2.setRegistrationDeadline(today.plusDays(1)); // Deadline Soon!
+            e2.setStartDate(today.plusDays(4));
+            e2.setEndDate(today.plusDays(5));
+            e2.setRegistrationDeadline(today.plusDays(2)); // Deadline Soon (2 days left)
             e2.setMode("ONLINE");
             e2.setVenue("Online Virtual Lab");
             e2.setRegistrationLink("https://ai-challenge.dept.edu");
-            e2.setSkills("AI/ML, Python, Database");
+            e2.setSkills("AI/ML, Python, Database, PyTorch");
             e2.setPosterPath("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80");
-            e2.setCreatedBy(creator);
+            if (e2.getCreatedBy() == null) e2.setCreatedBy(creator);
             eventRepository.save(e2);
 
-            Event e3 = new Event();
-            e3.setTitle("Web Development & UI/UX Sprint");
-            e3.setDescription("Design and implement high-performance, mobile-first web applications using modern Web standards, CSS grid, and micro-interactions.");
-            e3.setEventType("WORKSHOP");
-            e3.setTeamSizeMin(1);
-            e3.setTeamSizeMax(2);
-            e3.setStartDate(today.minusDays(5));
-            e3.setEndDate(today.minusDays(3)); // Ended Event
-            e3.setRegistrationDeadline(today.minusDays(7));
+            // 3. Smart India Department HackSprint 2026 (Upcoming — 20 days away)
+            Event e3 = allEvents.stream()
+                    .filter(e -> e.getTitle() != null && e.getTitle().contains("Smart India Department"))
+                    .findFirst()
+                    .orElse(new Event());
+            e3.setTitle("Smart India Department HackSprint 2026");
+            e3.setDescription("Department-wide software and hardware innovation sprint. Build solutions for smart campus, cybersecurity, and student welfare.");
+            e3.setEventType("HACKATHON");
+            e3.setTeamSizeMin(2);
+            e3.setTeamSizeMax(4);
+            e3.setStartDate(today.plusDays(20));
+            e3.setEndDate(today.plusDays(22));
+            e3.setRegistrationDeadline(today.plusDays(15));
             e3.setMode("OFFLINE");
-            e3.setVenue("Computer Lab 3");
-            e3.setRegistrationLink("https://websprint.dept.edu");
-            e3.setSkills("HTML/CSS, UI/UX, React");
-            e3.setPosterPath("https://images.unsplash.com/photo-1507238691740-187a5b1d37b8?auto=format&fit=crop&w=800&q=80");
-            e3.setCreatedBy(creator);
+            e3.setVenue("CS Lab 1 & Main Hall");
+            e3.setRegistrationLink("https://hacksprint2026.dept.edu");
+            e3.setSkills("Java, React, Cloud, IoT");
+            e3.setPosterPath("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80");
+            if (e3.getCreatedBy() == null) e3.setCreatedBy(creator);
             eventRepository.save(e3);
 
-            logger.info("✅ Seeded sample department events and hackathons.");
+            logger.info("✅ Ensured active department hackathons are ready (including upcoming and closing soon).");
         }
 
         logger.info("==================================================");

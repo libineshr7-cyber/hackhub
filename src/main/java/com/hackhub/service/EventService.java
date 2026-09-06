@@ -101,7 +101,11 @@ public class EventService {
         return events.stream()
                 .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> !"ENDED".equals(dto.getStatus()))
-                .sorted((a, b) -> a.getStartDate().compareTo(b.getStartDate()))
+                .sorted((a, b) -> {
+                    if (a.getStartDate() == null) return 1;
+                    if (b.getStartDate() == null) return -1;
+                    return a.getStartDate().compareTo(b.getStartDate());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -114,7 +118,11 @@ public class EventService {
                 .filter(dto -> "ENDED".equals(dto.getStatus()))
                 // Only show hackathons that ended within the last 7 days; older ones are removed
                 .filter(dto -> dto.getEndDate() != null && !dto.getEndDate().isBefore(sevenDaysAgo))
-                .sorted((a, b) -> b.getEndDate().compareTo(a.getEndDate()))
+                .sorted((a, b) -> {
+                    if (b.getEndDate() == null) return 1;
+                    if (a.getEndDate() == null) return -1;
+                    return b.getEndDate().compareTo(a.getEndDate());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -124,7 +132,11 @@ public class EventService {
         return events.stream()
                 .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> "DEADLINE_SOON".equals(dto.getStatus()))
-                .sorted((a, b) -> a.getRegistrationDeadline().compareTo(b.getRegistrationDeadline()))
+                .sorted((a, b) -> {
+                    if (a.getRegistrationDeadline() == null) return 1;
+                    if (b.getRegistrationDeadline() == null) return -1;
+                    return a.getRegistrationDeadline().compareTo(b.getRegistrationDeadline());
+                })
                 .collect(Collectors.toList());
     }
 
@@ -253,8 +265,12 @@ public class EventService {
             dto.setStatus("UPCOMING");
         }
 
-        long daysToDeadline = ChronoUnit.DAYS.between(today, event.getRegistrationDeadline());
-        dto.setDaysToDeadline(daysToDeadline);
+        if (event.getRegistrationDeadline() != null) {
+            long daysToDeadline = ChronoUnit.DAYS.between(today, event.getRegistrationDeadline());
+            dto.setDaysToDeadline(daysToDeadline);
+        } else {
+            dto.setDaysToDeadline(0L);
+        }
 
         if (savedEventIds != null && event.getId() != null) {
             dto.setSaved(savedEventIds.contains(event.getId()));

@@ -158,9 +158,18 @@ public class UnstopSyncService {
         // Check explicit registration status from Unstop JSON
         String regStatus = item.path("registerStatus").asText("").toLowerCase();
         String oppStatus = item.path("status").asText("").toLowerCase();
-        if (regStatus.contains("closed") || regStatus.contains("expired") || oppStatus.contains("closed") || oppStatus.contains("expired") || oppStatus.contains("archived")) {
-            deadlineDate = today.minusDays(1);
-            endDate = today.minusDays(1);
+        String regnReqStatus = regnReq.path("reg_status").asText("").toLowerCase();
+        String remainDaysText = item.path("remain_days").asText("").toLowerCase();
+
+        if (regStatus.contains("closed") || regStatus.contains("expired") || regStatus.contains("finished") ||
+            oppStatus.contains("closed") || oppStatus.contains("expired") || oppStatus.contains("archived") ||
+            regnReqStatus.contains("finished") || remainDaysText.contains("ended")) {
+            return false;
+        }
+
+        // Do not import hackathons whose dates have already passed
+        if (endDate.isBefore(today) || deadlineDate.isBefore(today)) {
+            return false;
         }
 
         // Venue & Org
