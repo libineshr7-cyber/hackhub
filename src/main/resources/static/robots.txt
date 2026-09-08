@@ -1,6 +1,5 @@
-﻿User-agent: *
+User-agent: *
 Allow: /
 Disallow: /api/
-Disallow: /h2-console/
 
 Sitemap: https://hackhub-h1uf.onrender.com/sitemap.xml

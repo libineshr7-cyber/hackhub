@@ -22,7 +22,7 @@
 - **Frontend**: HTML5, CSS3 (Vanilla CSS with CSS Custom Properties & Glassmorphism), Vanilla JavaScript.
 - **Backend**: Java 21, Spring Boot 3.2.5, Spring Web, Spring Data JPA, Spring Security, JavaMail.
 - **Security**: BCrypt Password Hashing, JWT Authentication Filter, Role-Based Access Control (`ROLE_STUDENT`, `ROLE_ADMIN`).
-- **Database**: MySQL Server 8.x (with automated DDL schema management).
+- **Database**: PostgreSQL 15+ hosted on Supabase Cloud (with Flyway database migrations & HikariCP pooling).
 - **Email**: Gmail SMTP via JavaMailSender.
 - **Build Tool**: Apache Maven.
 
@@ -50,15 +50,15 @@ com.hackhub
 
 Set the following environment variables (or rely on sensible local defaults):
 
-| Variable | Description | Default Value |
+| Variable | Description | Example / Recommended Value |
 | :--- | :--- | :--- |
-| `DB_URL` | MySQL JDBC Connection URL | `jdbc:mysql://localhost:3306/hackhub_db?createDatabaseIfNotExist=true&useSSL=false&allowPublicKeyRetrieval=true` |
-| `DB_USERNAME` | MySQL Username | `root` |
-| `DB_PASSWORD` | MySQL Password | `""` |
+| `DB_URL` | Supabase PostgreSQL JDBC URL | `jdbc:postgresql://db.[PROJECT-REF].supabase.co:5432/postgres?sslmode=require` |
+| `DB_USERNAME` | Supabase Database Username | `postgres` (or `postgres.[PROJECT-REF]` with pooler) |
+| `DB_PASSWORD` | Supabase Database Password | Your Supabase database password |
 | `MAIL_HOST` | SMTP Host | `smtp.gmail.com` |
 | `MAIL_PORT` | SMTP Port | `587` |
-| `MAIL_USERNAME` | Gmail Account Email | `""` |
-| `MAIL_PASSWORD` | Gmail App Password (16-char) | `""` |
+| `MAIL_USERNAME` | Gmail Account Email | `your_email@gmail.com` |
+| `MAIL_PASSWORD` | Gmail App Password (16-char) | `your_app_password` |
 | `JWT_SECRET` | 256-bit Secret Key | Configured in properties |
 
 > [!NOTE]
@@ -68,8 +68,11 @@ Set the following environment variables (or rely on sensible local defaults):
 
 ## 🚀 Running the Project
 
-### 1. Database Setup
-Make sure MySQL Server is running on `localhost:3306`. The database `hackhub_db` will be created automatically on first startup.
+### 1. Database Setup (Supabase PostgreSQL)
+1. Create a free project on [Supabase](https://supabase.com).
+2. Get your connection parameters from **Project Settings → Database → Connection string**.
+3. Flyway migrations in `src/main/resources/db/migration/` automatically create all tables and indexes upon application startup.
+4. Alternatively, you can run [`supabase_setup.sql`](supabase_setup.sql) directly in Supabase SQL Editor.
 
 ### 2. Build & Run Backend
 Compile and start the Spring Boot application using Maven:

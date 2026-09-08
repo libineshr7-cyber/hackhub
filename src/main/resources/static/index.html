@@ -357,7 +357,7 @@
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="teams" onclick="Admin.switchSubTab('teams')">🤝 Teams Management</button>
                 <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
-                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector &amp; H2 Console</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector &amp; Supabase</button>
                 <button id="admin-subtab-subadmins" class="btn btn-sm admin-subtab-btn" data-subtab="subadmins" onclick="Admin.switchSubTab('subadmins')" style="display:none; background:#7c3aed; color:#fff; border-color:#7c3aed;">🛡️ Sub-Admin Management</button>
             </div>
 
@@ -448,19 +448,19 @@
             <div id="admin-sec-database" style="margin-bottom: 30px; display:none;">
                 <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
                     <div>
-                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🗄️ Live Database Inspector & H2 Web Console</h3>
-                        <span style="font-size: 0.78rem; color: var(--text-muted);">Inspect live tables, database records, and connect to H2 Web Console</span>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🗄️ Live Database Inspector (Supabase PostgreSQL)</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Inspect live PostgreSQL tables, database records, and connect to Supabase Cloud</span>
                     </div>
-                    <a href="/h2-console" target="_blank" class="btn btn-primary btn-sm">🖥️ Open H2 Web Console (/h2-console)</a>
+                    <a href="https://supabase.com/dashboard" target="_blank" class="btn btn-primary btn-sm">⚡ Open Supabase Dashboard</a>
                 </div>
 
-                <div class="card" style="padding: 16px; margin-bottom: 16px; background: rgba(14, 165, 233, 0.06); border: 1px solid rgba(14, 165, 233, 0.2); border-radius: 10px;">
-                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">💡 How to connect via H2 Web Console:</h4>
+                <div class="card" style="padding: 16px; margin-bottom: 16px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">⚡ Connected to Supabase Cloud PostgreSQL:</h4>
                     <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; line-height: 1.6; margin:0;">
-                        <li><strong>H2 Console URL</strong>: <a href="/h2-console" target="_blank" style="color:var(--accent-maroon); font-weight:600;">/h2-console</a></li>
-                        <li><strong>JDBC URL</strong>: <code>jdbc:h2:file:./data/hackhubdb</code> (or default memory URL)</li>
-                        <li><strong>User Name</strong>: <code>sa</code></li>
-                        <li><strong>Password</strong>: <em>(leave empty)</em></li>
+                        <li><strong>Database Engine</strong>: PostgreSQL 15+ (Hosted on Supabase Cloud)</li>
+                        <li><strong>ORM</strong>: Spring Data JPA / Hibernate (PostgreSQL Dialect)</li>
+                        <li><strong>Connection Pool</strong>: HikariCP with cloud keep-alive &amp; SSL (5 connections)</li>
+                        <li><strong>Live Inspector</strong>: Click the buttons below to inspect live user, event, and report records directly from the database.</li>
                     </ul>
                 </div>
 

@@ -47,8 +47,6 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-        http.headers(headers -> headers.frameOptions(frame -> frame.disable()));
-
         http.csrf(AbstractHttpConfigurer::disable)
             .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
             .authorizeHttpRequests(auth -> 
@@ -65,7 +63,6 @@ public class SecurityConfig {
                         "/google*.html",
                         "/robots.txt",
                         "/sitemap.xml",
-                        "/h2-console/**",
                         "/api/auth/**",
                         "/api/health"
                     ).permitAll()

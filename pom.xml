@@ -60,18 +60,21 @@
             <scope>runtime</scope>
         </dependency>
 
-        <!-- PostgreSQL Driver for Aiven / Cloud Postgres -->
+        <!-- PostgreSQL JDBC Driver for Supabase / Cloud Postgres -->
         <dependency>
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <scope>runtime</scope>
         </dependency>
 
-        <!-- H2 Database for fallback / testing -->
+        <!-- Flyway Database Migrations for PostgreSQL -->
         <dependency>
-            <groupId>com.h2database</groupId>
-            <artifactId>h2</artifactId>
-            <scope>runtime</scope>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+        </dependency>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-database-postgresql</artifactId>
         </dependency>
 
         <!-- JJWT for JWT Authentication -->
