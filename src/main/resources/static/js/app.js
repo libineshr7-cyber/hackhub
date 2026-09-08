@@ -188,6 +188,9 @@ const App = {
       case 'home':
         Events.loadHomeDashboard();
         break;
+      case 'all-events':
+        Events.loadAllEvents();
+        break;
       case 'latest':
         Events.loadLatestEvents();
         break;

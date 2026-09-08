@@ -111,13 +111,10 @@ public class EventService {
 
     public List<EventDto> getEndedEvents(User user) {
         java.util.Set<Long> savedIds = (user != null) ? savedEventRepository.findSavedEventIdsByUser(user) : java.util.Collections.emptySet();
-        LocalDate sevenDaysAgo = LocalDate.now().minusDays(7);
         List<Event> events = eventRepository.findAll();
         return events.stream()
                 .map(e -> mapToDtoWithSavedSet(e, user, savedIds))
                 .filter(dto -> "ENDED".equals(dto.getStatus()))
-                // Only show hackathons that ended within the last 7 days; older ones are removed
-                .filter(dto -> dto.getEndDate() != null && !dto.getEndDate().isBefore(sevenDaysAgo))
                 .sorted((a, b) -> {
                     if (b.getEndDate() == null) return 1;
                     if (a.getEndDate() == null) return -1;
@@ -253,12 +250,15 @@ public class EventService {
             dto.setCreatedByName(event.getCreatedBy().getName());
         }
 
-        // Calculate dynamic status based on date (Ended if end date or registration deadline has passed)
+        // Dynamic status based on date:
+        // An event is ENDED only when the actual event end date has passed!
         boolean isEndedByEndDate = event.getEndDate() != null && today.isAfter(event.getEndDate());
-        boolean isEndedByDeadline = event.getRegistrationDeadline() != null && today.isAfter(event.getRegistrationDeadline());
+        boolean isRegClosed = event.getRegistrationDeadline() != null && today.isAfter(event.getRegistrationDeadline());
 
-        if (isEndedByEndDate || isEndedByDeadline) {
+        if (isEndedByEndDate) {
             dto.setStatus("ENDED");
+        } else if (isRegClosed) {
+            dto.setStatus("REG_CLOSED");
         } else if (event.getRegistrationDeadline() != null && ChronoUnit.DAYS.between(today, event.getRegistrationDeadline()) <= 5) {
             dto.setStatus("DEADLINE_SOON");
         } else {

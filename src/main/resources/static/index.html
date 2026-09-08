@@ -66,6 +66,7 @@
             <!-- Desktop Nav Links -->
             <ul class="nav-links">
                 <li class="nav-item active" data-view="home">Home</li>
+                <li class="nav-item" data-view="all-events">🌐 All Events</li>
                 <li class="nav-item" data-view="latest">✨ Latest</li>
                 <li class="nav-item" data-view="upcoming">Upcoming</li>
                 <li class="nav-item nav-item-deadline" data-view="deadline-soon">⏰ Deadline Soon</li>
@@ -98,6 +99,7 @@
         <!-- Mobile View Navigation Tab Pills Bar -->
         <div class="mobile-tab-bar">
             <button class="mobile-tab-pill active" data-view="home">🏠 Home</button>
+            <button class="mobile-tab-pill" data-view="all-events">🌐 All Events</button>
             <button class="mobile-tab-pill" data-view="latest">✨ Latest</button>
             <button class="mobile-tab-pill" data-view="upcoming">🔥 Upcoming</button>
             <button class="mobile-tab-pill" data-view="deadline-soon" style="color:var(--status-deadline);">⏰ Deadline Soon</button>
@@ -161,6 +163,17 @@
                 </div>
                 <div id="home-deadline-grid" class="events-grid"></div>
             </div>
+        </section>
+
+        <!-- 1B. ALL EVENTS VIEW (DISPLAYS ENTIRE LIVE CATALOG 24/7) -->
+        <section id="view-all-events" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">🌐 All Department &amp; National Hackathons</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Browse the entire live catalog of hackathons, CTFs, and coding competitions available 24/7.</p>
+                </div>
+            </div>
+            <div id="all-events-grid" class="events-grid"></div>
         </section>
 
         <!-- 2. UPCOMING VIEW -->

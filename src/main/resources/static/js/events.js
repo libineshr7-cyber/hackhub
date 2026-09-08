@@ -29,30 +29,33 @@ const Events = {
   },
 
   async loadHomeDashboard() {
-    this.showGridLoading('home-upcoming-grid', 'Loading department hackathons...');
+    this.showGridLoading('home-upcoming-grid', 'Loading all hackathons & CTFs...');
     this.showGridLoading('home-deadline-grid', 'Checking application deadlines...');
     try {
-      const [upcomingRes, deadlineRes] = await Promise.allSettled([
-        API.request('/events/upcoming'),
+      const [allRes, deadlineRes] = await Promise.allSettled([
+        API.request('/events'),
         API.request('/events/deadline-soon')
       ]);
 
-      const upcoming = upcomingRes.status === 'fulfilled' && Array.isArray(upcomingRes.value) ? upcomingRes.value : [];
+      const allEvents = allRes.status === 'fulfilled' && Array.isArray(allRes.value) ? allRes.value : [];
       const deadlineSoon = deadlineRes.status === 'fulfilled' && Array.isArray(deadlineRes.value) ? deadlineRes.value : [];
 
-      if (upcomingRes.status === 'rejected') {
-        console.warn('Upcoming events load issue:', upcomingRes.reason);
-      }
-      if (deadlineRes.status === 'rejected') {
-        console.warn('Deadline-soon events load issue:', deadlineRes.reason);
-      }
-
-      this.renderEventsGrid('home-upcoming-grid', upcoming);
+      this.renderEventsGrid('home-upcoming-grid', allEvents);
       this.renderEventsGrid('home-deadline-grid', deadlineSoon);
     } catch (err) {
       console.error('Failed to load dashboard:', err);
       this.renderEventsGrid('home-upcoming-grid', []);
       this.renderEventsGrid('home-deadline-grid', []);
+    }
+  },
+
+  async loadAllEvents() {
+    this.showGridLoading('all-events-grid', 'Loading all hackathons & CTFs...');
+    try {
+      const events = await API.request('/events');
+      this.renderEventsGrid('all-events-grid', events);
+    } catch (err) {
+      this.showGridError('all-events-grid', 'Events.loadAllEvents()');
     }
   },
 
@@ -134,6 +137,7 @@ const Events = {
       const events = await API.request(`/events/search?query=${encodeURIComponent(query)}&eventType=${eventType}&mode=${mode}&view=${encodeURIComponent(currentView)}`);
       let gridId = 'upcoming-grid';
       if (App.currentView === 'home') gridId = 'home-upcoming-grid';
+      else if (App.currentView === 'all-events') gridId = 'all-events-grid';
       else if (App.currentView === 'latest') gridId = 'latest-grid';
       else if (App.currentView === 'ended') gridId = 'ended-grid';
       else if (App.currentView === 'deadline-soon') gridId = 'deadline-soon-grid';
@@ -309,6 +313,9 @@ const Events = {
     if (event.status === 'ENDED') {
       statusBadgeClass = 'badge-ended';
       statusText = 'ENDED';
+    } else if (event.status === 'REG_CLOSED') {
+      statusBadgeClass = 'badge-ended';
+      statusText = 'REG CLOSED';
     } else if (event.status === 'DEADLINE_SOON') {
       statusBadgeClass = 'badge-deadline';
       statusText = `⏰ DEADLINE: ${event.daysToDeadline} DAYS`;

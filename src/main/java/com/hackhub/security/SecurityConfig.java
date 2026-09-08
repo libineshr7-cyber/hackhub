@@ -67,7 +67,7 @@ public class SecurityConfig {
                         "/api/auth/**",
                         "/api/health"
                     ).permitAll()
-                    .requestMatchers(HttpMethod.GET, "/api/events/**").permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/events", "/api/events/**").permitAll()
                     .requestMatchers("/api/admin/**").hasAnyAuthority("ROLE_ADMIN", "ROLE_SUBADMIN")
                     .requestMatchers("/api/**").authenticated()
                     .anyRequest().permitAll()
