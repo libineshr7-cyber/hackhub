@@ -145,87 +145,154 @@ public class DataInitializer implements CommandLineRunner {
             logger.info("✅ Database already has {} student accounts. Preserving all existing credentials, emails, and skills forever.", existingStudentCount);
         }
 
-        // 3. Ensure active department hackathons and events always exist
-        LocalDate today = LocalDate.now();
-        List<Event> allEvents = eventRepository.findAll();
-        long activeUpcomingCount = allEvents.stream()
-                .filter(e -> e.getEndDate() != null && !today.isAfter(e.getEndDate()))
-                .filter(e -> e.getRegistrationDeadline() == null || !today.isAfter(e.getRegistrationDeadline()))
-                .count();
-
-        if (activeUpcomingCount < 2) {
-            logger.info("⚡ Zero/low active upcoming hackathons detected. Refreshing sample department hackathons with fresh future dates...");
-            User creator = userRepository.findByRegistrationNumber("Admin").orElse(null);
-            if (creator == null) {
-                creator = userRepository.findAll().stream().findFirst().orElse(null);
-            }
-
-            // 1. National Cyber Security Hackathon (Upcoming — 10 days away)
-            Event e1 = allEvents.stream()
-                    .filter(e -> e.getTitle() != null && e.getTitle().contains("National Cyber Security"))
-                    .findFirst()
-                    .orElse(new Event());
-            e1.setTitle("National Cyber Security Hackathon 2026");
-            e1.setDescription("Build next-generation threat detection algorithms, CTF defense tools, and zero-trust security prototypes in a 48-hour intensive department hackathon!");
-            e1.setEventType("HACKATHON");
-            e1.setTeamSizeMin(2);
-            e1.setTeamSizeMax(4);
-            e1.setStartDate(today.plusDays(10));
-            e1.setEndDate(today.plusDays(12));
-            e1.setRegistrationDeadline(today.plusDays(7));
-            e1.setMode("HYBRID");
-            e1.setVenue("Auditorium B & Discord Server");
-            e1.setRegistrationLink("https://cyberhack2026.dept.edu/register");
-            e1.setSkills("Python, Cybersecurity, Networking, CTF");
-            e1.setPosterPath("https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80");
-            if (e1.getCreatedBy() == null) e1.setCreatedBy(creator);
-            eventRepository.save(e1);
-
-            // 2. AI & Machine Learning Challenge (Deadline Soon — 2 days away)
-            Event e2 = allEvents.stream()
-                    .filter(e -> e.getTitle() != null && e.getTitle().contains("AI & Machine Learning"))
-                    .findFirst()
-                    .orElse(new Event());
-            e2.setTitle("AI & Machine Learning Innovation Challenge");
-            e2.setDescription("Solve real-world healthcare and automated security classification challenges using PyTorch, TensorFlow, and LLM fine-tuning.");
-            e2.setEventType("COMPETITION");
-            e2.setTeamSizeMin(1);
-            e2.setTeamSizeMax(3);
-            e2.setStartDate(today.plusDays(4));
-            e2.setEndDate(today.plusDays(5));
-            e2.setRegistrationDeadline(today.plusDays(2)); // Deadline Soon (2 days left)
-            e2.setMode("ONLINE");
-            e2.setVenue("Online Virtual Lab");
-            e2.setRegistrationLink("https://ai-challenge.dept.edu");
-            e2.setSkills("AI/ML, Python, Database, PyTorch");
-            e2.setPosterPath("https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80");
-            if (e2.getCreatedBy() == null) e2.setCreatedBy(creator);
-            eventRepository.save(e2);
-
-            // 3. Smart India Department HackSprint 2026 (Upcoming — 20 days away)
-            Event e3 = allEvents.stream()
-                    .filter(e -> e.getTitle() != null && e.getTitle().contains("Smart India Department"))
-                    .findFirst()
-                    .orElse(new Event());
-            e3.setTitle("Smart India Department HackSprint 2026");
-            e3.setDescription("Department-wide software and hardware innovation sprint. Build solutions for smart campus, cybersecurity, and student welfare.");
-            e3.setEventType("HACKATHON");
-            e3.setTeamSizeMin(2);
-            e3.setTeamSizeMax(4);
-            e3.setStartDate(today.plusDays(20));
-            e3.setEndDate(today.plusDays(22));
-            e3.setRegistrationDeadline(today.plusDays(15));
-            e3.setMode("OFFLINE");
-            e3.setVenue("CS Lab 1 & Main Hall");
-            e3.setRegistrationLink("https://hacksprint2026.dept.edu");
-            e3.setSkills("Java, React, Cloud, IoT");
-            e3.setPosterPath("https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80");
-            if (e3.getCreatedBy() == null) e3.setCreatedBy(creator);
-            eventRepository.save(e3);
-
-            logger.info("✅ Ensured active department hackathons are ready (including upcoming and closing soon).");
+        // 3. Clean up legacy dummy department events if present
+        List<String> dummyLinks = Arrays.asList(
+                "https://cyberhack2026.dept.edu/register",
+                "https://ai-challenge.dept.edu",
+                "https://hacksprint2026.dept.edu"
+        );
+        for (String dummyLink : dummyLinks) {
+            try {
+                eventRepository.findByRegistrationLink(dummyLink).ifPresent(eventRepository::delete);
+            } catch (Exception ignored) {}
         }
 
+        // 4. Ensure real, authentic national and global hackathons always exist
+        LocalDate today = LocalDate.now();
+        User creator = userRepository.findByRegistrationNumber("Admin").orElse(null);
+        if (creator == null) {
+            creator = userRepository.findAll().stream().findFirst().orElse(null);
+        }
+
+        seedOrUpdateRealEvent(
+                "Smart India Hackathon (SIH) 2026",
+                "World's largest open innovation model by Ministry of Education & AICTE. Compete across 36-hour non-stop problem-solving for Central Ministries, State Governments, and PSUs. Software and Hardware editions.",
+                "HACKATHON",
+                6, 6,
+                today.plusDays(25), today.plusDays(27), today.plusDays(18),
+                "HYBRID",
+                "National Nodal Centers & sih.gov.in",
+                "https://sih.gov.in",
+                "Python, AI/ML, Full Stack, IoT, Mobile Apps, System Design",
+                "https://images.unsplash.com/photo-1531482615713-2afd69097998?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        seedOrUpdateRealEvent(
+                "Google Solution Challenge 2026",
+                "Global annual hackathon by Google for Developers. Build solutions addressing one or more of the 17 United Nations Sustainable Development Goals using Flutter, Firebase, TensorFlow, and Google Cloud.",
+                "HACKATHON",
+                1, 4,
+                today.plusDays(15), today.plusDays(17), today.plusDays(10),
+                "ONLINE",
+                "Google for Developers Community",
+                "https://developers.google.com/community/gdsc-solution-challenge",
+                "Flutter, Firebase, Google Cloud, AI/ML, React, Android",
+                "https://images.unsplash.com/photo-1522071820081-009f0129c71c?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        seedOrUpdateRealEvent(
+                "Flipkart GRiD 6.0 — Software Development Challenge",
+                "Flipkart's premier campus hackathon for engineering students across India. Solve real-world e-commerce challenges across GenAI, High-Throughput Systems, Distributed Architecture, and Robotics.",
+                "HACKATHON",
+                2, 3,
+                today.plusDays(8), today.plusDays(10), today.plusDays(3),
+                "ONLINE",
+                "Unstop & Flipkart HQ",
+                "https://unstop.com/hackathons/flipkart-grid-60-software-development-track-flipkart-984478",
+                "Java, Python, Algorithms, Distributed Systems, Cloud",
+                "https://images.unsplash.com/photo-1550751827-4bd374c3f58b?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        seedOrUpdateRealEvent(
+                "Microsoft Imagine Cup 2026",
+                "The premier global student technology competition. Build game-changing solutions using Microsoft Azure, GitHub, and OpenAI with mentorship from Microsoft leaders and $100,000 in grand prizes.",
+                "COMPETITION",
+                1, 4,
+                today.plusDays(30), today.plusDays(32), today.plusDays(22),
+                "ONLINE",
+                "Microsoft Virtual Campus",
+                "https://imaginecup.microsoft.com",
+                "Azure, OpenAI, Python, Full Stack, UI/UX, Cloud",
+                "https://images.unsplash.com/photo-1517245386807-bb43f82c33c4?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        seedOrUpdateRealEvent(
+                "Kavach 2026 — National Cyber Security Hackathon",
+                "National cyber security initiative by AICTE, MoE's Innovation Cell, and Bureau of Police Research & Development (BPR&D) to identify cyber defense prototypes, dark web scrapers, and zero-trust systems.",
+                "HACKATHON",
+                3, 6,
+                today.plusDays(12), today.plusDays(14), today.plusDays(6),
+                "HYBRID",
+                "AICTE Headquarters & BPR&D Centers",
+                "https://kavach.mic.gov.in",
+                "Cybersecurity, Threat Hunting, Python, CTF, Networking, Cryptography",
+                "https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        seedOrUpdateRealEvent(
+                "Tata Imagination Challenge 2026",
+                "One of India's largest campus ideation and leadership competitions by Tata Sons. Present innovative ideas for real-world enterprise disruption, green tech, and societal transformation directly to Tata leaders.",
+                "COMPETITION",
+                1, 3,
+                today.plusDays(5), today.plusDays(6), today.plusDays(2),
+                "ONLINE",
+                "Tata Sons & Unstop",
+                "https://unstop.com/competitions/tata-imagination-challenge-2026",
+                "Ideation, Product Design, Presentation, Innovation",
+                "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=800&q=80",
+                creator
+        );
+
+        logger.info("✅ Ensured real national and global hackathons (SIH 2026, Google, Flipkart, Microsoft, Kavach, Tata) are active.");
         logger.info("==================================================");
+    }
+
+    private void seedOrUpdateRealEvent(
+            String title,
+            String description,
+            String eventType,
+            int minTeam,
+            int maxTeam,
+            LocalDate startDate,
+            LocalDate endDate,
+            LocalDate deadline,
+            String mode,
+            String venue,
+            String registrationLink,
+            String skills,
+            String posterPath,
+            User creator) {
+        try {
+            Event event = eventRepository.findByRegistrationLink(registrationLink)
+                    .orElseGet(() -> eventRepository.findAll().stream()
+                            .filter(e -> e.getTitle() != null && e.getTitle().equalsIgnoreCase(title))
+                            .findFirst()
+                            .orElse(new Event()));
+
+            event.setTitle(title);
+            event.setDescription(description);
+            event.setEventType(eventType);
+            event.setTeamSizeMin(minTeam);
+            event.setTeamSizeMax(maxTeam);
+            event.setStartDate(startDate);
+            event.setEndDate(endDate);
+            event.setRegistrationDeadline(deadline);
+            event.setMode(mode);
+            event.setVenue(venue);
+            event.setRegistrationLink(registrationLink);
+            event.setSkills(skills);
+            event.setPosterPath(posterPath);
+            if (event.getCreatedBy() == null) {
+                event.setCreatedBy(creator);
+            }
+            eventRepository.save(event);
+        } catch (Exception e) {
+            logger.warn("⚠️ Could not seed/update event {}: {}", title, e.getMessage());
+        }
     }
 }
