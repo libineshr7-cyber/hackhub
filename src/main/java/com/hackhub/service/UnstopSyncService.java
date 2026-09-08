@@ -39,14 +39,14 @@ public class UnstopSyncService {
     private ObjectMapper objectMapper;
 
     /**
-     * Run periodically every 6 hours (initialDelay = 60s after startup to keep server boot instant)
+     * Run periodically every 6 hours (initialDelay = 15s after startup to keep server boot instant)
      */
-    @Scheduled(initialDelay = 60000, fixedRate = 21600000)
+    @Scheduled(initialDelay = 15000, fixedRate = 21600000)
     public void scheduledUnstopSync() {
-        logger.info("🔄 Running scheduled Unstop Live Hackathons sync...");
+        logger.info("🔄 Running scheduled Unstop Live Hackathons & Competitions sync...");
         try {
             int syncedCount = fetchAndSyncUnstopHackathons();
-            logger.info("✅ Unstop Sync completed. Total active synced hackathons: {}", syncedCount);
+            logger.info("✅ Unstop Sync completed. Total active synced hackathons & competitions: {}", syncedCount);
         } catch (Exception e) {
             logger.warn("⚠️ Unstop sync encountered an issue (non-fatal): {}", e.getMessage());
         }
@@ -70,32 +70,36 @@ public class UnstopSyncService {
         HttpEntity<String> entity = new HttpEntity<>(headers);
 
         int totalSyncedCount = 0;
-        int maxPages = 5; // Fetch up to 5 pages x 50 hackathons = up to 250 hackathons
+        // Sync both Hackathons and Competitions (including CTFs and coding challenges)
+        String[] categories = new String[]{"hackathons", "competitions"};
+        int maxPagesPerCategory = 8; // 8 pages x 50 = 400 per category, up to 800 opportunities total
 
-        for (int page = 1; page <= maxPages; page++) {
-            String pageUrl = "https://unstop.com/api/public/opportunity/search-result?opportunity=hackathons&per_page=50&page=" + page;
-            try {
-                ResponseEntity<String> response = restTemplate.exchange(pageUrl, HttpMethod.GET, entity, String.class);
-                if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
-                    JsonNode root = objectMapper.readTree(response.getBody());
-                    JsonNode items = root.path("data").path("data");
+        for (String category : categories) {
+            for (int page = 1; page <= maxPagesPerCategory; page++) {
+                String pageUrl = "https://unstop.com/api/public/opportunity/search-result?opportunity=" + category + "&per_page=50&page=" + page;
+                try {
+                    ResponseEntity<String> response = restTemplate.exchange(pageUrl, HttpMethod.GET, entity, String.class);
+                    if (response.getStatusCode().is2xxSuccessful() && response.getBody() != null) {
+                        JsonNode root = objectMapper.readTree(response.getBody());
+                        JsonNode items = root.path("data").path("data");
 
-                    if (items.isArray() && items.size() > 0) {
-                        for (JsonNode item : items) {
-                            try {
-                                boolean synced = processUnstopItem(item, admin);
-                                if (synced) totalSyncedCount++;
-                            } catch (Exception itemErr) {
-                                logger.debug("Could not parse single Unstop item: {}", itemErr.getMessage());
+                        if (items.isArray() && items.size() > 0) {
+                            for (JsonNode item : items) {
+                                try {
+                                    boolean synced = processUnstopItem(item, admin);
+                                    if (synced) totalSyncedCount++;
+                                } catch (Exception itemErr) {
+                                    logger.debug("Could not parse single Unstop item: {}", itemErr.getMessage());
+                                }
                             }
+                        } else {
+                            break;
                         }
-                    } else {
-                        break;
                     }
+                } catch (Exception e) {
+                    logger.warn("Could not fetch Unstop {} page {}: {}", category, page, e.getMessage());
+                    break;
                 }
-            } catch (Exception e) {
-                logger.warn("Could not fetch Unstop hackathons page {}: {}", page, e.getMessage());
-                break;
             }
         }
 
@@ -167,8 +171,8 @@ public class UnstopSyncService {
             return false;
         }
 
-        // Do not import hackathons whose dates have already passed
-        if (endDate.isBefore(today) || deadlineDate.isBefore(today)) {
+        // Do not import hackathons whose actual end date has already passed
+        if (endDate.isBefore(today)) {
             return false;
         }
 
