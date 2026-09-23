@@ -1,45 +1,47 @@
-﻿const { Pool } = require('pg');
+const { Pool } = require('pg');
 require('dotenv').config();
 
 function buildPoolConfig() {
-  let connectionString = process.env.DATABASE_URL || process.env.DB_URL;
+  let rawUrl = process.env.DATABASE_URL || process.env.DB_URL;
+  let host = process.env.DB_HOST || 'localhost';
+  let port = parseInt(process.env.DB_PORT || '5432', 10);
+  let database = process.env.DB_NAME || 'postgres';
+  let user = process.env.DB_USERNAME || 'postgres';
+  let password = process.env.DB_PASSWORD || '';
 
-  if (connectionString) {
-    if (connectionString.startsWith('jdbc:')) {
-      connectionString = connectionString.substring(5);
+  if (rawUrl) {
+    if (rawUrl.startsWith('jdbc:')) {
+      rawUrl = rawUrl.substring(5);
     }
-
-    // If username and password are provided separately from DB_URL
     try {
-      const url = new URL(connectionString);
-      if (process.env.DB_USERNAME && !url.username) {
-        url.username = process.env.DB_USERNAME;
+      const parsed = new URL(rawUrl);
+      if (parsed.hostname) host = parsed.hostname;
+      if (parsed.port) port = parseInt(parsed.port, 10);
+      if (parsed.pathname && parsed.pathname.length > 1) {
+        database = parsed.pathname.substring(1);
       }
-      if (process.env.DB_PASSWORD && !url.password) {
-        url.password = process.env.DB_PASSWORD;
+      if (parsed.username && !process.env.DB_USERNAME) {
+        user = decodeURIComponent(parsed.username);
       }
-      connectionString = url.toString();
+      if (parsed.password && !process.env.DB_PASSWORD) {
+        password = decodeURIComponent(parsed.password);
+      }
     } catch (e) {
-      // Keep as-is if parsing fails
+      console.warn('URL parsing fallback:', e.message);
     }
-
-    return {
-      connectionString,
-      ssl: { rejectUnauthorized: false },
-      max: 5,
-      idleTimeoutMillis: 30000,
-      connectionTimeoutMillis: 10000
-    };
   }
 
-  // Fallback to individual connection parameters
+  // Environment variables take precedence if explicitly provided
+  if (process.env.DB_USERNAME) user = process.env.DB_USERNAME;
+  if (process.env.DB_PASSWORD) password = process.env.DB_PASSWORD;
+
   return {
-    host: process.env.DB_HOST || 'localhost',
-    port: parseInt(process.env.DB_PORT || '5432', 10),
-    database: process.env.DB_NAME || 'postgres',
-    user: process.env.DB_USERNAME || 'postgres',
-    password: process.env.DB_PASSWORD || '',
-    ssl: process.env.DB_SSL === 'false' ? false : { rejectUnauthorized: false },
+    host,
+    port,
+    database,
+    user,
+    password,
+    ssl: { rejectUnauthorized: false },
     max: 5,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 10000

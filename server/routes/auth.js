@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
@@ -70,7 +70,8 @@ router.post('/login', async (req, res) => {
     });
   } catch (err) {
     console.error('Login error:', err);
-    res.status(500).json({ success: false, message: 'An unexpected error occurred during login.' });
+    const detail = err.message ? `Login failed: ${err.message}` : 'An unexpected error occurred during login.';
+    res.status(500).json({ success: false, message: detail });
   }
 });
 
