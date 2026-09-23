@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const router = express.Router();
 const multer = require('multer');
 const path = require('path');
@@ -6,6 +6,7 @@ const fs = require('fs');
 const db = require('../db');
 const { optionalAuth, requireAuth } = require('../middleware/auth');
 const { logActivity } = require('../services/logger');
+const { syncUnstopEvents } = require('../services/unstop');
 
 // Setup file upload storage for local environment
 const uploadDir = path.join(__dirname, '../../uploads/posters');
@@ -51,12 +52,15 @@ function mapToDto(row, savedIds = new Set()) {
     daysToDeadline = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
   }
 
-  const isEnded = end && today > end;
+  const isEndedByEndDate = end && today > end;
   const isRegClosed = deadline && today > deadline;
+  const daysPastDeadline = deadline ? Math.floor((today.getTime() - deadline.getTime()) / (1000 * 60 * 60 * 24)) : 0;
 
-  if (isEnded) {
+  // Rule: Event is ENDED if actual end date passed OR registration deadline passed more than 3 days ago.
+  // Stays as REG_CLOSED for up to 3 days after registration finished.
+  if (isEndedByEndDate || (isRegClosed && daysPastDeadline > 3)) {
     status = 'ENDED';
-  } else if (isRegClosed) {
+  } else if (isRegClosed && daysPastDeadline <= 3) {
     status = 'REG_CLOSED';
   } else if (daysToDeadline <= 5 && daysToDeadline >= 0) {
     status = 'DEADLINE_SOON';
@@ -102,12 +106,45 @@ const BASE_QUERY = `
   LEFT JOIN users u ON e.created_by = u.id
 `;
 
-// GET /api/events & /api/events/all
+// Filter active events: Not ended by end date AND registration not passed by more than 3 days
+const ACTIVE_FILTER = `
+  WHERE e.end_date >= CURRENT_DATE 
+    AND (e.registration_deadline IS NULL OR e.registration_deadline >= CURRENT_DATE - INTERVAL '3 days')
+`;
+
+// Filter ended events: End date passed OR registration passed more than 3 days ago
+const ENDED_FILTER = `
+  WHERE e.end_date < CURRENT_DATE 
+     OR (e.registration_deadline IS NOT NULL AND e.registration_deadline < CURRENT_DATE - INTERVAL '3 days')
+`;
+
+// Flag to prevent concurrent auto-syncs
+let isSyncing = false;
+
+async function checkAndAutoSyncEvents() {
+  if (isSyncing) return;
+  try {
+    const countRes = await db.query(`SELECT COUNT(*) FROM events ${ACTIVE_FILTER}`);
+    const activeCount = parseInt(countRes.rows[0].count, 10);
+    if (activeCount < 5) {
+      isSyncing = true;
+      syncUnstopEvents().catch(console.error).finally(() => { isSyncing = false; });
+    }
+  } catch (e) {
+    isSyncing = false;
+  }
+}
+
+// GET /api/events & /api/events/all & /api/events/calendar (All active current & future events)
 router.get(['/', '/all', '/calendar'], optionalAuth, async (req, res) => {
   try {
     const savedIds = await getSavedEventIds(req.user?.id);
-    const result = await db.query(`${BASE_QUERY} ORDER BY e.start_date ASC, e.id DESC`);
+    const result = await db.query(`${BASE_QUERY} ${ACTIVE_FILTER} ORDER BY e.start_date ASC, e.id DESC`);
     const dtos = result.rows.map(r => mapToDto(r, savedIds));
+
+    // Trigger background sync if events count is low
+    checkAndAutoSyncEvents();
+
     res.json(dtos);
   } catch (err) {
     console.error('Error fetching events:', err);
@@ -115,12 +152,15 @@ router.get(['/', '/all', '/calendar'], optionalAuth, async (req, res) => {
   }
 });
 
-// GET /api/events/upcoming
+// GET /api/events/upcoming (Future events where registration is open)
 router.get('/upcoming', optionalAuth, async (req, res) => {
   try {
     const savedIds = await getSavedEventIds(req.user?.id);
     const result = await db.query(
-      `${BASE_QUERY} WHERE e.end_date >= CURRENT_DATE ORDER BY e.start_date ASC, e.id DESC`
+      `${BASE_QUERY} 
+       WHERE e.end_date >= CURRENT_DATE 
+         AND (e.registration_deadline IS NULL OR e.registration_deadline >= CURRENT_DATE)
+       ORDER BY e.start_date ASC, e.id DESC`
     );
     const dtos = result.rows.map(r => mapToDto(r, savedIds));
     res.json(dtos);
@@ -129,12 +169,12 @@ router.get('/upcoming', optionalAuth, async (req, res) => {
   }
 });
 
-// GET /api/events/ended
+// GET /api/events/ended (Only events that ended or whose registration passed > 3 days ago)
 router.get('/ended', optionalAuth, async (req, res) => {
   try {
     const savedIds = await getSavedEventIds(req.user?.id);
     const result = await db.query(
-      `${BASE_QUERY} WHERE e.end_date < CURRENT_DATE ORDER BY e.end_date DESC, e.id DESC`
+      `${BASE_QUERY} ${ENDED_FILTER} ORDER BY e.end_date DESC, e.id DESC`
     );
     const dtos = result.rows.map(r => mapToDto(r, savedIds));
     res.json(dtos);
@@ -143,7 +183,7 @@ router.get('/ended', optionalAuth, async (req, res) => {
   }
 });
 
-// GET /api/events/deadline-soon
+// GET /api/events/deadline-soon (Registration deadline closing within 7 days)
 router.get('/deadline-soon', optionalAuth, async (req, res) => {
   try {
     const savedIds = await getSavedEventIds(req.user?.id);
@@ -161,12 +201,12 @@ router.get('/deadline-soon', optionalAuth, async (req, res) => {
   }
 });
 
-// GET /api/events/latest
+// GET /api/events/latest (Latest active events uploaded)
 router.get('/latest', optionalAuth, async (req, res) => {
   try {
     const savedIds = await getSavedEventIds(req.user?.id);
     const result = await db.query(
-      `${BASE_QUERY} ORDER BY e.created_at DESC, e.id DESC LIMIT 10`
+      `${BASE_QUERY} ${ACTIVE_FILTER} ORDER BY e.created_at DESC, e.id DESC LIMIT 10`
     );
     const dtos = result.rows.map(r => mapToDto(r, savedIds));
     res.json(dtos);
@@ -181,11 +221,11 @@ router.get('/search', optionalAuth, async (req, res) => {
     const { query = '', eventType = 'ALL', mode = 'ALL', view = 'all' } = req.query;
     const savedIds = await getSavedEventIds(req.user?.id);
 
-    let baseFilter = '';
+    let baseFilter = ACTIVE_FILTER;
     if (view === 'upcoming') {
-      baseFilter = 'WHERE e.end_date >= CURRENT_DATE';
+      baseFilter = "WHERE e.end_date >= CURRENT_DATE AND (e.registration_deadline IS NULL OR e.registration_deadline >= CURRENT_DATE)";
     } else if (view === 'ended') {
-      baseFilter = 'WHERE e.end_date < CURRENT_DATE';
+      baseFilter = ENDED_FILTER;
     } else if (view === 'deadline-soon') {
       baseFilter = "WHERE e.registration_deadline >= CURRENT_DATE AND e.registration_deadline <= CURRENT_DATE + INTERVAL '7 days' AND e.end_date >= CURRENT_DATE";
     }
@@ -358,14 +398,24 @@ router.post('/:id/report', requireAuth, async (req, res) => {
   }
 });
 
-// POST /api/events/sync-unstop (Mock/Manual sync)
+// POST /api/events/sync-unstop (Sync live hackathons from Unstop)
 router.post('/sync-unstop', async (req, res) => {
-  res.json({ success: true, message: 'Unstop sync endpoint ready.' });
+  try {
+    const count = await syncUnstopEvents();
+    res.json({ success: true, message: `Successfully synced ${count} live hackathons from Unstop!` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Unstop sync failed: ' + err.message });
+  }
 });
 
 // DELETE /api/events/clear-unstop
 router.delete('/clear-unstop', async (req, res) => {
-  res.json({ success: true, message: 'Cleared unstop events.' });
+  try {
+    const result = await db.query("DELETE FROM events WHERE venue LIKE '%(Unstop)%' OR skills LIKE '%Unstop%'");
+    res.json({ success: true, message: `Cleared ${result.rowCount} Unstop events from database.` });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Failed to clear Unstop events: ' + err.message });
+  }
 });
 
 module.exports = router;
