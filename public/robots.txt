@@ -2,4 +2,4 @@ User-agent: *
 Allow: /
 Disallow: /api/
 
-Sitemap: https://hackhub-h1uf.onrender.com/sitemap.xml
+Sitemap: https://hackhub.duckdns.org/sitemap.xml
