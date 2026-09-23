@@ -1,4 +1,4 @@
-﻿const express = require('express');
+const express = require('express');
 const cors = require('cors');
 const path = require('path');
 require('dotenv').config();
@@ -23,15 +23,20 @@ const teamsRoutes = require('./routes/teams');
 const notificationsRoutes = require('./routes/notifications');
 const adminRoutes = require('./routes/admin');
 
-// Mount routes on /api
-app.use('/api', healthRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
-app.use('/api/events', eventsRoutes);
-app.use('/api', savedEventsRoutes); // Handles /api/saved-events
-app.use('/api/teams', teamsRoutes);
-app.use('/api/notifications', notificationsRoutes);
-app.use('/api/admin', adminRoutes);
+// Mount routes for both /api and root paths (guarantees compatibility with Vercel rewrites)
+const mount = (prefix) => {
+  app.use(`${prefix}`, healthRoutes);
+  app.use(`${prefix}/auth`, authRoutes);
+  app.use(`${prefix}/user`, userRoutes);
+  app.use(`${prefix}/events`, eventsRoutes);
+  app.use(`${prefix}`, savedEventsRoutes);
+  app.use(`${prefix}/teams`, teamsRoutes);
+  app.use(`${prefix}/notifications`, notificationsRoutes);
+  app.use(`${prefix}/admin`, adminRoutes);
+};
+
+mount('/api');
+mount('');
 
 // Fallback 404 for unmatched /api routes
 app.all('/api/*', (req, res) => {
