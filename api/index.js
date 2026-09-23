@@ -14,14 +14,14 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));
 
 // Route Handlers
-const healthRoutes = require('./routes/health');
-const authRoutes = require('./routes/auth');
-const userRoutes = require('./routes/user');
-const eventsRoutes = require('./routes/events');
-const savedEventsRoutes = require('./routes/saved-events');
-const teamsRoutes = require('./routes/teams');
-const notificationsRoutes = require('./routes/notifications');
-const adminRoutes = require('./routes/admin');
+const healthRoutes = require('../server/routes/health');
+const authRoutes = require('../server/routes/auth');
+const userRoutes = require('../server/routes/user');
+const eventsRoutes = require('../server/routes/events');
+const savedEventsRoutes = require('../server/routes/saved-events');
+const teamsRoutes = require('../server/routes/teams');
+const notificationsRoutes = require('../server/routes/notifications');
+const adminRoutes = require('../server/routes/admin');
 
 // Mount routes for both /api and root paths (guarantees compatibility with Vercel rewrites)
 const mount = (prefix) => {
