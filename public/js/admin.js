@@ -1,0 +1,1086 @@
+/* ==========================================================================
+   HackHub — Admin Dashboard & Student Management Controller
+   ========================================================================== */
+
+const Admin = {
+  cachedEvents: [],
+  currentSubTab: 'all',
+  _autoRefreshTimer: null,
+  _isRefreshing: false,
+
+  startLiveAutoRefresh() {
+    this.stopLiveAutoRefresh();
+    // Live update every 4 seconds
+    this._autoRefreshTimer = setInterval(() => {
+      this.pollLiveData();
+    }, 4000);
+  },
+
+  stopLiveAutoRefresh() {
+    if (this._autoRefreshTimer) {
+      clearInterval(this._autoRefreshTimer);
+      this._autoRefreshTimer = null;
+    }
+  },
+
+  async pollLiveData() {
+    if (App.currentView !== 'admin' || document.hidden) return;
+    if (this._isRefreshing) return;
+    this._isRefreshing = true;
+
+    try {
+      // 1. Silently update dashboard stats with smooth pulse effect on change
+      const stats = await API.request('/admin/dashboard');
+      const updateStat = (id, val) => {
+        const el = document.getElementById(id);
+        if (el && el.textContent != val) {
+          el.textContent = val;
+          el.classList.remove('stat-updated-pulse');
+          void el.offsetWidth; // trigger reflow
+          el.classList.add('stat-updated-pulse');
+          setTimeout(() => el.classList.remove('stat-updated-pulse'), 800);
+        }
+      };
+
+      updateStat('stat-total-students', stats.totalStudents);
+      updateStat('stat-total-events', stats.totalEvents);
+      updateStat('stat-upcoming-events', stats.upcomingEvents);
+      updateStat('stat-ended-events', stats.endedEvents);
+      updateStat('stat-saved-events', stats.totalSavedEvents);
+      updateStat('stat-total-reports', stats.totalReports);
+      updateStat('stat-total-teams', stats.totalTeams || 0);
+      updateStat('stat-total-logs', stats.totalLogs || 0);
+
+      // Update sync time badge
+      const timeEl = document.getElementById('admin-last-sync-time');
+      if (timeEl) {
+        const now = new Date();
+        timeEl.textContent = `Synced: ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      }
+
+      // 2. Silently update active tab data
+      const activeTab = this.currentSubTab || 'all';
+
+      if (activeTab === 'activity-logs' || activeTab === 'all') {
+        await this.loadActivityLogs(true);
+      }
+
+      if (activeTab === 'teams' || activeTab === 'all') {
+        await this.loadTeams(true);
+      }
+
+      if (activeTab === 'students' || activeTab === 'all') {
+        const studentSearch = document.getElementById('admin-student-search');
+        if (!studentSearch || document.activeElement !== studentSearch) {
+          await this.loadStudents(undefined, true);
+        }
+      }
+
+      if (activeTab === 'subadmins' || activeTab === 'all') {
+        const user = API.getUser();
+        if (user && user.role === 'ROLE_ADMIN') {
+          await this.loadSubAdmins(true);
+        }
+      }
+
+      if (activeTab === 'posting-history' || activeTab === 'all') {
+        await this.loadPostingHistory(true);
+      }
+
+      if (activeTab === 'userlogs' || activeTab === 'all') {
+        await this.loadUserLogs(undefined, true);
+      }
+    } catch (e) {
+      // Quiet background polling
+    } finally {
+      this._isRefreshing = false;
+    }
+  },
+
+  async loadDashboard() {
+    try {
+      const stats = await API.request('/admin/dashboard');
+      document.getElementById('stat-total-students').textContent = stats.totalStudents;
+      document.getElementById('stat-total-events').textContent = stats.totalEvents;
+      document.getElementById('stat-upcoming-events').textContent = stats.upcomingEvents;
+      document.getElementById('stat-ended-events').textContent = stats.endedEvents;
+      document.getElementById('stat-saved-events').textContent = stats.totalSavedEvents;
+      document.getElementById('stat-total-reports').textContent = stats.totalReports;
+      const teamsStatEl = document.getElementById('stat-total-teams');
+      if (teamsStatEl) teamsStatEl.textContent = stats.totalTeams || 0;
+      const logsStatEl = document.getElementById('stat-total-logs');
+      if (logsStatEl) logsStatEl.textContent = stats.totalLogs || 0;
+
+      const timeEl = document.getElementById('admin-last-sync-time');
+      if (timeEl) {
+        timeEl.textContent = `Synced: ${new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`;
+      }
+
+      const user = API.getUser();
+      // Sub-admin management tab: only visible to ROLE_ADMIN
+      const subAdminTab = document.getElementById('admin-subtab-subadmins');
+      const subAdminSection = document.getElementById('admin-sec-subadmins');
+      const subAdminCreateBtn = document.getElementById('admin-create-subadmin-btn');
+      if (user && user.role === 'ROLE_ADMIN') {
+        if (subAdminTab) subAdminTab.style.display = 'inline-flex';
+        if (subAdminCreateBtn) subAdminCreateBtn.style.display = 'inline-flex';
+      } else {
+        if (subAdminTab) subAdminTab.style.display = 'none';
+        if (subAdminSection) subAdminSection.style.display = 'none';
+        if (subAdminCreateBtn) subAdminCreateBtn.style.display = 'none';
+      }
+
+      await this.loadPostingHistory();
+      await this.loadUserLogs();
+      await this.loadStudents();
+      await this.loadEvents();
+      await this.loadReports();
+      if (user && user.role === 'ROLE_ADMIN') {
+        await this.loadSubAdmins();
+      }
+
+      // Start continuous background live updates
+      this.startLiveAutoRefresh();
+    } catch (err) {
+      App.showToast('Failed to load Admin Dashboard', 'danger');
+    }
+  },
+
+  formatDateTime(dtStr) {
+    if (!dtStr) return '<span style="color:var(--text-muted);">N/A</span>';
+    try {
+      const d = new Date(dtStr);
+      if (isNaN(d.getTime())) return dtStr;
+      return d.toLocaleString('en-US', {
+        month: 'short',
+        day: 'numeric',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: true
+      });
+    } catch (e) {
+      return dtStr;
+    }
+  },
+
+  switchSubTab(tabName) {
+    this.currentSubTab = tabName;
+
+    document.querySelectorAll('.admin-subtab-btn').forEach(btn => {
+      if (btn.getAttribute('data-subtab') === tabName) {
+        btn.classList.add('active', 'btn-primary');
+        btn.classList.remove('btn-outline');
+        try {
+          btn.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+        } catch (e) {}
+      } else {
+        btn.classList.remove('active', 'btn-primary');
+        btn.classList.add('btn-outline');
+      }
+    });
+
+    const sections = {
+      'posting-history': document.getElementById('admin-sec-posting-history'),
+      'userlogs': document.getElementById('admin-sec-userlogs'),
+      'students': document.getElementById('admin-sec-students'),
+      'events': document.getElementById('admin-sec-events'),
+      'teams': document.getElementById('admin-sec-teams'),
+      'activity-logs': document.getElementById('admin-sec-activity-logs'),
+      'reports': document.getElementById('admin-sec-reports'),
+      'database': document.getElementById('admin-sec-database'),
+      'subadmins': document.getElementById('admin-sec-subadmins')
+    };
+
+    const user = API.getUser();
+    const isAdmin = user && user.role === 'ROLE_ADMIN';
+
+    // Hide logs, database, activity logs, and subadmin tabs for non-full admins
+    const dbTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="database"]');
+    const subadminTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="subadmins"]');
+    const logsTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="userlogs"]');
+    const historyTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="posting-history"]');
+    const actTabBtn = document.querySelector('.admin-subtab-btn[data-subtab="activity-logs"]');
+    if (dbTabBtn) dbTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (subadminTabBtn) subadminTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (logsTabBtn) logsTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (historyTabBtn) historyTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+    if (actTabBtn) actTabBtn.style.display = isAdmin ? 'inline-block' : 'none';
+
+    if (tabName === 'all') {
+      Object.keys(sections).forEach(key => {
+        if (!sections[key]) return;
+        if (key === 'database' || key === 'userlogs' || key === 'posting-history' || key === 'subadmins' || key === 'activity-logs') {
+          sections[key].style.display = isAdmin ? (key === 'database' || key === 'activity-logs' ? 'none' : 'block') : 'none';
+          return;
+        }
+        sections[key].style.display = 'block';
+      });
+    } else {
+      if (!isAdmin && (tabName === 'database' || tabName === 'userlogs' || tabName === 'posting-history' || tabName === 'subadmins' || tabName === 'activity-logs')) {
+        tabName = 'students';
+        this.currentSubTab = 'students';
+      }
+      Object.keys(sections).forEach(key => {
+        if (sections[key]) {
+          sections[key].style.display = (key === tabName) ? 'block' : 'none';
+        }
+      });
+      if (tabName === 'database' && isAdmin) {
+        this.loadDbTable('users');
+      }
+      if (tabName === 'teams') {
+        this.loadTeams();
+      }
+      if (tabName === 'activity-logs') {
+        this.loadActivityLogs();
+      }
+    }
+  },
+
+  async loadDbTable(tableName) {
+    const headersEl = document.getElementById('db-table-headers');
+    const rowsEl = document.getElementById('db-table-rows');
+    if (!headersEl || !rowsEl) return;
+
+    try {
+      rowsEl.innerHTML = '<tr><td colspan="10" style="text-align:center; padding:20px;">Loading database records...</td></tr>';
+      
+      let data = [];
+      if (tableName === 'users') {
+        data = await API.request('/admin/users/log');
+        headersEl.innerHTML = '<th>ID</th><th>Reg No</th><th>Name</th><th>Role</th><th>Dept</th><th>Status</th><th>First Login</th>';
+        rowsEl.innerHTML = data.map(u => `
+          <tr>
+            <td>#${u.id}</td>
+            <td><strong>${this.escapeHtml(u.registrationNumber)}</strong></td>
+            <td>${this.escapeHtml(u.name)}</td>
+            <td><code>${u.role}</code></td>
+            <td><span style="font-size:0.75rem; color:var(--accent-cyan);">${this.escapeHtml(u.department || 'CS')}</span></td>
+            <td><span class="badge ${u.status === 'ACTIVE' ? 'badge-upcoming' : 'badge-ended'}">${u.status}</span></td>
+            <td>${u.firstLogin ? 'YES' : 'NO'}</td>
+          </tr>`).join('');
+      } else if (tableName === 'events') {
+        data = await API.request('/admin/events');
+        headersEl.innerHTML = '<th>ID</th><th>Title</th><th>Type</th><th>Mode</th><th>Deadline</th><th>Status</th>';
+        rowsEl.innerHTML = data.map(e => `
+          <tr>
+            <td>#${e.id}</td>
+            <td><strong>${this.escapeHtml(e.title)}</strong></td>
+            <td>${e.eventType}</td>
+            <td>${e.mode}</td>
+            <td>${e.registrationDeadline}</td>
+            <td><span class="badge ${e.status === 'UPCOMING' ? 'badge-upcoming' : (e.status === 'ENDED' ? 'badge-ended' : 'badge-deadline')}">${e.status}</span></td>
+          </tr>`).join('');
+      } else if (tableName === 'reports') {
+        data = await API.request('/admin/reports');
+        headersEl.innerHTML = '<th>ID</th><th>Reported Event</th><th>Reporter Reg No</th><th>Reason</th><th>Status</th>';
+        rowsEl.innerHTML = data.map(r => `
+          <tr>
+            <td>#${r.id}</td>
+            <td><strong>${this.escapeHtml(r.eventTitle)}</strong></td>
+            <td>${this.escapeHtml(r.reporterRegNo)}</td>
+            <td>${this.escapeHtml(r.reason)}</td>
+            <td><span class="badge ${r.status === 'RESOLVED' ? 'badge-upcoming' : 'badge-deadline'}">${r.status}</span></td>
+          </tr>`).join('');
+      }
+    } catch (err) {
+      rowsEl.innerHTML = `<tr><td colspan="10" style="color:var(--status-danger); text-align:center; padding:20px;">Failed to load database table: ${err.message}</td></tr>`;
+    }
+  },
+
+  async loadPostingHistory(query = '') {
+    try {
+      const events = await API.request('/admin/events');
+      const tbody = document.getElementById('admin-history-tbody');
+      if (!tbody) return;
+
+      if (!events || events.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding:20px;">No hackathon posting logs available.</td></tr>`;
+        return;
+      }
+
+      let filtered = events;
+      if (query && query.trim()) {
+        const q = query.trim().toLowerCase();
+        filtered = events.filter(e =>
+          (e.title && e.title.toLowerCase().includes(q)) ||
+          (e.createdByRegNo && e.createdByRegNo.toLowerCase().includes(q)) ||
+          (e.createdByName && e.createdByName.toLowerCase().includes(q)) ||
+          (e.eventType && e.eventType.toLowerCase().includes(q))
+        );
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding:20px;">No matching posting logs found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = filtered.map(e => {
+        const posterReg = e.createdByRegNo || 'N/A';
+        const posterName = e.createdByName || 'Unknown';
+        const formattedDate = this.formatDateTime(e.createdAt);
+
+        return `
+          <tr>
+            <td><strong>#${e.id}</strong></td>
+            <td><strong>${this.escapeHtml(e.title)}</strong></td>
+            <td><span style="font-size:0.75rem; background: var(--accent-maroon-tint); color: var(--accent-maroon); font-weight:700; padding:3px 8px; border-radius:4px;">${this.escapeHtml(e.eventType || 'HACKATHON')}</span></td>
+            <td>
+              <div style="display:flex; flex-direction:column;">
+                <span style="font-weight:700; color:var(--accent-cyan); font-size:0.82rem;">🆔 ${this.escapeHtml(posterReg)}</span>
+                <span style="font-size:0.78rem; color:var(--text-main);">${this.escapeHtml(posterName)}</span>
+              </div>
+            </td>
+            <td><span style="font-size:0.8rem; font-weight:600; color:var(--accent-maroon);">🕒 ${formattedDate}</span></td>
+            <td><span style="font-size:0.78rem;">${e.startDate} to ${e.endDate}</span></td>
+            <td><span style="font-size:0.78rem;">${e.mode}</span></td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                <button class="btn btn-primary btn-sm" onclick="Admin.openEditEventModal(${e.id})">✏️ Edit</button>
+                <button class="btn btn-danger btn-sm" onclick="Admin.deleteEvent(${e.id}, '${this.escapeHtml(e.title)}')">🗑️ Delete</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load posting history:', err);
+    }
+  },
+
+  handleSearchPostingHistory() {
+    const q = document.getElementById('admin-history-search-input').value;
+    this.loadPostingHistory(q);
+  },
+
+  async loadUserLogs(query = '') {
+    try {
+      const users = await API.request(`/admin/users/log${query ? '?search=' + encodeURIComponent(query) : ''}`);
+      const tbody = document.getElementById('admin-userlogs-tbody');
+      if (!tbody) return;
+
+      if (!users || users.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" style="text-align:center; color: var(--text-muted); padding:20px;">No user account logs found.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = users.map(u => {
+        const isStatusActive = u.status === 'ACTIVE';
+        const statusBadge = isStatusActive ?
+          `<span style="background: rgba(16,185,129,0.15); color: var(--status-upcoming); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">ACTIVE</span>` :
+          `<span style="background: rgba(239,68,68,0.15); color: var(--status-danger); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">DISABLED</span>`;
+
+        const newStatusTarget = isStatusActive ? 'DISABLED' : 'ACTIVE';
+        const toggleBtnText = isStatusActive ? 'Disable' : 'Enable';
+        const formattedCreated = this.formatDateTime(u.createdAt);
+        const roleBadge = u.role === 'ROLE_ADMIN' ?
+          `<span style="background:var(--accent-maroon); color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:700;">ADMIN</span>` :
+          u.role === 'ROLE_SUBADMIN' ?
+          `<span style="background:#7c3aed; color:#fff; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:700;">SUB-ADMIN</span>` :
+          `<span style="background:rgba(59,130,246,0.15); color:#3b82f6; padding:2px 6px; border-radius:4px; font-size:0.7rem; font-weight:600;">STUDENT</span>`;
+
+        return `
+          <tr>
+            <td><strong style="color:var(--accent-cyan); font-size:0.8rem;">#${u.id}</strong></td>
+            <td><strong style="color:var(--accent-cyan);">🆔 ${this.escapeHtml(u.registrationNumber)}</strong></td>
+            <td><strong>${this.escapeHtml(u.name)}</strong></td>
+            <td><span style="font-size:0.8rem;">${this.escapeHtml(u.email)}</span></td>
+            <td>${roleBadge}</td>
+            <td><span style="font-size:0.75rem; color:var(--accent-cyan);">${this.escapeHtml(u.department || 'CS')}</span></td>
+            <td><span style="font-size:0.8rem; font-weight:600;">📅 ${formattedCreated}</span></td>
+            <td><span style="font-weight:700; color:var(--accent-maroon);">${u.postedEventsCount || 0} events</span></td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:4px;">
+                ${u.role !== 'ROLE_ADMIN' ? `<button class="btn btn-outline btn-sm" onclick="Admin.toggleStudentStatus(${u.id}, '${newStatusTarget}')">${toggleBtnText}</button>` : ''}
+                <button class="btn btn-secondary btn-sm" onclick="Admin.resetStudentPassword(${u.id}, '${u.registrationNumber}')">Reset Pass</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load user logs:', err);
+    }
+  },
+
+  handleSearchUserLogs() {
+    const q = document.getElementById('admin-userlog-search-input').value;
+    this.loadUserLogs(q);
+  },
+
+  async loadStudents(searchQuery = '', isSilent = false) {
+    try {
+      const q = (searchQuery !== undefined && searchQuery !== '') ? searchQuery : (document.getElementById('admin-student-search')?.value || '');
+      const students = await API.request(`/admin/students?search=${encodeURIComponent(q)}`);
+      const tbody = document.getElementById('admin-students-tbody');
+
+      if (!tbody) return;
+
+      if (!students || students.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="8" style="text-align:center; color: var(--text-muted); padding:20px;">No student accounts found for your assigned department/year.</td></tr>`;
+        return;
+      }
+
+      const currentUser = API.getUser();
+      const isAdmin = currentUser && currentUser.role === 'ROLE_ADMIN';
+
+      tbody.innerHTML = students.map(s => {
+        const isStatusActive = s.status === 'ACTIVE';
+        const statusBadge = isStatusActive ? 
+          `<span style="background: rgba(16,185,129,0.15); color: var(--status-upcoming); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">ACTIVE</span>` : 
+          `<span style="background: rgba(239,68,68,0.15); color: var(--status-danger); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">DISABLED</span>`;
+
+        const newStatusTarget = isStatusActive ? 'DISABLED' : 'ACTIVE';
+        const toggleBtnText = isStatusActive ? 'Disable' : 'Enable';
+
+        const deleteBtnHtml = isAdmin ? `
+          <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.deleteStudent(${s.id}, '${this.escapeHtml(s.registrationNumber)}')">🗑️</button>
+        ` : '';
+
+        return `
+          <tr>
+            <td><strong style="color:var(--accent-cyan); font-size:0.85rem;">#${s.id}</strong></td>
+            <td><strong>${this.escapeHtml(s.registrationNumber)}</strong></td>
+            <td>${this.escapeHtml(s.name)}</td>
+            <td>${this.escapeHtml(s.email)}</td>
+            <td><span style="font-size:0.75rem; background:rgba(14,165,233,0.1); color:var(--accent-cyan); padding:2px 6px; border-radius:4px;">${this.escapeHtml(s.department || 'CS')}</span></td>
+            <td><span style="font-size:0.75rem; color: var(--accent-cyan);">${this.escapeHtml(s.skills || 'N/A')}</span></td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap: 6px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="Admin.toggleStudentStatus(${s.id}, '${newStatusTarget}')">${toggleBtnText}</button>
+                <button class="btn btn-secondary btn-sm" onclick="Admin.resetStudentPassword(${s.id}, '${s.registrationNumber}')">🔑 Reset Pass</button>
+                ${deleteBtnHtml}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  async deleteStudent(studentId, regNo) {
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete student '${regNo}'? This cannot be undone.`, {
+      title: 'Delete Student Account?',
+      icon: '🗑️',
+      confirmText: 'Delete Account',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request(`/admin/students/${studentId}`, { method: 'DELETE' });
+      App.showToast(res.message || 'Student account deleted.', 'success');
+      this.loadStudents();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete student account', 'danger');
+    }
+  },
+
+  async handleSearchStudents() {
+    const q = document.getElementById('admin-student-search-input').value;
+    this.loadStudents(q);
+  },
+
+  async handleCreateStudentSubmit(event) {
+    event.preventDefault();
+    let regNo = document.getElementById('admin-create-reg-no').value.trim().toUpperCase();
+    if (/^\d+$/.test(regNo)) {
+      regNo = 'CS' + regNo.padStart(4, '0');
+    }
+    const name = document.getElementById('admin-create-name').value.trim();
+    const email = document.getElementById('admin-create-email').value.trim();
+    const skills = document.getElementById('admin-create-skills').value.trim();
+    const department = document.getElementById('admin-create-dept').value.trim().toUpperCase() || 'CS';
+
+    try {
+      const res = await API.request('/admin/students/create', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, name, email, skills, department })
+      });
+
+      App.closeModal('modal-admin-create-student');
+      document.getElementById('form-admin-create-student').reset();
+      App.showToast(`🎉 Student account '${res.registrationNumber}' created! Temporary password is '123'.`, 'success');
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to create student account', 'danger');
+    }
+  },
+
+  async toggleStudentStatus(studentId, targetStatus) {
+    try {
+      const res = await API.request(`/admin/students/${studentId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: targetStatus })
+      });
+
+      App.showToast(res.message, 'success');
+      this.loadStudents();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to update student status', 'danger');
+    }
+  },
+
+  async resetStudentPassword(studentId, regNo) {
+    const confirmed = await App.confirm(`Reset password for student '${regNo}' to default temporary password '123'?`, {
+      title: 'Reset Student Password?',
+      icon: '🔑',
+      confirmText: 'Reset to 123',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request(`/admin/students/${studentId}/reset-password`, { method: 'POST' });
+      App.showToast(res.message || `Password for ${regNo} reset to '123'.`, 'success');
+    } catch (err) {
+      App.showToast(err.message || 'Password reset failed', 'danger');
+    }
+  },
+
+  // =====================================================================
+  // SUB-ADMIN MANAGEMENT (Admin Only)
+  // =====================================================================
+
+  async loadSubAdmins() {
+    try {
+      const subAdmins = await API.request('/admin/subadmins');
+      const tbody = document.getElementById('admin-subadmins-tbody');
+      if (!tbody) return;
+
+      if (!subAdmins || subAdmins.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; color: var(--text-muted); padding:20px;">No sub-admin accounts created yet. Click "Create Sub-Admin" to add one.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = subAdmins.map(sa => {
+        const isStatusActive = sa.status === 'ACTIVE';
+        const statusBadge = isStatusActive ?
+          `<span style="background: rgba(16,185,129,0.15); color: var(--status-upcoming); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">ACTIVE</span>` :
+          `<span style="background: rgba(239,68,68,0.15); color: var(--status-danger); padding: 3px 8px; border-radius: 12px; font-weight:600; font-size: 0.75rem;">DISABLED</span>`;
+        const newStatus = isStatusActive ? 'DISABLED' : 'ACTIVE';
+        const toggleText = isStatusActive ? 'Disable' : 'Enable';
+
+        const yearLabel = sa.assignedYear === '2' ? 'Class 2 (2nd Yr)' : 
+                          sa.assignedYear === '3' ? 'Class 3 (3rd Yr)' : 
+                          sa.assignedYear === '1' ? 'Class 1 (1st Yr)' : 
+                          sa.assignedYear === '4' ? 'Class 4 (4th Yr)' : 'All Classes';
+
+        const limitLabel = sa.studentLimit && sa.studentLimit > 0
+          ? `<span style="background:rgba(245,158,11,0.12); color:#f59e0b; font-weight:700; padding:2px 6px; border-radius:4px; font-size:0.72rem; margin-left:4px;">Quota: ${sa.studentLimit} Students</span>`
+          : `<span style="background:rgba(107,114,128,0.15); color:var(--text-muted); padding:2px 6px; border-radius:4px; font-size:0.72rem; margin-left:4px;">Quota: Unlimited</span>`;
+
+        return `
+          <tr>
+            <td><strong style="color:var(--accent-cyan);">#${sa.id}</strong></td>
+            <td><strong style="color:#7c3aed;">🛡️ ${this.escapeHtml(sa.registrationNumber)}</strong></td>
+            <td>${this.escapeHtml(sa.name)}</td>
+            <td><span style="font-size:0.8rem;">${this.escapeHtml(sa.email)}</span></td>
+            <td>
+              <span style="background:rgba(124,58,237,0.12); color:#7c3aed; font-weight:700; padding:3px 8px; border-radius:6px; font-size:0.75rem;">
+                ${this.escapeHtml(sa.department || 'N/A')}
+              </span>
+              <span style="background:rgba(14,165,233,0.1); color:var(--accent-cyan); font-weight:600; padding:3px 6px; border-radius:6px; font-size:0.72rem; margin-left:4px;">
+                ${yearLabel}
+              </span>
+              ${limitLabel}
+            </td>
+            <td>${statusBadge}</td>
+            <td>
+              <div style="display:flex; gap:4px; flex-wrap:wrap;">
+                <button class="btn btn-outline btn-sm" onclick="Admin.openEditSubAdminModal(${sa.id}, '${this.escapeHtml(sa.name)}', '${this.escapeHtml(sa.email)}', '${this.escapeHtml(sa.department || '')}', '${this.escapeHtml(sa.assignedYear || 'ALL')}', ${sa.studentLimit || 'null'})">✏️ Edit</button>
+                <button class="btn btn-outline btn-sm" onclick="Admin.toggleSubAdminStatus(${sa.id}, '${newStatus}')">${toggleText}</button>
+                <button class="btn btn-secondary btn-sm" onclick="Admin.resetSubAdminPassword(${sa.id}, '${sa.registrationNumber}')">🔑 Reset Pass</button>
+                <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.deleteSubAdmin(${sa.id}, '${this.escapeHtml(sa.registrationNumber)}')">🗑️</button>
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      console.error('Failed to load sub-admins:', err);
+    }
+  },
+
+  async handleCreateSubAdminSubmit(event) {
+    event.preventDefault();
+    const regNo = document.getElementById('sa-create-reg-no').value.trim().toUpperCase();
+    const name = document.getElementById('sa-create-name').value.trim();
+    const email = document.getElementById('sa-create-email').value.trim();
+    const department = document.getElementById('sa-create-dept').value.trim().toUpperCase();
+    const assignedYear = document.getElementById('sa-create-year').value;
+    const studentLimitVal = document.getElementById('sa-create-student-limit')?.value;
+    const studentLimit = studentLimitVal && parseInt(studentLimitVal) > 0 ? parseInt(studentLimitVal) : null;
+
+    if (!regNo || !department) {
+      App.showToast('Registration number and department are required.', 'danger');
+      return;
+    }
+
+    try {
+      const res = await API.request('/admin/subadmins/create', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, name, email, department, assignedYear, studentLimit })
+      });
+
+      App.closeModal('modal-create-subadmin');
+      document.getElementById('form-create-subadmin').reset();
+      App.showToast(`🛡️ Sub-Admin '${res.registrationNumber}' created for Class ${assignedYear} (Limit: ${studentLimit || 'Unlimited'})! Temp pass: '123'.`, 'success');
+      this.loadSubAdmins();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to create sub-admin', 'danger');
+    }
+  },
+
+  openEditSubAdminModal(id, name, email, department, assignedYear = 'ALL', studentLimit = null) {
+    document.getElementById('sa-edit-id').value = id;
+    document.getElementById('sa-edit-name').value = name;
+    document.getElementById('sa-edit-email').value = email;
+    document.getElementById('sa-edit-dept').value = department;
+    const yearSelect = document.getElementById('sa-edit-year');
+    if (yearSelect) yearSelect.value = assignedYear || 'ALL';
+    const limitInput = document.getElementById('sa-edit-student-limit');
+    if (limitInput) limitInput.value = (studentLimit && studentLimit > 0) ? studentLimit : '';
+    App.openModal('modal-edit-subadmin');
+  },
+
+  async handleEditSubAdminSubmit(event) {
+    event.preventDefault();
+    const id = document.getElementById('sa-edit-id').value;
+    const name = document.getElementById('sa-edit-name').value.trim();
+    const email = document.getElementById('sa-edit-email').value.trim();
+    const department = document.getElementById('sa-edit-dept').value.trim().toUpperCase();
+    const assignedYear = document.getElementById('sa-edit-year') ? document.getElementById('sa-edit-year').value : 'ALL';
+    const studentLimitVal = document.getElementById('sa-edit-student-limit')?.value;
+    const studentLimit = studentLimitVal && parseInt(studentLimitVal) > 0 ? parseInt(studentLimitVal) : null;
+
+    try {
+      const res = await API.request(`/admin/subadmins/${id}`, {
+        method: 'PUT',
+        body: JSON.stringify({ name, email, department, assignedYear, studentLimit })
+      });
+
+      App.closeModal('modal-edit-subadmin');
+      App.showToast(res.message, 'success');
+      this.loadSubAdmins();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to update sub-admin', 'danger');
+    }
+  },
+
+  async deleteSubAdmin(id, regNo) {
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete Sub-Admin '${regNo}'?`, {
+      title: 'Delete Sub-Admin Account?',
+      icon: '🛡️',
+      confirmText: 'Delete Sub-Admin',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request(`/admin/subadmins/${id}`, { method: 'DELETE' });
+      App.showToast(res.message || 'Sub-Admin deleted.', 'success');
+      this.loadSubAdmins();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete Sub-Admin', 'danger');
+    }
+  },
+
+  async toggleSubAdminStatus(id, targetStatus) {
+    try {
+      const res = await API.request(`/admin/subadmins/${id}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status: targetStatus })
+      });
+      App.showToast(res.message, 'success');
+      this.loadSubAdmins();
+    } catch (err) {
+      App.showToast(err.message || 'Status toggle failed', 'danger');
+    }
+  },
+
+  async resetSubAdminPassword(id, regNo) {
+    const confirmed = await App.confirm(`Reset password for Sub-Admin ${regNo} to '123'?`, {
+      title: 'Reset Sub-Admin Password?',
+      icon: '🔑',
+      confirmText: 'Reset Password',
+      cancelText: 'Cancel',
+      danger: false
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request(`/admin/subadmins/${id}/reset-password`, { method: 'POST' });
+      App.showToast(res.message, 'success');
+    } catch (err) {
+      App.showToast(err.message || 'Password reset failed', 'danger');
+    }
+  },
+
+  // =====================================================================
+  // REPORTS
+  // =====================================================================
+
+  async loadReports() {
+    try {
+      const reports = await API.request('/admin/reports');
+      const tbody = document.getElementById('admin-reports-tbody');
+
+      if (!reports || reports.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No reports submitted.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = reports.map(r => `
+        <tr>
+          <td>#${r.id}</td>
+          <td><strong>${this.escapeHtml(r.eventTitle)}</strong></td>
+          <td>${this.escapeHtml(r.reportedByRegNo)} (${this.escapeHtml(r.reportedByName)})</td>
+          <td><span style="color: var(--status-danger); font-weight:600;">${this.escapeHtml(r.reason)}</span></td>
+          <td><span style="font-size:0.75rem;">${r.status}</span></td>
+          <td>
+            <div style="display:flex; gap:4px;">
+              <button class="btn btn-primary btn-sm" onclick="Admin.updateReportStatus(${r.id}, 'RESOLVED')">Resolve</button>
+              <button class="btn btn-secondary btn-sm" onclick="Admin.updateReportStatus(${r.id}, 'DISMISSED')">Dismiss</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  async updateReportStatus(reportId, status) {
+    try {
+      const res = await API.request(`/admin/reports/${reportId}/status`, {
+        method: 'PUT',
+        body: JSON.stringify({ status })
+      });
+
+      App.showToast(res.message, 'success');
+      this.loadReports();
+    } catch (err) {
+      App.showToast(err.message || 'Report status update failed', 'danger');
+    }
+  },
+
+  // =====================================================================
+  // EVENTS
+  // =====================================================================
+
+  async loadEvents() {
+    try {
+      const events = await API.request('/admin/events');
+      const tbody = document.getElementById('admin-events-tbody');
+      if (!tbody) return;
+
+      if (!events || events.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color: var(--text-muted);">No events posted yet.</td></tr>`;
+        return;
+      }
+
+      this.cachedEvents = events;
+      tbody.innerHTML = events.map(e => `
+        <tr>
+          <td><strong>${this.escapeHtml(e.title)}</strong></td>
+          <td><span style="font-size:0.75rem; background: var(--accent-maroon-tint); color: var(--accent-maroon); font-weight:700; padding:2px 6px; border-radius:4px;">${e.eventType}</span></td>
+          <td><span style="font-size:0.75rem;">${e.mode}</span></td>
+          <td><span style="font-size:0.78rem;">${e.startDate} to ${e.endDate}</span></td>
+          <td><span style="font-size:0.78rem; color: var(--accent-maroon); font-weight:600;">${e.registrationDeadline}</span></td>
+          <td>
+            <div style="display:flex; gap: 6px;">
+              <button class="btn btn-primary btn-sm" onclick="Admin.openEditEventModal(${e.id})">✏️ Modify</button>
+              <button class="btn btn-danger btn-sm" onclick="Admin.deleteEvent(${e.id}, '${this.escapeHtml(e.title)}')">🗑️ Delete</button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+    } catch (err) {
+      console.error(err);
+    }
+  },
+
+  openEditEventModal(eventId) {
+    const event = (this.cachedEvents || []).find(e => e.id === eventId);
+    if (!event) {
+      App.showToast('Event details not found.', 'danger');
+      return;
+    }
+
+    document.getElementById('admin-edit-event-id').value = event.id;
+    document.getElementById('admin-edit-title').value = event.title || '';
+    document.getElementById('admin-edit-description').value = event.description || '';
+    const typeSelect = document.getElementById('admin-edit-type');
+    typeSelect.value = event.eventType || 'HACKATHON';
+    if (!typeSelect.value || typeSelect.value !== (event.eventType || 'HACKATHON')) {
+      typeSelect.value = 'HACKATHON';
+    }
+    document.getElementById('admin-edit-mode').value = event.mode || 'HYBRID';
+    document.getElementById('admin-edit-min-team').value = event.teamSizeMin || 1;
+    document.getElementById('admin-edit-max-team').value = event.teamSizeMax || 4;
+    document.getElementById('admin-edit-start-date').value = event.startDate || '';
+    document.getElementById('admin-edit-end-date').value = event.endDate || '';
+    document.getElementById('admin-edit-deadline').value = event.registrationDeadline || '';
+    document.getElementById('admin-edit-venue').value = event.venue || '';
+    document.getElementById('admin-edit-link').value = event.registrationLink || '';
+    document.getElementById('admin-edit-skills').value = event.skills || '';
+    document.getElementById('admin-edit-poster-url').value = event.posterPath || '';
+    document.getElementById('admin-edit-poster-file').value = '';
+
+    const previewContainer = document.getElementById('admin-edit-poster-preview');
+    if (previewContainer) {
+      if (event.posterPath) {
+        previewContainer.innerHTML = `<img src="${this.escapeHtml(event.posterPath)}" style="max-height: 100px; border-radius: 6px; border: 1px solid var(--border-color);" alt="Current Poster">`;
+      } else {
+        previewContainer.innerHTML = `<span style="font-size: 0.78rem; color: var(--text-muted);">No current poster image.</span>`;
+      }
+    }
+
+    App.openModal('modal-admin-edit-event');
+  },
+
+  async handleEditEventSubmit(e) {
+    e.preventDefault();
+    const form = document.getElementById('form-admin-edit-event');
+    const submitBtn = form ? form.querySelector('button[type="submit"]') : null;
+    const done = App.submitGuard(submitBtn, '⏳ Saving...');
+    if (!done) return;
+
+    const eventId = document.getElementById('admin-edit-event-id').value;
+    const title = document.getElementById('admin-edit-title').value.trim();
+    const description = document.getElementById('admin-edit-description').value.trim();
+    const eventType = document.getElementById('admin-edit-type').value;
+    const mode = document.getElementById('admin-edit-mode').value;
+    const teamSizeMin = parseInt(document.getElementById('admin-edit-min-team').value) || 1;
+    const teamSizeMax = parseInt(document.getElementById('admin-edit-max-team').value) || 4;
+    const startDate = document.getElementById('admin-edit-start-date').value;
+    const endDate = document.getElementById('admin-edit-end-date').value;
+    const registrationDeadline = document.getElementById('admin-edit-deadline').value;
+    const venue = document.getElementById('admin-edit-venue').value.trim();
+    const registrationLink = document.getElementById('admin-edit-link').value.trim();
+    const skills = document.getElementById('admin-edit-skills').value.trim();
+    const posterPath = document.getElementById('admin-edit-poster-url').value.trim();
+
+    const payload = {
+      title, description, eventType, mode, teamSizeMin, teamSizeMax,
+      startDate, endDate, registrationDeadline, venue, registrationLink, skills, posterPath
+    };
+
+    const formData = new FormData();
+    formData.append('event', new Blob([JSON.stringify(payload)], { type: 'application/json' }));
+
+    const fileInput = document.getElementById('admin-edit-poster-file');
+    if (fileInput && fileInput.files[0]) {
+      formData.append('posterFile', fileInput.files[0]);
+    }
+
+    try {
+      await API.request(`/admin/events/${eventId}`, {
+        method: 'PUT',
+        body: formData
+      });
+      App.closeModal('modal-admin-edit-event');
+      App.showToast('🎉 Hackathon details & poster updated successfully!', 'success');
+      this.loadDashboard();
+      if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
+    } catch (err) {
+      done();
+      App.showToast(err.message || 'Failed to modify event', 'danger');
+    }
+  },
+
+  async deleteEvent(eventId, eventTitle) {
+    const confirmed = await App.confirm(`Are you sure you want to permanently delete event "${eventTitle}"? This action cannot be undone.`, {
+      title: 'Delete Hackathon Event?',
+      icon: '🗑️',
+      confirmText: 'Delete Event',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+
+    try {
+      const res = await API.request(`/admin/events/${eventId}`, { method: 'DELETE' });
+      App.showToast(res.message || 'Event deleted successfully', 'success');
+      this.loadDashboard();
+      if (typeof Events !== 'undefined' && Events.loadAllEvents) Events.loadAllEvents();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to delete event', 'danger');
+    }
+  },
+
+  async syncUnstopEvents() {
+    try {
+      App.showToast('⏳ Syncing live hackathons from Unstop...', 'info');
+      const res = await API.request('/events/sync-unstop', { method: 'POST' });
+      App.showToast(res.message || 'Successfully synced Unstop hackathons!', 'success');
+      if (typeof Events !== 'undefined' && Events.loadHomeDashboard) Events.loadHomeDashboard();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to sync Unstop hackathons', 'danger');
+    }
+  },
+
+  async clearUnstopEvents() {
+    const confirmed = await App.confirm('Are you sure you want to remove all synced Unstop hackathons from the website database?', {
+      title: 'Clear Unstop Hackathons?',
+      icon: '🧹',
+      confirmText: 'Remove All',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request('/events/clear-unstop', { method: 'DELETE' });
+      App.showToast(res.message || 'Cleared Unstop events', 'info');
+      if (typeof Events !== 'undefined' && Events.loadHomeDashboard) Events.loadHomeDashboard();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to clear Unstop hackathons', 'danger');
+    }
+  },
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  },
+
+  async loadTeams(isSilent = false) {
+    const tbody = document.getElementById('admin-teams-tbody');
+    if (!tbody) return;
+    if (!isSilent && (!tbody.children.length || tbody.innerHTML.includes('No teams'))) {
+      tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;">Loading teams...</td></tr>';
+    }
+    try {
+      const teams = await API.request('/admin/teams');
+      if (!teams || teams.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">No teams have been created yet.</td></tr>';
+        return;
+      }
+      tbody.innerHTML = teams.map(t => {
+        const memberNames = (t.members || []).map(m => `${this.escapeHtml(m.name)} (${this.escapeHtml(m.registrationNumber)})`).join(', ');
+        const memberSkills = [...new Set((t.members || []).flatMap(m => (m.skills || '').split(',').map(s => s.trim()).filter(Boolean)))].join(', ');
+        return `<tr>
+          <td style="font-size:0.8rem;color:var(--text-muted);">#${t.id}</td>
+          <td style="font-weight:700;">${this.escapeHtml(t.teamName)}</td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(t.eventTitle)}</td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(t.creatorName)}<br><span style="color:var(--text-muted);font-size:0.75rem;">${this.escapeHtml(t.creatorRegistrationNumber)}</span></td>
+          <td style="font-size:0.82rem;">${this.escapeHtml(memberNames || 'None')}</td>
+          <td style="text-align:center;">${t.currentMemberCount}/${t.maxMembers}</td>
+          <td style="font-size:0.75rem;color:var(--accent-cyan,#22d3ee);">${this.escapeHtml(memberSkills || '—')}</td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="Admin.deleteTeam(${t.id}, '${this.escapeHtml(t.teamName)}')">🗑️ Delete</button>
+          </td>
+        </tr>`;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;padding:20px;color:var(--text-muted);">${err.message || 'Failed to load teams'}</td></tr>`;
+    }
+  },
+
+  async deleteTeam(teamId, teamName) {
+    const confirmed = await App.confirm(`Delete team "${teamName}" permanently? All join requests and members will be removed.`, {
+      title: 'Delete Team?',
+      icon: '👥',
+      confirmText: 'Delete Team',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request(`/admin/teams/${teamId}`, { method: 'DELETE' });
+      App.showToast(res.message, 'success');
+      this.loadTeams();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Delete failed', 'danger');
+    }
+  },
+
+  async loadActivityLogs() {
+    const tbody = document.getElementById('admin-activity-logs-tbody');
+    if (!tbody) return;
+    const actionFilter = document.getElementById('admin-logs-action-filter')?.value || 'ALL';
+    const searchQuery = document.getElementById('admin-logs-search-input')?.value || '';
+
+    try {
+      let url = `/admin/activity-logs?action=${encodeURIComponent(actionFilter)}`;
+      if (searchQuery.trim()) {
+        url += `&search=${encodeURIComponent(searchQuery.trim())}`;
+      }
+      const logs = await API.request(url);
+      if (!logs || logs.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; padding:24px; color:var(--text-muted);">No activity logs recorded yet.</td></tr>';
+        return;
+      }
+
+      tbody.innerHTML = logs.map(l => {
+        let roleBadge = '';
+        if (l.userRole === 'ROLE_ADMIN') {
+          roleBadge = '<span style="background:rgba(220,38,38,0.15); color:var(--accent-maroon); font-weight:700; padding:2px 7px; border-radius:10px; font-size:0.75rem;">ADMIN</span>';
+        } else if (l.userRole === 'ROLE_SUBADMIN') {
+          roleBadge = '<span style="background:rgba(124,58,237,0.15); color:#7c3aed; font-weight:700; padding:2px 7px; border-radius:10px; font-size:0.75rem;">SUB-ADMIN</span>';
+        } else {
+          roleBadge = '<span style="background:rgba(14,165,233,0.15); color:var(--accent-cyan); font-weight:600; padding:2px 7px; border-radius:10px; font-size:0.75rem;">STUDENT</span>';
+        }
+
+        let actionColor = 'var(--text-main)';
+        if (l.action.includes('CREATE')) actionColor = 'var(--status-upcoming)';
+        else if (l.action.includes('DELETE')) actionColor = 'var(--status-danger)';
+        else if (l.action.includes('LOGIN')) actionColor = '#06b6d4';
+        else if (l.action.includes('PASSWORD')) actionColor = '#f59e0b';
+        else if (l.action.includes('JOIN')) actionColor = '#8b5cf6';
+        else if (l.action.includes('STATUS')) actionColor = '#ec4899';
+
+        return `
+          <tr>
+            <td style="font-size:0.8rem; color:var(--text-muted); white-space:nowrap;">${this.formatDateTime(l.createdAt)}</td>
+            <td><strong>${this.escapeHtml(l.userRegNo)}</strong><br><span style="font-size:0.75rem; color:var(--text-muted);">${this.escapeHtml(l.userName || '')}</span></td>
+            <td>${roleBadge}</td>
+            <td><span style="font-weight:700; font-size:0.78rem; color:${actionColor}; border:1px solid currentColor; padding:2px 6px; border-radius:4px;">${this.escapeHtml(l.action)}</span></td>
+            <td style="font-size:0.85rem; color:var(--text-main);">${this.escapeHtml(l.details)}</td>
+          </tr>
+        `;
+      }).join('');
+    } catch (err) {
+      tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">${err.message || 'Failed to load logs'}</td></tr>`;
+    }
+  },
+
+  handleSearchActivityLogs() {
+    clearTimeout(this._logSearchTimer);
+    this._logSearchTimer = setTimeout(() => this.loadActivityLogs(), 300);
+  },
+
+  async clearActivityLogs() {
+    const confirmed = await App.confirm('Purge all live audit logs? This action cannot be undone.', {
+      title: 'Purge Audit Logs?',
+      icon: '🔴',
+      confirmText: 'Purge Logs',
+      cancelText: 'Cancel',
+      danger: true
+    });
+    if (!confirmed) return;
+    try {
+      const res = await API.request('/admin/activity-logs', { method: 'DELETE' });
+      App.showToast(res.message, 'success');
+      this.loadActivityLogs();
+      this.loadDashboard();
+    } catch (err) {
+      App.showToast(err.message || 'Failed to clear logs', 'danger');
+    }
+  },
+
+  escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  }
+};

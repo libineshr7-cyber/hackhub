@@ -1,5 +1,13 @@
-{
-  "buildCommand": null,
-  "outputDirectory": "src/main/resources/static",
-  "framework": null
+﻿{
+  "version": 2,
+  "rewrites": [
+    {
+      "source": "/api",
+      "destination": "/api/index.js"
+    },
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/index.js"
+    }
+  ]
 }

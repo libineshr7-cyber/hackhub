@@ -13,3 +13,6 @@ uploads/
 data/
 *.db
 *.mv.db
+
+node_modules/
+.vercel/

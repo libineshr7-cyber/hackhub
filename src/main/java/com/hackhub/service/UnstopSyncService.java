@@ -39,11 +39,10 @@ public class UnstopSyncService {
     private ObjectMapper objectMapper;
 
     /**
-     * Run periodically every 6 hours (initialDelay = 15s after startup to keep server boot instant)
+     * Manual sync only — background auto-sync disabled to prevent low-quality spam events from being injected.
      */
-    @Scheduled(initialDelay = 15000, fixedRate = 21600000)
     public void scheduledUnstopSync() {
-        logger.info("🔄 Running scheduled Unstop Live Hackathons & Competitions sync...");
+        logger.info("🔄 Running Unstop Live Hackathons & Competitions sync (manual)...");
         try {
             int syncedCount = fetchAndSyncUnstopHackathons();
             logger.info("✅ Unstop Sync completed. Total active synced hackathons & competitions: {}", syncedCount);

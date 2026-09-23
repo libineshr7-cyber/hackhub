@@ -1,0 +1,341 @@
+/* ==========================================================================
+   HackHub — Authentication & Profile Handler
+   ========================================================================== */
+
+const Auth = {
+  showLoginModal() {
+    App.openModal('modal-login');
+    setTimeout(() => {
+      const regInput = document.getElementById('login-reg-no');
+      if (regInput) regInput.focus();
+    }, 150);
+  },
+
+  showFirstLoginModal() {
+    this.showChangePasswordModal();
+  },
+
+  showChangePasswordModal() {
+    const title = document.getElementById('first-login-modal-title');
+    const desc = document.getElementById('first-login-modal-desc');
+    const closeBtn = document.getElementById('first-login-close-btn');
+    if (title) title.innerHTML = '🔐 Change Account Password';
+    if (desc) desc.textContent = 'Enter your current password and your new password below.';
+    if (closeBtn) closeBtn.style.display = 'block';
+    
+    const curr = document.getElementById('first-current-password');
+    const next = document.getElementById('first-new-password');
+    if (curr) curr.value = '';
+    if (next) next.value = '';
+    
+    App.openModal('modal-first-login');
+    setTimeout(() => {
+      if (curr) curr.focus();
+    }, 150);
+  },
+
+  async handleLogin(event) {
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    const regNo = document.getElementById('login-reg-no').value.trim();
+    const password = document.getElementById('login-password').value;
+
+    if (!regNo || !password) {
+      App.showToast('Please enter registration number or name and password.', 'danger');
+      if (!regNo) document.getElementById('login-reg-no').focus();
+      else document.getElementById('login-password').focus();
+      return;
+    }
+
+    const btn = document.getElementById('btn-login-submit');
+    const originalText = btn ? btn.innerHTML : 'Login to HackHub';
+    let progressTimer = null;
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⚡ Authenticating...';
+      let sec = 1;
+      progressTimer = setInterval(() => {
+        if (btn) btn.innerHTML = `⚡ Authenticating (${sec++}s)...`;
+      }, 1000);
+    }
+
+    try {
+      const data = await API.request('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, password: password })
+      });
+
+      API.setToken(data.token);
+      API.setUser({
+        id: data.id,
+        registrationNumber: data.registrationNumber,
+        name: data.name,
+        email: data.email,
+        role: data.role,
+        firstLogin: data.firstLogin,
+        skills: data.skills
+      });
+
+      App.closeModal('modal-login');
+      App.showToast(`Welcome back, ${data.name}!`, 'success');
+      App.updateUserUI(data);
+
+      if (data.firstLogin || password === '123') {
+        this.showChangePasswordModal();
+      } else {
+        App.navigateTo('home');
+      }
+    } catch (err) {
+      App.showToast(err.message || 'Login failed', 'danger');
+    } finally {
+      if (progressTimer) clearInterval(progressTimer);
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  },
+
+  async handleFirstLoginPasswordChange(event) {
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    const currentPassword = document.getElementById('first-current-password').value;
+    const newPassword = document.getElementById('first-new-password').value;
+
+    if (!currentPassword || !newPassword) {
+      App.showToast('Please fill in both current and new password fields.', 'danger');
+      if (!currentPassword) document.getElementById('first-current-password').focus();
+      else document.getElementById('first-new-password').focus();
+      return;
+    }
+
+    if (newPassword.length < 3) {
+      App.showToast('New password must be at least 3 characters.', 'danger');
+      return;
+    }
+
+    if (newPassword === currentPassword) {
+      App.showToast('New password cannot be the same as current password.', 'danger');
+      return;
+    }
+
+    const btn = document.getElementById('btn-update-password-submit');
+    const originalText = btn ? btn.innerHTML : 'Update Password & Continue';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Updating password...';
+    }
+
+    try {
+      const response = await API.request('/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
+
+      const user = API.getUser();
+      if (user) {
+        user.firstLogin = false;
+        API.setUser(user);
+      }
+
+      App.closeModal('modal-first-login');
+      App.showToast(response.message || 'Password updated successfully!', 'success');
+      // Push state so back button cannot return to pre-password-change state
+      history.pushState({ spa: true, authed: true }, '', window.location.pathname);
+      App.navigateTo('home');
+    } catch (err) {
+      App.showToast(err.message || 'Password change failed. Check your current password.', 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  },
+
+  _otpRegistrationNumber: '',
+  _otpEmailAddress: '',
+
+  showForgotPasswordModal() {
+    App.closeModal('modal-login');
+    document.getElementById('otp-step-1').style.display = 'block';
+    document.getElementById('otp-step-2').style.display = 'none';
+    const regInput = document.getElementById('otp-reg-no');
+    const emailInput = document.getElementById('otp-email');
+    const otpInput = document.getElementById('otp-code-input');
+    const passInput = document.getElementById('otp-new-password');
+    if (regInput) regInput.value = '';
+    if (emailInput) emailInput.value = '';
+    if (otpInput) otpInput.value = '';
+    if (passInput) passInput.value = '';
+    this._otpRegistrationNumber = '';
+    this._otpEmailAddress = '';
+    App.openModal('modal-forgot-password');
+  },
+
+  async handleRequestOtp(event) {
+    event.preventDefault();
+    const regNo = document.getElementById('otp-reg-no').value.trim();
+    const email = document.getElementById('otp-email')?.value.trim() || '';
+
+    if (!regNo) {
+      App.showToast('Please enter your Registration Number.', 'danger');
+      return;
+    }
+    if (!email || !email.includes('@') || !email.includes('.')) {
+      App.showToast('Please enter a valid personal email address (e.g. your Gmail).', 'danger');
+      return;
+    }
+
+    const btn = document.getElementById('btn-request-otp') || event.target.querySelector('button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : '📩 Send Verification OTP';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Sending OTP to Email...';
+    }
+
+    try {
+      const res = await API.request('/auth/forgot-password/request-otp', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, email: email })
+      });
+
+      this._otpRegistrationNumber = (res.data && res.data.registrationNumber) ? res.data.registrationNumber : regNo;
+      this._otpEmailAddress = (res.data && res.data.email) ? res.data.email : email;
+
+      const infoEl = document.getElementById('otp-sent-info');
+      if (infoEl) {
+        infoEl.innerHTML = `📬 <strong>OTP Dispatched!</strong><br>A 6-digit verification code was sent to <strong>${this._otpEmailAddress}</strong>.<br><small style="opacity:0.9;">Please check your Inbox (or Spam/Junk folder). Code expires in 5 minutes.</small>`;
+      }
+
+      document.getElementById('otp-step-1').style.display = 'none';
+      document.getElementById('otp-step-2').style.display = 'block';
+      App.showToast(res.message || 'OTP sent successfully!', 'success');
+      setTimeout(() => document.getElementById('otp-code-input')?.focus(), 250);
+    } catch (err) {
+      App.showToast(err.message || 'Failed to send OTP', 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  },
+
+  async handleVerifyOtpAndResetPassword(event) {
+    event.preventDefault();
+    const regNo = this._otpRegistrationNumber || document.getElementById('otp-reg-no').value.trim();
+    const email = this._otpEmailAddress || document.getElementById('otp-email')?.value.trim() || '';
+    const otp = document.getElementById('otp-code-input').value.trim();
+    const newPassword = document.getElementById('otp-new-password').value;
+
+    if (!otp || !newPassword) {
+      App.showToast('Please enter the 6-digit OTP and your new password.', 'danger');
+      return;
+    }
+    if (newPassword.length < 3) {
+      App.showToast('Password must be at least 3 characters long.', 'danger');
+      return;
+    }
+
+    const btn = document.getElementById('btn-verify-otp') || event.target.querySelector('button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : '✅ Verify OTP & Change Password';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Verifying & Updating Password...';
+    }
+
+    try {
+      const res = await API.request('/auth/forgot-password/verify-otp', {
+        method: 'POST',
+        body: JSON.stringify({ registrationNumber: regNo, email: email, otp: otp, newPassword: newPassword })
+      });
+
+      App.closeModal('modal-forgot-password');
+      App.showToast(res.message || 'Password reset successfully!', 'success');
+      this.showLoginModal();
+      const loginReg = document.getElementById('login-reg-no');
+      if (loginReg) loginReg.value = regNo;
+      document.getElementById('login-password')?.focus();
+    } catch (err) {
+      App.showToast(err.message || 'OTP verification failed', 'danger');
+    } finally {
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  },
+
+  async loadProfile() {
+    try {
+      const user = await API.request('/user/profile');
+      document.getElementById('profile-reg-no').textContent = user.registrationNumber;
+      document.getElementById('profile-name-input').value = user.name || '';
+      document.getElementById('profile-email-input').value = user.email || '';
+      document.getElementById('profile-skills-input').value = user.skills || '';
+      document.getElementById('profile-role').textContent = 
+        user.role === 'ROLE_ADMIN' ? 'Department Admin' : 
+        user.role === 'ROLE_SUBADMIN' ? ('Sub-Admin' + (user.department ? ' — ' + user.department + ' Dept' : '')) :
+        'Student';
+    } catch (err) {
+      App.showToast('Failed to load profile', 'danger');
+    }
+  },
+
+  async handleUpdateProfile(event) {
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+    }
+    if (this.isUpdatingProfile) return;
+    this.isUpdatingProfile = true;
+
+    const btn = document.querySelector('#view-profile button[type="submit"]');
+    const originalText = btn ? btn.innerHTML : 'Save Profile';
+    if (btn) {
+      btn.disabled = true;
+      btn.innerHTML = '⏳ Saving...';
+    }
+
+    const name = document.getElementById('profile-name-input').value.trim();
+    const email = document.getElementById('profile-email-input').value.trim();
+    const skills = document.getElementById('profile-skills-input').value.trim();
+
+    try {
+      const updatedUser = await API.request('/user/profile', {
+        method: 'PUT',
+        body: JSON.stringify({ name, email, skills })
+      });
+
+      const cached = API.getUser();
+      if (cached) {
+        cached.name = updatedUser.name;
+        cached.email = updatedUser.email;
+        cached.skills = updatedUser.skills;
+        API.setUser(cached);
+      }
+
+      App.showToast('Profile updated successfully!', 'success');
+    } catch (err) {
+      App.showToast(err.message || 'Profile update failed', 'danger');
+    } finally {
+      this.isUpdatingProfile = false;
+      if (btn) {
+        btn.disabled = false;
+        btn.innerHTML = originalText;
+      }
+    }
+  },
+
+  logout() {
+    if (this.isLoggingOut) return;
+    this.isLoggingOut = true;
+    API.clearToken();
+    App.showToast('Logged out successfully.', 'info');
+    setTimeout(() => {
+      window.location.reload();
+    }, 250);
+  }
+};

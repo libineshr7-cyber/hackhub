@@ -1,0 +1,1317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, viewport-fit=cover">
+    <title>HackHub — Department Hackathon &amp; Event Platform</title>
+    <meta name="description" content="HackHub is the department hackathon and event platform for students to discover upcoming hackathons, post events, and find teammates.">
+    <meta name="keywords" content="HackHub, Hack Hub, hackathon, hackathons, department hackathon, student hackathon, college events, find teammates, HackHub platform">
+    <meta name="author" content="HackHub">
+    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">
+    <link rel="canonical" href="https://hackhub-h1uf.onrender.com/">
+
+    <!-- Open Graph / Facebook / LinkedIn Meta Tags -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://hackhub-h1uf.onrender.com/">
+    <meta property="og:site_name" content="HackHub">
+    <meta property="og:title" content="HackHub — Department Hackathon &amp; Event Platform">
+    <meta property="og:description" content="Discover department hackathons, connect with peers, and form your ideal hackathon team instantly on HackHub.">
+    <meta property="og:image" content="https://hackhub-h1uf.onrender.com/logo.png">
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:url" content="https://hackhub-h1uf.onrender.com/">
+    <meta name="twitter:title" content="HackHub — Department Hackathon &amp; Event Platform">
+    <meta name="twitter:description" content="Discover department hackathons, connect with peers, and form your ideal hackathon team instantly on HackHub.">
+    <meta name="twitter:image" content="https://hackhub-h1uf.onrender.com/logo.png">
+
+    <!-- Structured Data (JSON-LD) for Google Search -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebSite",
+      "name": "HackHub",
+      "alternateName": ["Hack Hub", "HackHub Platform", "HackHub Events"],
+      "url": "https://hackhub-h1uf.onrender.com/",
+      "description": "Department hackathon and event platform for students to discover events, post hackathons, and find teammates.",
+      "publisher": {
+        "@type": "Organization",
+        "name": "HackHub",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://hackhub-h1uf.onrender.com/logo.png"
+        }
+      }
+    }
+    </script>
+
+    <link rel="icon" type="image/png" href="/favicon.png">
+    <link rel="shortcut icon" type="image/x-icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/logo.png">
+    <link rel="stylesheet" href="/css/styles.css?v=9.0">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+</head>
+<body>
+
+    <!-- Header Navigation -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo" data-view="home" title="HackHub Home">
+                <img src="/logo.png" alt="HackHub Logo" class="brand-logo-img">
+                <span class="logo-badge">HACKHUB</span>
+            </div>
+
+            <!-- Desktop Nav Links -->
+            <ul class="nav-links">
+                <li class="nav-item active" data-view="home">Home</li>
+                <li class="nav-item" data-view="all-events">🌐 All Events</li>
+                <li class="nav-item" data-view="latest">✨ Latest</li>
+                <li class="nav-item" data-view="upcoming">Upcoming</li>
+                <li class="nav-item nav-item-deadline" data-view="deadline-soon">⏰ Deadline Soon</li>
+                <li class="nav-item" data-view="ended">Ended</li>
+                <li class="nav-item" data-view="saved">Saved</li>
+                <li class="nav-item" data-view="teams">Find Team</li>
+                <li class="nav-item" id="nav-admin-link" data-view="admin" style="display:none; color: var(--accent-maroon);">Admin</li>
+            </ul>
+
+            <div class="header-actions">
+                <button class="btn btn-secondary btn-sm" id="notif-bell-btn" onclick="Notifications.toggleModal()" style="position:relative; gap:6px;">
+                    🔔 Requests <span id="notif-badge" class="badge" style="display:none; background:var(--status-danger); color:white; font-size:0.75rem; border-radius:10px; padding:2px 6px;">0</span>
+                </button>
+
+                <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-post-event')">
+                    + Post Event
+                </button>
+
+                <div class="user-badge" data-view="profile" onclick="App.checkAuthentication()">
+                    <div class="user-avatar">🎓</div>
+                    <span id="header-user-reg">🔒 Login</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Views Container -->
+    <main class="container" style="margin-top: 16px;">
+
+        <!-- Mobile View Navigation Tab Pills Bar -->
+        <div class="mobile-tab-bar">
+            <button class="mobile-tab-pill active" data-view="home">🏠 Home</button>
+            <button class="mobile-tab-pill" data-view="all-events">🌐 All Events</button>
+            <button class="mobile-tab-pill" data-view="latest">✨ Latest</button>
+            <button class="mobile-tab-pill" data-view="upcoming">🔥 Upcoming</button>
+            <button class="mobile-tab-pill" data-view="deadline-soon" style="color:var(--status-deadline);">⏰ Deadline Soon</button>
+            <button class="mobile-tab-pill" data-view="ended">🏁 Ended</button>
+            <button class="mobile-tab-pill" data-view="saved">🔖 Saved</button>
+            <button class="mobile-tab-pill" data-view="teams">🤝 Teams</button>
+        </div>
+
+        <!-- Global Search & Filter Bar -->
+        <div class="search-filter-bar">
+            <div class="search-input-group">
+                <span class="search-icon">🔎</span>
+                <input type="text" id="search-input" placeholder="Search hackathons, topics, skills (e.g. CTF, AI, Python)..." onkeyup="if(event.key==='Enter') Events.handleSearchFilter(true)" oninput="Events.handleSearchFilter(false)">
+            </div>
+            <div class="filters-row">
+                <select id="filter-type-select" class="select-filter" onchange="Events.handleSearchFilter(false)">
+                    <option value="ALL">All Event Types</option>
+                    <option value="HACKATHON">Hackathon</option>
+                    <option value="WORKSHOP">Workshop</option>
+                    <option value="COMPETITION">Competition</option>
+                    <option value="CTF">CTF Challenge</option>
+                </select>
+
+                <select id="filter-mode-select" class="select-filter" onchange="Events.handleSearchFilter(false)">
+                    <option value="ALL">All Modes</option>
+                    <option value="ONLINE">Online</option>
+                    <option value="OFFLINE">Offline</option>
+                    <option value="HYBRID">Hybrid</option>
+                </select>
+
+                <button type="button" class="btn btn-primary" onclick="Events.handleSearchFilter(true)" style="padding: 7px 16px; font-weight: 700; gap: 6px; white-space: nowrap; font-size: 0.85rem; border-radius: 20px; flex-shrink: 0;">
+                    🔍 Search
+                </button>
+            </div>
+        </div>
+
+        <!-- 1. HOME VIEW -->
+        <section id="view-home" class="view-section">
+            <div style="background: linear-gradient(135deg, var(--accent-maroon), var(--accent-maroon-light)); border-radius: var(--radius-md); padding: 24px; margin-bottom: 24px;">
+                <h1 style="font-size: 1.6rem; font-weight: 800; color: #fff; line-height: 1.3;">
+                    <span style="font-size: 1rem; font-weight: 600; display: block; opacity: 0.9; margin-bottom: 4px;">Welcome to HackHub 👋</span>
+                    Department Hackathons &amp; Events Platform
+                </h1>
+                <p style="color: rgba(255,255,255,0.8); font-size: 0.95rem; margin-top: 4px;">Discover department hackathons, connect with peers, and form your ideal hackathon team instantly.</p>
+                <div style="display: flex; gap: 12px; margin-top: 16px;">
+                    <button class="btn btn-secondary" onclick="Events.scrollToHomeEvents()">Explore Hackathons</button>
+                    <button class="btn btn-outline" style="border-color:rgba(255,255,255,0.6); color:#fff;" onclick="App.navigateTo('teams')">🤝 Find Team</button>
+                </div>
+            </div>
+
+            <div id="home-events-section" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h2 style="font-size: 1.2rem; font-weight: 700;">🔥 All Department Hackathons &amp; Events</h2>
+                </div>
+                <div id="home-upcoming-grid" class="events-grid"></div>
+            </div>
+
+            <div style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h2 style="font-size: 1.2rem; font-weight: 700; color: var(--status-deadline);">⏰ Deadlines Soon</h2>
+                </div>
+                <div id="home-deadline-grid" class="events-grid"></div>
+            </div>
+        </section>
+
+        <!-- 1B. ALL EVENTS VIEW (DISPLAYS ENTIRE LIVE CATALOG 24/7) -->
+        <section id="view-all-events" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">🌐 All Department &amp; National Hackathons</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Browse the entire live catalog of hackathons, CTFs, and coding competitions available 24/7.</p>
+                </div>
+            </div>
+            <div id="all-events-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 2. UPCOMING VIEW -->
+        <section id="view-upcoming" class="view-section" style="display:none;">
+            <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Active &amp; Upcoming Hackathons</h2>
+            <div id="upcoming-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 2A. LATEST VIEW (NEWLY UPLOADED IN LAST 7 DAYS) -->
+        <section id="view-latest" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon);">✨ Latest Hackathons (Uploaded Recently)</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Fresh hackathons and competitions uploaded within the last 7 days! Be the first to form your team and apply.</p>
+                </div>
+            </div>
+            <div id="latest-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 2B. DEADLINE SOON VIEW -->
+        <section id="view-deadline-soon" class="view-section" style="display:none;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:8px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--status-deadline);">⏰ Deadline Soon (5 Days or Less Left)</h2>
+                    <p style="color: var(--text-muted); font-size: 0.85rem; margin-top:4px;">Hackathons with registration closing within 5 days! Form your team fast before registrations close.</p>
+                </div>
+            </div>
+            <div id="deadline-soon-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 3. ENDED VIEW -->
+        <section id="view-ended" class="view-section" style="display:none;">
+            <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Past &amp; Ended Events</h2>
+            <p style="color: var(--text-muted); font-size: 0.85rem; margin-bottom: 16px;">Events automatically move to this tab based on the server current date.</p>
+            <div id="ended-grid" class="events-grid"></div>
+        </section>
+
+
+
+        <!-- 5. SAVED VIEW -->
+        <section id="view-saved" class="view-section" style="display:none;">
+            <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Bookmark / Saved Events</h2>
+            <div id="saved-grid" class="events-grid"></div>
+        </section>
+
+        <!-- 6. FIND TEAM VIEW -->
+        <section id="view-teams" class="view-section" style="display:none;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px;">
+                <div>
+                    <h2 style="font-size: 1.3rem; font-weight: 700; color: var(--accent-maroon); margin: 0;">🤝 Department Teammate Finder & Open Teams</h2>
+                    <p style="color: var(--text-muted); font-size: 0.9rem; margin-top: 4px; margin-bottom: 0;">Browse open hackathon teams, request to join vacancies, or create your own team!</p>
+                </div>
+                <button class="btn btn-primary" onclick="Teams.openCreateTeamModal()">+ Create a Team</button>
+            </div>
+
+            <!-- Incoming Join Requests for Leader's Teams -->
+            <div id="incoming-requests-section" style="margin-bottom: 24px; display: none;">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px; color: var(--status-deadline);">📬 Incoming Join Requests for Your Teams</h3>
+                <div id="incoming-requests-list"></div>
+            </div>
+
+            <!-- Public Open Teams Feed (Shows to Everyone) -->
+            <div style="margin-bottom: 24px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; margin: 0;">🌟 Open Teams Looking for Teammates</h3>
+                        <p style="color: var(--text-muted); font-size: 0.8rem; margin: 2px 0 0 0;">Visible to everyone logged in. Tap "Request to Join" on any team to send your request.</p>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex: 1; max-width: 320px;">
+                        <input type="text" id="teams-filter-search" class="form-input" placeholder="Filter by team or event..." style="font-size: 0.82rem; padding: 6px 12px; width: 100%; min-width: 0;" oninput="Teams.filterRenderedTeams()">
+                        <button class="btn btn-secondary btn-sm" style="white-space: nowrap; flex-shrink: 0;" onclick="Teams.loadAllTeams()">🔄 Refresh</button>
+                    </div>
+                </div>
+                <div id="all-teams-container" style="display: flex; flex-direction: column; gap: 12px;">
+                    <div style="text-align:center; padding: 24px; color: var(--text-muted);">Loading teams...</div>
+                </div>
+            </div>
+
+            <!-- Student Search & Quick Teammate Finder -->
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 20px; margin-bottom: 24px;">
+                <h3 style="font-size: 1.05rem; font-weight: 700; margin-bottom: 6px;">🔎 Search Student Directory by Name or Reg No</h3>
+                <p style="color: var(--text-muted); font-size: 0.8rem; margin-top: 0; margin-bottom: 10px;">Find specific students and inspect their skills for hackathons</p>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="teams-student-search-input" class="form-input" placeholder="Enter Name or Reg No (e.g. CS2001, CS3015)..." oninput="Teams.handleSearchStudentInput()">
+                </div>
+                <div id="teams-student-search-results" style="margin-top: 12px; display: flex; flex-direction: column; gap: 8px;"></div>
+            </div>
+        </section>
+
+        <!-- 7. PROFILE VIEW -->
+        <section id="view-profile" class="view-section" style="display:none;">
+            <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-md); padding: 24px; max-width: 600px; margin: 0 auto;">
+                <h2 style="font-size: 1.3rem; font-weight: 700; margin-bottom: 16px;">Student Profile</h2>
+                <form onsubmit="Auth.handleUpdateProfile(event)">
+                    <div class="form-group">
+                        <label class="form-label">Registration Number</label>
+                        <div id="profile-reg-no" style="font-weight: 700; color: var(--accent-maroon); font-size: 1.1rem;">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Account Role</label>
+                        <div id="profile-role" style="font-weight: 600; color: var(--text-muted); font-size: 0.9rem;">-</div>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Full Name</label>
+                        <input type="text" id="profile-name-input" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Email Address</label>
+                        <input type="email" id="profile-email-input" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Skills (Comma-separated)</label>
+                        <input type="text" id="profile-skills-input" class="form-input" placeholder="e.g. Python, Cybersecurity, React, UI/UX">
+                    </div>
+
+                    <div style="display: flex; gap: 12px; margin-top: 20px;">
+                        <button type="submit" class="btn btn-primary">Save Profile</button>
+                        <button type="button" class="btn btn-secondary" onclick="Auth.showChangePasswordModal()">Change Password</button>
+                        <button type="button" class="btn btn-danger" onclick="Auth.logout()">Logout</button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- 8. ADMIN VIEW -->
+        <section id="view-admin" class="view-section" style="display:none;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; flex-wrap: wrap; gap: 10px;">
+                <div>
+                    <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
+                        <h2 style="font-size: 1.4rem; font-weight: 800; color: var(--accent-maroon); margin: 0;">Protected Admin Dashboard</h2>
+                        <span id="admin-live-badge" style="display: inline-flex; align-items: center; gap: 6px; background: rgba(16, 185, 129, 0.12); color: #059669; border: 1px solid rgba(16, 185, 129, 0.3); padding: 3px 10px; border-radius: 20px; font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;">
+                            <span style="width: 8px; height: 8px; border-radius: 50%; background: #10b981; display: inline-block; animation: hackhubPulseDot 1.5s infinite;"></span>
+                            LIVE 24/7 AUTO-SYNC
+                        </span>
+                        <span id="admin-last-sync-time" style="font-size: 0.72rem; color: var(--text-muted);">Synced just now</span>
+                    </div>
+                    <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 2px;">Real-time audit history, student accounts, teams &amp; live logs auto-syncing without page reload</p>
+                </div>
+                <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.syncUnstopEvents()">🌐 Sync Unstop Hackathons</button>
+                    <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.4);" onclick="Admin.clearUnstopEvents()">🗑️ Clear Unstop</button>
+                    <button class="btn btn-primary btn-sm" onclick="App.openModal('modal-admin-create-student')">+ Create Student Account</button>
+                    <button id="admin-create-subadmin-btn" class="btn btn-sm" style="background:#7c3aed; color:#fff; display:none;" onclick="App.openModal('modal-create-subadmin')">🛡️ Create Sub-Admin</button>
+                </div>
+            </div>
+
+            <!-- Stats Grid -->
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-students">0</span>
+                    <span class="stat-label">Total Students</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-events">0</span>
+                    <span class="stat-label">Total Events</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-upcoming-events">0</span>
+                    <span class="stat-label">Upcoming</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-ended-events">0</span>
+                    <span class="stat-label">Ended</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-saved-events">0</span>
+                    <span class="stat-label">Saved Events</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-reports">0</span>
+                    <span class="stat-label">Reports</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-teams">0</span>
+                    <span class="stat-label">Total Teams</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-number" id="stat-total-logs">0</span>
+                    <span class="stat-label">🔴 24/7 Logs</span>
+                </div>
+            </div>
+
+            <!-- Sub-Navigation Filter Pills for Admin -->
+            <div class="admin-subtabs-bar">
+                <button class="btn btn-primary btn-sm admin-subtab-btn active" data-subtab="all" onclick="Admin.switchSubTab('all')">📋 All Logs &amp; Controls</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="activity-logs" onclick="Admin.switchSubTab('activity-logs')">🔴 24/7 Live Audit Log</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="posting-history" onclick="Admin.switchSubTab('posting-history')">📜 Hackathon Posting History Log</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="userlogs" onclick="Admin.switchSubTab('userlogs')">👤 Active &amp; Future User Logs</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="students" onclick="Admin.switchSubTab('students')">👥 Student Accounts</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="events" onclick="Admin.switchSubTab('events')">💻 Hackathons Management</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="teams" onclick="Admin.switchSubTab('teams')">🤝 Teams Management</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="reports" onclick="Admin.switchSubTab('reports')">🚩 Flagged Reports</button>
+                <button class="btn btn-outline btn-sm admin-subtab-btn" data-subtab="database" onclick="Admin.switchSubTab('database')">🗄️ Database Inspector &amp; Supabase</button>
+                <button id="admin-subtab-subadmins" class="btn btn-sm admin-subtab-btn" data-subtab="subadmins" onclick="Admin.switchSubTab('subadmins')" style="display:none; background:#7c3aed; color:#fff; border-color:#7c3aed;">🛡️ Sub-Admin Management</button>
+            </div>
+
+            <!-- TEAMS MANAGEMENT SECTION -->
+            <div id="admin-sec-teams" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🤝 All Teams Management</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">View, inspect and delete all teams created across hackathons department-wide</span>
+                    </div>
+                    <button class="btn btn-secondary btn-sm" onclick="Admin.loadTeams()">🔄 Refresh Teams</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Team Name</th>
+                                <th>Event / Hackathon</th>
+                                <th>Created By</th>
+                                <th>Members</th>
+                                <th>Max Size</th>
+                                <th>Skills in Team</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-teams-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 24/7 LIVE AUDIT & ACTIVITY LOG SECTION -->
+            <div id="admin-sec-activity-logs" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon); display: flex; align-items: center; gap: 8px;">
+                            <span>🔴 24/7 Live Audit &amp; Activity Log</span>
+                            <span style="font-size: 0.7rem; background: rgba(34,197,94,0.15); color: var(--status-upcoming); padding: 2px 8px; border-radius: 12px; border: 1px solid rgba(34,197,94,0.3);">● LIVE TRACKING ACTIVE</span>
+                        </h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Real-time tracking of every login, password change, team creation, event edit, and sub-admin action</span>
+                    </div>
+                    <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+                        <select id="admin-logs-action-filter" class="form-select" style="font-size: 0.8rem; padding: 4px 10px; width: 140px;" onchange="Admin.loadActivityLogs()">
+                            <option value="ALL">All Actions</option>
+                            <option value="LOGIN">Logins</option>
+                            <option value="TEAM_CREATE">Team Creations</option>
+                            <option value="TEAM_DELETE">Team Deletions</option>
+                            <option value="JOIN_REQUEST">Join Requests</option>
+                            <option value="JOIN_ACCEPTED">Join Accepted</option>
+                            <option value="JOIN_REJECTED">Join Rejected</option>
+                            <option value="EVENT_CREATE">Event Creations</option>
+                            <option value="EVENT_UPDATE">Event Updates</option>
+                            <option value="EVENT_DELETE">Event Deletions</option>
+                            <option value="PASSWORD_RESET">Password Resets</option>
+                            <option value="PASSWORD_CHANGE">Password Changes</option>
+                            <option value="SUBADMIN_CREATE">Sub-Admin Create</option>
+                            <option value="SUBADMIN_UPDATE">Sub-Admin Update</option>
+                            <option value="SUBADMIN_DELETE">Sub-Admin Delete</option>
+                            <option value="STUDENT_CREATE">Student Create</option>
+                            <option value="STUDENT_STATUS">Student Status</option>
+                            <option value="PROFILE_UPDATE">Profile Updates</option>
+                        </select>
+                        <input type="text" id="admin-logs-search-input" class="form-input" placeholder="Search user, action, details..." style="font-size: 0.82rem; padding: 4px 10px; width: 200px;" oninput="Admin.handleSearchActivityLogs()">
+                        <button class="btn btn-secondary btn-sm" onclick="Admin.loadActivityLogs()">🔄 Refresh</button>
+                        <button class="btn btn-outline btn-sm" style="color:var(--status-danger); border-color:rgba(220,38,38,0.3);" onclick="Admin.clearActivityLogs()">🗑️ Purge Logs</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive" style="max-height: 520px; overflow-y: auto;">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 155px;">Timestamp</th>
+                                <th style="width: 130px;">User</th>
+                                <th style="width: 110px;">Role</th>
+                                <th style="width: 135px;">Action</th>
+                                <th>Activity Details</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-activity-logs-tbody">
+                            <tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">Loading live logs...</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- DATABASE INSPECTOR & H2 CONSOLE LINK SECTION -->
+            <div id="admin-sec-database" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">🗄️ Live Database Inspector (Supabase PostgreSQL)</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Inspect live PostgreSQL tables, database records, and connect to Supabase Cloud</span>
+                    </div>
+                    <a href="https://supabase.com/dashboard" target="_blank" class="btn btn-primary btn-sm">⚡ Open Supabase Dashboard</a>
+                </div>
+
+                <div class="card" style="padding: 16px; margin-bottom: 16px; background: rgba(16, 185, 129, 0.06); border: 1px solid rgba(16, 185, 129, 0.2); border-radius: 10px;">
+                    <h4 style="font-size: 0.95rem; font-weight: 700; color: var(--text-main); margin-bottom: 6px;">⚡ Connected to Supabase Cloud PostgreSQL:</h4>
+                    <ul style="font-size: 0.85rem; color: var(--text-muted); padding-left: 20px; line-height: 1.6; margin:0;">
+                        <li><strong>Database Engine</strong>: PostgreSQL 15+ (Hosted on Supabase Cloud)</li>
+                        <li><strong>ORM</strong>: Spring Data JPA / Hibernate (PostgreSQL Dialect)</li>
+                        <li><strong>Connection Pool</strong>: HikariCP with cloud keep-alive &amp; SSL (5 connections)</li>
+                        <li><strong>Live Inspector</strong>: Click the buttons below to inspect live user, event, and report records directly from the database.</li>
+                    </ul>
+                </div>
+
+                <div class="admin-subtabs-bar" style="border-bottom:none; margin-bottom:14px; padding-bottom:4px;">
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('users')">👥 Users Data</button>
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('events')">💻 Events Data</button>
+                    <button class="btn btn-secondary btn-sm admin-subtab-btn" onclick="Admin.loadDbTable('reports')">🚩 Reports Data</button>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table" id="db-table-view">
+                        <thead>
+                            <tr id="db-table-headers">
+                                <th>Select a database table above to inspect live records...</th>
+                            </tr>
+                        </thead>
+                        <tbody id="db-table-rows">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 1. HACKATHON POSTING HISTORY & CREATOR AUDIT LOG -->
+            <div id="admin-sec-posting-history" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">📜 Hackathon Posting History & Audit Log</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Track who posted each hackathon with Creator Reg No, Name, and exact Posting Date/Time</span>
+                    </div>
+                    <input type="text" id="admin-history-search-input" class="form-input admin-search-input" placeholder="Search title, Reg No, or name..." oninput="Admin.handleSearchPostingHistory()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th># ID</th>
+                                <th>Hackathon / Event Title</th>
+                                <th>Type</th>
+                                <th>Posted By (Reg No & Name)</th>
+                                <th>Date & Time Posted</th>
+                                <th>Schedule</th>
+                                <th>Mode</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-history-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 2. ACTIVE & FUTURE USERS CREATION LOG -->
+            <div id="admin-sec-userlogs" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: var(--accent-maroon);">👤 User Accounts Activity & Creation Log</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Displays active users log & future additional created users with Registration Date/Time & Post Counts</span>
+                    </div>
+                    <input type="text" id="admin-userlog-search-input" class="form-input admin-search-input" placeholder="Search Reg No, name, role..." oninput="Admin.handleSearchUserLogs()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Reg No</th>
+                                <th>Full Name</th>
+                                <th>Email</th>
+                                <th>Role</th>
+                                <th>Account Created Date & Time</th>
+                                <th>Posted Events</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-userlogs-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- SUB-ADMIN MANAGEMENT SECTION (ROLE_ADMIN only) -->
+            <div id="admin-sec-subadmins" style="margin-bottom: 30px; display:none;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <div>
+                        <h3 style="font-size: 1.1rem; font-weight: 700; color: #7c3aed;">🛡️ Sub-Admin Management</h3>
+                        <span style="font-size: 0.78rem; color: var(--text-muted);">Create and manage Sub-Admins. Each Sub-Admin handles student accounts for their assigned department.</span>
+                    </div>
+                    <button class="btn btn-sm" style="background:#7c3aed; color:#fff;" onclick="App.openModal('modal-create-subadmin')">+ Create Sub-Admin</button>
+                </div>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Department</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-subadmins-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 3. Student Management Table -->
+            <div id="admin-sec-students" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 10px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Student Accounts Management (CS2001–CS2049, CS3001–CS3048 & Admin Created)</h3>
+                    <input type="text" id="admin-student-search-input" class="form-input admin-search-input" placeholder="Search Reg No or Name..." oninput="Admin.handleSearchStudents()">
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Reg No</th>
+                                <th>Name</th>
+                                <th>Email</th>
+                                <th>Dept</th>
+                                <th>Skills</th>
+                                <th>Status</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-students-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 4. Hackathons Management Table -->
+            <div id="admin-sec-events" style="margin-bottom: 30px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">
+                    <h3 style="font-size: 1.1rem; font-weight: 700;">Hackathons & Events Management (Modify / Delete)</h3>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Mode</th>
+                                <th>Dates</th>
+                                <th>Deadline</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-events-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 5. Reports Management Table -->
+            <div id="admin-sec-reports">
+                <h3 style="font-size: 1.1rem; font-weight: 700; margin-bottom: 12px;">Reported Events Audit Log</h3>
+                <div class="table-responsive">
+                    <table class="data-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Event Title</th>
+                                <th>Reported By</th>
+                                <th>Reason</th>
+                                <th>Status</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-reports-tbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Mobile Bottom Navigation Bar -->
+    <nav class="bottom-nav">
+        <a href="#" class="bottom-nav-item active" data-view="home">
+            <span class="icon">🏠</span>
+            <span>Home</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-view="teams">
+            <span class="icon">🤝</span>
+            <span>Teams</span>
+        </a>
+        <a href="#" class="bottom-nav-item bottom-nav-post" onclick="App.openModal('modal-post-event'); return false;">
+            <span class="icon" style="font-size:1.4rem;">➕</span>
+            <span>Post</span>
+        </a>
+        <a href="#" class="bottom-nav-item" onclick="Notifications.toggleModal(); return false;" style="position:relative;">
+            <span class="icon">🔔</span>
+            <span>Alerts</span>
+            <span id="bottom-notif-badge" class="badge" style="display:none; position:absolute; top:2px; right:12px; background:var(--status-danger); color:white; font-size:0.65rem; border-radius:10px; padding:1px 5px;">0</span>
+        </a>
+        <a href="#" class="bottom-nav-item" data-view="profile">
+            <span class="profile-nav-avatar" id="bottom-profile-avatar">🎓</span>
+            <span>Profile</span>
+        </a>
+        <a href="#" class="bottom-nav-item" id="bottom-admin-item" data-view="admin" style="display:none; color: var(--accent-cyan);">
+            <span class="icon">⚡</span>
+            <span>Admin</span>
+        </a>
+    </nav>
+
+    <!-- Floating Action Button for Post Event -->
+    <button class="fab-post" onclick="App.openModal('modal-post-event')" title="Post Hackathon Event">+</button>
+
+    <!-- MODAL 1: Login -->
+    <div id="modal-login" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="/logo.png" alt="HackHub Logo" class="brand-logo-img" style="width: 32px; height: 32px;">
+                    <h3 class="modal-title">Student &amp; Admin Login</h3>
+                </div>
+                <button type="button" class="close-btn" onclick="App.closeModal('modal-login')">&times;</button>
+            </div>
+            <form id="form-login" onsubmit="Auth.handleLogin(event); return false;">
+                <div class="form-group">
+                    <label class="form-label">Registration Number</label>
+                    <input type="text" id="login-reg-no" class="form-input" placeholder="Registration Number" required onkeydown="if(event.key==='Enter'){event.preventDefault(); const p=document.getElementById('login-password'); if(p.value){document.getElementById('btn-login-submit').click();} else {p.focus();}}">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Password</label>
+                    <input type="password" id="login-password" class="form-input" placeholder="Enter Password" required onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('btn-login-submit').click();}">
+                </div>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 20px;">
+                    <a href="javascript:void(0)" style="font-size: 0.85rem; color: var(--accent-cyan); text-decoration: underline; cursor: pointer; padding: 4px;" onclick="event.preventDefault(); App.closeModal('modal-login'); Auth.showForgotPasswordModal();">Forgot Password?</a>
+                    <button type="submit" id="btn-login-submit" class="btn btn-primary">Login to HackHub</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 2: Change Account Password (Shown on default password / first login) -->
+    <div id="modal-first-login" class="modal-overlay">
+        <div class="modal-box" style="max-width: 460px;">
+            <div class="modal-header" style="display: flex; justify-content: space-between; align-items: center;">
+                <h3 class="modal-title" id="first-login-modal-title" style="font-size: 1.25rem; font-weight: 700; display: flex; align-items: center; gap: 8px;">🔐 Change Account Password</h3>
+                <button type="button" class="close-btn" id="first-login-close-btn" onclick="App.closeModal('modal-first-login')">&times;</button>
+            </div>
+            <p id="first-login-modal-desc" style="font-size: 0.9rem; color: var(--text-muted); margin: 6px 0 20px 0;">
+                Enter your current password and your new password below.
+            </p>
+            <form id="form-change-password" onsubmit="Auth.handleFirstLoginPasswordChange(event)">
+                <div class="form-group" style="margin-bottom: 16px;">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; display: block;">Current Password</label>
+                    <input type="password" id="first-current-password" class="form-input" placeholder="Enter current password" required onkeydown="if(event.key==='Enter'){event.preventDefault(); document.getElementById('first-new-password').focus();}">
+                </div>
+                <div class="form-group" style="margin-bottom: 24px;">
+                    <label class="form-label" style="font-weight: 600; font-size: 0.9rem; margin-bottom: 6px; display: block;">New Secure Password</label>
+                    <input type="password" id="first-new-password" class="form-input" placeholder="Enter new password" required onkeydown="if(event.key==='Enter'){event.preventDefault(); Auth.handleFirstLoginPasswordChange(event);}">
+                </div>
+                <button type="submit" id="btn-update-password-submit" class="btn btn-primary" style="width: 100%; padding: 12px; font-size: 0.95rem; font-weight: 700; border-radius: 8px;">Update Password & Continue</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 3: Forgot Password Brevo OTP Recovery -->
+    <div id="modal-forgot-password" class="modal-overlay">
+        <div class="modal-box" style="max-width: 460px;">
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center;">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <img src="/logo.png" alt="HackHub" class="brand-logo-img" style="width: 28px; height: 28px;">
+                    <h3 class="modal-title">🔐 Reset Password with Email OTP</h3>
+                </div>
+                <button type="button" class="close-btn" onclick="App.closeModal('modal-forgot-password'); Auth.showLoginModal();">&times;</button>
+            </div>
+            
+            <!-- Step 1: Enter Registration Number & Valid Email -->
+            <div id="otp-step-1">
+                <p style="font-size: 0.85rem; color: var(--text-muted); margin: 6px 0 16px 0; line-height: 1.5;">
+                    Enter your student Registration Number and your valid personal email address. A 6-digit verification OTP will be sent to your email.
+                </p>
+                <form onsubmit="Auth.handleRequestOtp(event)">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label">Registration Number *</label>
+                        <input type="text" id="otp-reg-no" class="form-input" placeholder="e.g. CS2001" required autocomplete="username">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">Registered Email Address *</label>
+                        <input type="email" id="otp-email" class="form-input" placeholder="e.g. yourname@gmail.com" required autocomplete="email">
+                        <small style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px;">
+                            Must match your registered email in HackHub. Otherwise, contact Admin.
+                        </small>
+                    </div>
+                    <button type="submit" id="btn-request-otp" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700;">📩 Send Verification OTP</button>
+                    <div style="text-align: center; margin-top: 14px;">
+                        <a href="javascript:void(0)" style="font-size: 0.85rem; color: var(--accent-cyan); text-decoration: underline;" onclick="App.closeModal('modal-forgot-password'); Auth.showLoginModal();">&larr; Back to Login</a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Step 2: Verify OTP & Change Password -->
+            <div id="otp-step-2" style="display: none;">
+                <div id="otp-sent-info" style="font-size: 0.85rem; color: var(--accent-cyan); background: rgba(59,130,246,0.08); padding: 12px 14px; border-radius: 8px; margin-bottom: 16px; border-left: 3px solid var(--accent-cyan);"></div>
+                
+                <form onsubmit="Auth.handleVerifyOtpAndResetPassword(event)">
+                    <div class="form-group" style="margin-bottom: 14px;">
+                        <label class="form-label">Enter 6-Digit OTP Code *</label>
+                        <input type="text" id="otp-code-input" class="form-input" placeholder="••••••" maxlength="6" style="letter-spacing: 8px; font-size: 1.3rem; text-align: center; font-weight: 800; font-family: monospace;" required autocomplete="one-time-code">
+                    </div>
+                    <div class="form-group" style="margin-bottom: 20px;">
+                        <label class="form-label">New Password *</label>
+                        <input type="password" id="otp-new-password" class="form-input" placeholder="Enter new password (min 3 characters)" required autocomplete="new-password">
+                    </div>
+                    <button type="submit" id="btn-verify-otp" class="btn btn-primary" style="width: 100%; padding: 12px; font-weight: 700;">✅ Verify OTP & Change Password</button>
+                    <button type="button" class="btn btn-outline" style="width: 100%; margin-top: 10px;" onclick="Auth.showForgotPasswordModal()">← Back / Change Email</button>
+                    <div style="text-align: center; margin-top: 14px;">
+                        <a href="javascript:void(0)" style="font-size: 0.85rem; color: var(--accent-cyan); text-decoration: underline;" onclick="App.closeModal('modal-forgot-password'); Auth.showLoginModal();">&larr; Back to Login</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 4: Post Event -->
+    <div id="modal-post-event" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📢 Post Hackathon / Department Event</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <p style="font-size: 0.8rem; color: var(--accent-cyan); margin-bottom: 14px;">⚡ Published immediately to all department students upon submission.</p>
+
+            <form id="form-post-event" onsubmit="Events.handlePostEventSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Event / Hackathon Name *</label>
+                    <input type="text" name="title" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea name="description" class="form-textarea" rows="3" required></textarea>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Event Type *</label>
+                        <select name="eventType" class="form-select" required>
+                            <option value="HACKATHON">Hackathon</option>
+                            <option value="WORKSHOP">Workshop</option>
+                            <option value="COMPETITION">Competition</option>
+                            <option value="CTF">CTF Challenge</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Mode *</label>
+                        <select name="mode" class="form-select" required>
+                            <option value="HYBRID">Hybrid</option>
+                            <option value="ONLINE">Online</option>
+                            <option value="OFFLINE">Offline</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Min Team Size</label>
+                        <input type="number" name="teamSizeMin" class="form-input" value="1" min="1" max="10">
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Max Team Size</label>
+                        <input type="number" name="teamSizeMax" class="form-input" value="4" min="1" max="10">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Start Date *</label>
+                        <input type="date" name="startDate" class="form-input" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">End Date *</label>
+                        <input type="date" name="endDate" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Deadline *</label>
+                    <input type="date" name="registrationDeadline" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Poster Image Upload</label>
+                    <input type="file" id="post-poster-file" class="form-input" accept="image/png, image/jpeg, image/webp">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Venue (Optional)</label>
+                    <input type="text" name="venue" class="form-input" placeholder="e.g. Auditorium B / Online Discord">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Link (Optional)</label>
+                    <input type="url" name="registrationLink" class="form-input" placeholder="https://...">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Skills / Technologies Needed</label>
+                    <input type="text" name="skills" class="form-input" placeholder="e.g. Python, Cybersecurity, React">
+                </div>
+
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Publish Event Immediately</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 5: Find Team & Create Team -->
+    <div id="modal-find-team" class="modal-overlay">
+        <div class="modal-box" style="max-width: 650px;">
+            <div class="modal-header">
+                <h3 class="modal-title">🤝 Find Team — <span id="findteam-event-title" style="color: var(--accent-cyan);">Event</span></h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px;">
+                <span style="font-size: 0.9rem; color: var(--text-muted);">Existing teams looking for teammates:</span>
+                <button class="btn btn-primary btn-sm" onclick="Teams.openCreateTeamModal(Teams.currentEventId)">+ Create Team</button>
+            </div>
+
+            <div id="findteam-teams-container" style="max-height: 400px; overflow-y: auto;"></div>
+        </div>
+    </div>
+
+    <!-- MODAL 6: Create Team Modal -->
+    <div id="modal-create-team" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">🤝 Create New Team</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form onsubmit="Teams.handleCreateTeam(event)">
+                <div class="form-group">
+                    <label class="form-label">Select Hackathon / Event *</label>
+                    <select id="form-create-team-event-id" class="form-input" required>
+                        <option value="">-- Loading events... --</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Team Name *</label>
+                    <input type="text" id="team-name-input" class="form-input" placeholder="e.g. CyberShield Squad" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Max Team Members</label>
+                    <input type="number" id="team-max-input" class="form-input" value="4" min="2" max="10">
+                    <small style="color: var(--text-muted); font-size: 0.78rem;">Between 2 and 10 members (default: 4)</small>
+                </div>
+                <button type="submit" class="btn btn-primary" style="width: 100%; margin-top: 10px;">Create Team</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 7: View Event Details -->
+    <div id="modal-event-details" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title" id="modal-details-title">Event Details</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+
+            <div style="height: 200px; border-radius: var(--radius-sm); overflow: hidden; margin-bottom: 16px; background: #000;">
+                <img id="modal-details-poster" src="" alt="Poster" style="width:100%; height:100%; object-fit:cover;">
+            </div>
+
+            <!-- Live Application Deadline Countdown Banner -->
+            <div id="modal-details-countdown-box" style="background: linear-gradient(135deg, rgba(220,38,38,0.1), rgba(234,88,12,0.1)); border: 1px solid rgba(220,38,38,0.3); padding: 14px 16px; border-radius: var(--radius-sm); margin-bottom: 16px; text-align: center;">
+                <span style="font-size: 0.76rem; font-weight: 700; color: var(--status-deadline); text-transform: uppercase; letter-spacing: 1px;">⏳ Live Application Deadline Countdown</span>
+                <div id="modal-details-countdown-timer" style="font-size: 1.4rem; font-weight: 900; color: var(--accent-maroon); margin-top: 4px; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;">00d 00h 00m 00s</div>
+                <!-- Live Progress Bar -->
+                <div style="width:100%; height:6px; background:rgba(0,0,0,0.1); border-radius:3px; overflow:hidden; margin-top:8px;">
+                    <div id="modal-details-countdown-bar" style="height:100%; width:100%; background:linear-gradient(90deg, var(--status-deadline), var(--accent-maroon)); transition: width 1s linear;"></div>
+                </div>
+            </div>
+
+            <p id="modal-details-description" style="color: var(--text-main); font-size: 0.95rem; margin-bottom: 16px;"></p>
+
+            <div class="form-grid-2" style="font-size: 0.85rem; color: var(--text-muted); background: var(--bg-dark); padding: 14px; border-radius: var(--radius-sm); margin-bottom: 16px;">
+                <div>🏷️ <strong>Type:</strong> <span id="modal-details-type"></span></div>
+                <div>🌐 <strong>Mode:</strong> <span id="modal-details-mode"></span></div>
+                <div>📍 <strong>Venue:</strong> <span id="modal-details-venue"></span></div>
+                <div>👥 <strong>Team Size:</strong> <span id="modal-details-team"></span></div>
+                <div>📅 <strong>Dates:</strong> <span id="modal-details-dates"></span></div>
+                <div>⏰ <strong>Deadline:</strong> <span id="modal-details-deadline"></span></div>
+            </div>
+
+            <div style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 16px; align-items: center;">
+                <a id="modal-details-reglink" href="#" target="_blank" class="btn btn-primary" style="flex:1; justify-content:center;">🔗 Apply / Register Now</a>
+                <button id="modal-details-save" class="btn btn-outline">🔖 Save</button>
+                <button id="modal-details-findteam" class="btn btn-secondary">🤝 Find Team</button>
+                <button id="modal-details-share" class="btn btn-outline">📤 Share</button>
+                <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-event-details')" style="border: 1px solid var(--border-color);">❌ Close</button>
+                <button id="modal-details-report" class="btn btn-danger btn-sm" style="margin-left: auto;">⚠️ Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 9: Share Event Options -->
+    <div id="modal-share-event" class="modal-overlay">
+        <div class="modal-box" style="max-width: 440px;">
+            <div class="modal-header">
+                <h3 class="modal-title">📤 Share Hackathon</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            
+            <p id="share-modal-title" style="font-weight: 700; color: var(--accent-maroon); font-size: 1.05rem; margin-bottom: 10px; word-break: break-word;"></p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-bottom: 18px;">Invite classmates, team members, or share to WhatsApp & social platforms!</p>
+
+            <div style="display: flex; flex-direction: column; gap: 10px;">
+                <button type="button" class="btn btn-primary" onclick="Events.execShare('whatsapp')" style="background: #25D366; border-color: #25D366; color: #ffffff; justify-content: center; gap: 8px; font-weight: 700; padding: 10px 16px;">
+                    <span style="font-size: 1.2rem;">💬</span> Share to WhatsApp
+                </button>
+
+                <button type="button" class="btn btn-secondary" onclick="Events.execShare('copy')" style="justify-content: center; gap: 8px; font-weight: 600; padding: 10px 16px;">
+                    <span>📋</span> Copy Hackathon Link
+                </button>
+
+                <button type="button" class="btn btn-outline" id="share-btn-native" onclick="Events.execShare('native')" style="justify-content: center; gap: 8px; font-weight: 600; padding: 10px 16px;">
+                    <span>📲</span> More Apps (Native Share)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL 8: Report Event -->
+    <div id="modal-report-event" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">⚠️ Report Event — <span id="report-event-title" style="color: var(--status-danger);"></span></h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form onsubmit="Events.handleReportSubmit(event)">
+                <input type="hidden" id="report-event-id">
+                <div class="form-group">
+                    <label class="form-label">Reason for Report *</label>
+                    <select id="report-reason" class="form-select" required>
+                        <option value="FAKE_EVENT">Fake Event</option>
+                        <option value="WRONG_INFO">Wrong Information</option>
+                        <option value="BROKEN_LINK">Broken Registration Link</option>
+                        <option value="SPAM">Spam Content</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Description (Optional)</label>
+                    <textarea id="report-description" class="form-textarea" rows="3" placeholder="Provide extra details..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-danger" style="width: 100%; margin-top: 10px;">Submit Report</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 9: Admin Create Student Account -->
+    <div id="modal-admin-create-student" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">➕ Create Student Account (CS050+)</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-admin-create-student" onsubmit="Admin.handleCreateStudentSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Registration Number *</label>
+                    <input type="text" id="admin-create-reg-no" class="form-input" placeholder="e.g. CS050, CS051" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Student Name</label>
+                    <input type="text" id="admin-create-name" class="form-input" placeholder="Full Student Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="admin-create-email" class="form-input" placeholder="student050@hackhub.dept.edu">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Skills (Comma-separated)</label>
+                    <input type="text" id="admin-create-skills" class="form-input" placeholder="Python, Cybersecurity, Web Development">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Department</label>
+                    <select id="admin-create-dept" class="form-select">
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password will be generated as <code>123</code>. First-login password change will be required.</p>
+                <button type="submit" class="btn btn-primary" style="width: 100%;">Create Account</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL 10: Admin Edit Hackathon/Event -->
+    <div id="modal-admin-edit-event" class="modal-overlay">
+        <div class="modal-box" style="max-width: 600px;">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Modify Hackathon / Event</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-admin-edit-event" onsubmit="Admin.handleEditEventSubmit(event)">
+                <input type="hidden" id="admin-edit-event-id">
+
+                <div class="form-group">
+                    <label class="form-label">Event Title *</label>
+                    <input type="text" id="admin-edit-title" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Description *</label>
+                    <textarea id="admin-edit-description" class="form-textarea" rows="3" required></textarea>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Event Type</label>
+                        <select id="admin-edit-type" class="form-select">
+                            <option value="HACKATHON">Hackathon</option>
+                            <option value="WORKSHOP">Workshop</option>
+                            <option value="COMPETITION">Competition</option>
+                            <option value="CTF">CTF Challenge</option>
+                            <option value="OTHER">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Mode</label>
+                        <select id="admin-edit-mode" class="form-select">
+                            <option value="ONLINE">Online</option>
+                            <option value="OFFLINE">Offline / On-Campus</option>
+                            <option value="HYBRID">Hybrid</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Min Team Size</label>
+                        <input type="number" id="admin-edit-min-team" class="form-input" min="1" max="10" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">Max Team Size</label>
+                        <input type="number" id="admin-edit-max-team" class="form-input" min="1" max="10" required>
+                    </div>
+                </div>
+
+                <div class="form-grid-2">
+                    <div class="form-group">
+                        <label class="form-label">Start Date *</label>
+                        <input type="date" id="admin-edit-start-date" class="form-input" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label">End Date *</label>
+                        <input type="date" id="admin-edit-end-date" class="form-input" required>
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Deadline *</label>
+                    <input type="date" id="admin-edit-deadline" class="form-input" required>
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Venue / Platform</label>
+                    <input type="text" id="admin-edit-venue" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Registration Link (URL)</label>
+                    <input type="url" id="admin-edit-link" class="form-input">
+                </div>
+
+                <div class="form-group">
+                    <label class="form-label">Skills Required (Comma-separated)</label>
+                    <input type="text" id="admin-edit-skills" class="form-input">
+                </div>
+
+                <div class="form-group" style="background: var(--bg-dark); padding: 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+                    <label class="form-label">🖼️ Hackathon Poster Image (Upload or Image URL)</label>
+                    <div id="admin-edit-poster-preview" style="margin-bottom: 8px;"></div>
+                    <div style="margin-bottom: 8px;">
+                        <label style="font-size: 0.78rem; color: var(--text-muted);">Upload Image File:</label>
+                        <input type="file" id="admin-edit-poster-file" class="form-input" accept="image/*" style="font-size:0.8rem; padding: 6px 10px;">
+                    </div>
+                    <div>
+                        <label style="font-size: 0.78rem; color: var(--text-muted);">Or Direct Image URL:</label>
+                        <input type="text" id="admin-edit-poster-url" class="form-input" placeholder="e.g. https://images.unsplash.com/photo-..." style="font-size:0.8rem; padding: 6px 10px;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px; margin-top: 16px;">
+                    <button type="submit" class="btn btn-primary" style="flex:1;">Save Modifications</button>
+                    <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-admin-edit-event')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Notifications & Requests -->
+    <div id="modal-notifications" class="modal-overlay">
+        <div class="modal-box" style="max-width: 550px; border-radius: 18px; border: 2px solid rgba(128, 0, 32, 0.18); overflow: hidden;">
+            <div style="height: 4px; background: linear-gradient(90deg, #800020, #9e1b32);"></div>
+            <div class="modal-header" style="display:flex; justify-content:space-between; align-items:center; padding: 16px 20px; background: linear-gradient(180deg, rgba(128,0,32,0.04) 0%, rgba(255,255,255,0) 100%); border-bottom: 1px solid rgba(128,0,32,0.1);">
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <div style="width: 34px; height: 34px; border-radius: 50%; background: #ffffff; border: 1.5px solid rgba(128,0,32,0.2); display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(128,0,32,0.18);">
+                        <img src="/logo.png" alt="HackHub Logo" style="width: 24px; height: 24px; object-fit: contain; border-radius: 50%;">
+                    </div>
+                    <div>
+                        <h3 class="modal-title" style="margin:0; font-size: 1.15rem; color: #800020; font-weight: 800;">🔔 Notifications &amp; Requests</h3>
+                        <span style="font-size: 0.75rem; color: var(--text-muted);">Real-time teammate alerts &amp; requests</span>
+                    </div>
+                </div>
+                <button class="close-btn" onclick="App.closeModal('modal-notifications')">&times;</button>
+            </div>
+            <div class="modal-body" style="padding:18px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:14px; padding: 8px 12px; background: rgba(128,0,32,0.04); border-radius: 8px; border: 1px solid rgba(128,0,32,0.08);">
+                    <span style="font-size:0.8rem; color: #800020; font-weight: 600;">⚡ Instant updates &amp; invitations</span>
+                    <button class="btn btn-outline btn-sm" onclick="Notifications.clearAll()" style="font-size:0.75rem; padding:4px 10px; color: #800020; border-color: rgba(128,0,32,0.3);">🗑️ Clear All</button>
+                </div>
+                <div id="notifications-list" style="max-height: 380px; overflow-y: auto;">
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: Create Sub-Admin Account (ROLE_ADMIN only) -->
+    <div id="modal-create-subadmin" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">🛡️ Create Sub-Admin Account</h3>
+                <button type="button" class="close-btn">&times;</button>
+            </div>
+            <form id="form-create-subadmin" onsubmit="Admin.handleCreateSubAdminSubmit(event)">
+                <div class="form-group">
+                    <label class="form-label">Registration Number (Username) *</label>
+                    <input type="text" id="sa-create-reg-no" class="form-input" placeholder="e.g. SUBADMIN-CS, SA001" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="sa-create-name" class="form-input" placeholder="Sub-Admin Full Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="sa-create-email" class="form-input" placeholder="subadmin.cs@hackhub.dept.edu">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Department *</label>
+                    <select id="sa-create-dept" class="form-select" required>
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Class / Year *</label>
+                    <select id="sa-create-year" class="form-select" required>
+                        <option value="2">Class 2 Only (2nd Year: CS2001–CS2049)</option>
+                        <option value="3">Class 3 Only (3rd Year: CS3001–CS3048)</option>
+                        <option value="1">Class 1 Only (1st Year)</option>
+                        <option value="4">Class 4 Only (4th Year)</option>
+                        <option value="ALL">All Classes (Whole Department)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Student Quota Limit (Max Students Access)</label>
+                    <input type="number" id="sa-create-student-limit" class="form-input" min="0" placeholder="e.g. 50 (Leave blank or 0 for unlimited)">
+                    <small style="color: var(--text-muted); font-size: 0.75rem; display:block; margin-top:4px;">Sub-admin is strictly isolated to their assigned class and department, and cannot access other classes or exceed this student limit.</small>
+                </div>
+                <p style="font-size:0.75rem; color: var(--text-muted); margin-bottom: 12px;">Temporary password: <code>123</code>.</p>
+                <button type="submit" class="btn btn-sm" style="width:100%; background:#7c3aed; color:#fff;">Create Sub-Admin</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL: Edit Sub-Admin Account (ROLE_ADMIN only) -->
+    <div id="modal-edit-subadmin" class="modal-overlay">
+        <div class="modal-box">
+            <div class="modal-header">
+                <h3 class="modal-title">✏️ Modify Sub-Admin</h3>
+                <button type="button" class="close-btn" onclick="App.closeModal('modal-edit-subadmin')">&times;</button>
+            </div>
+            <form id="form-edit-subadmin" onsubmit="Admin.handleEditSubAdminSubmit(event)">
+                <input type="hidden" id="sa-edit-id">
+                <div class="form-group">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" id="sa-edit-name" class="form-input" placeholder="Sub-Admin Full Name">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Email Address</label>
+                    <input type="email" id="sa-edit-email" class="form-input">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Department</label>
+                    <select id="sa-edit-dept" class="form-select">
+                        <option value="CS">CS — Computer Science</option>
+                        <option value="IT">IT — Information Technology</option>
+                        <option value="ECE">ECE — Electronics &amp; Communication</option>
+                        <option value="MECH">MECH — Mechanical Engineering</option>
+                        <option value="EEE">EEE — Electrical &amp; Electronics</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Assigned Class / Year</label>
+                    <select id="sa-edit-year" class="form-select">
+                        <option value="2">Class 2 Only (2nd Year: CS2001–CS2049)</option>
+                        <option value="3">Class 3 Only (3rd Year: CS3001–CS3048)</option>
+                        <option value="1">Class 1 Only (1st Year)</option>
+                        <option value="4">Class 4 Only (4th Year)</option>
+                        <option value="ALL">All Classes (Whole Department)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Student Quota Limit</label>
+                    <input type="number" id="sa-edit-student-limit" class="form-input" min="0" placeholder="e.g. 50 (Leave blank or 0 for unlimited)">
+                </div>
+                <div style="display:flex; gap:10px; margin-top:16px;">
+                    <button type="submit" class="btn btn-sm" style="flex:1; background:#7c3aed; color:#fff;">Save Changes</button>
+                    <button type="button" class="btn btn-secondary" onclick="App.closeModal('modal-edit-subadmin')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript Modules -->
+    <script src="/js/api.js?v=9.0"></script>
+    <script src="/js/auth.js?v=9.0"></script>
+    <script src="/js/events.js?v=9.0"></script>
+    <script src="/js/teams.js?v=9.0"></script>
+    <script src="/js/notifications.js?v=9.0"></script>
+    <script src="/js/admin.js?v=9.0"></script>
+    <script src="/js/app.js?v=9.0"></script>
+</body>
+</html>

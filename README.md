@@ -64,9 +64,26 @@ Set the following environment variables (or rely on sensible local defaults):
 > [!NOTE]
 > If Gmail SMTP credentials are not supplied, the system logs the 6-digit OTP code to the backend server console for local testing without interrupting password recovery tests.
 
+## 🚀 Deploying to Vercel (100% Free, Zero Sleep, Fast)
+
+1. Push this repository to GitHub.
+2. Go to [vercel.com](https://vercel.com) and log in with your GitHub account.
+3. Click **"Add New Project"** and select your `hackhub` repository.
+4. Under **Environment Variables**, add:
+   - `DATABASE_URL`: `postgresql://postgres.[PROJECT-REF]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:5432/postgres` (or your direct Supabase connection URL)
+   - `JWT_SECRET`: `404E635266556A586E3272357538782F413F4428472B4B6250655368566D5971`
+5. Click **Deploy**. Vercel will build and launch your application globally in under 60 seconds with 0% sleep!
+
+### Running Locally (Node.js)
+```bash
+npm install
+node server.js
+```
+Open [http://localhost:8085](http://localhost:8085) in your browser.
+
 ---
 
-## 🚀 Running the Project
+## 🚀 Running with Spring Boot (Alternative)
 
 ### 1. Database Setup (Supabase PostgreSQL)
 1. Create a free project on [Supabase](https://supabase.com).
